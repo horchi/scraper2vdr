@@ -148,9 +148,7 @@ time_t cPluginScraper2vdr::WakeupTime(void) {
 }
 
 cOsdObject *cPluginScraper2vdr::MainMenuAction(void) {
-    if (config.mainMenuEntry == 1)
-        return new cScraper2VdrPluginMenu("Scraper2Vdr", update);
-    return NULL;
+    return new cScraper2VdrPluginMenu("Scraper2Vdr", update);
 }
 
 cMenuSetupPage *cPluginScraper2vdr::SetupMenu(void) {

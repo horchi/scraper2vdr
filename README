@@ -34,10 +34,14 @@ To run the plugin the following libaries have to be installed:
  - uuid-dev
  - imagemagick or graphicksmagick
 
-Installation and configuration
-------------------------------
+Installation, configuration and Usage
+----------------------------------------
 
-Just install the plugin depending on your used distribution. During VDR
+To download the plugin from the GIT repository, do a
+
+git clone http://projects.vdr-developer.org/git/vdr-plugin-scraper2vdr.git/
+
+Install the plugin depending on your used distribution. During VDR
 startup the following options can be set:
 
 -i <IMAGEDIR>, --imagedir=<IMAGEDIR>  Set directory where images are stored
@@ -61,6 +65,40 @@ VDR during no other VDR client with running scraper2vdr Plugin is active
 are not missed. The recording information is then written to the database 
 in time before the related and already reliably scraped event entry is 
 deleted from the database.
+
+Format of scrapinfo file
+------------------------
+
+If a recorded show is not correctly scraped because of whatever, it is 
+possible to place a file called scrapinfo into the recordings folder to
+set the IDs manually. To get the IDs, you have to check
+
+http://www.themoviedb.org/
+
+for movies and 
+
+http://www.thetvdb.com/
+
+for Series. The format of the scrapinfo file for series is:
+
+series
+id = <series id from tvdb.com>
+episode = <episode id from tvdb.com>
+
+The episode line can also be empty, then only the series without 
+information for the episode is scraped.
+
+For series it is possible to place one common scrapinfo file
+for the whole series. For that the scrapinfo file has to be placed
+two folder levels higher relatively to the recording directory. 
+If a recording is placed in /video/series/episode/<date>.rec/
+then the scrapinfo file has to be placed in /video/series/  
+
+For movies the format is
+
+movie
+id = <movie id from moviedb.org>
+episode = <episode id from tvdb.com>
 
 Service Interface
 -----------------
