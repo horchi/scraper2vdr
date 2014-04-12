@@ -1,0 +1,98 @@
+#ifndef __TVSCRAPER_MOVIEDBMOVIE_H
+#define __TVSCRAPER_MOVIEDBMOVIE_H
+
+#include <iostream>
+#include <string>
+#include <vector>
+#include <map>
+#include <set>
+#include <utility>
+#include <algorithm>
+#include "services.h"
+
+using namespace std;
+
+enum mediaMovies {
+     mmPoster,
+     mmFanart,
+     mmCollectionPoster,
+     mmCollectionFanart,
+     mmActorThumb,
+     mmPosterThumb,
+};
+
+// --- cMovieMedia -------------------------------------------------------------
+class cMovieMedia {
+public:
+    cMovieMedia(void) {
+        path = "";
+        mediaType = mmPoster;
+        width = 0;
+        height = 0;
+    };
+    ~cMovieMedia(void) {
+    };
+    string path;
+    int mediaType;
+    int width;
+    int height;
+};
+
+// --- cMovieActor -------------------------------------------------------------
+class cMovieActor {
+public:
+    cMovieActor(void) {
+        id = 0;
+        name = "";
+        role = "";
+        actorThumb = NULL;
+    };
+    ~cMovieActor(void) {
+        if (actorThumb)
+            delete actorThumb;
+    };
+    int id;
+    string name;
+    string role;
+    cMovieMedia *actorThumb;
+};
+
+// --- cMovieDbMovie -------------------------------------------------------------
+
+class cMovieDbMovie {
+private:
+    map<int, cMovieActor*> actors;
+    map<int, cMovieMedia*> medias;
+public:
+    cMovieDbMovie(void);
+    virtual ~cMovieDbMovie(void);
+    int id;
+    string title;
+    string originalTitle;
+    string tagline;    
+    string overview;
+    bool adult;
+    int collectionID;
+    string collectionName;
+    int budget;
+    int revenue;
+    string genres;
+    string homepage;
+    string imdbid;
+    string releaseDate;
+    int runtime;
+    float popularity;
+    float voteAverage;
+    void InsertActor(cMovieActor *actor);
+    void InsertMedia(cMovieMedia *media);
+    vector<int> GetActorIDs(void);
+    void SetActorThumbSize(int actorId, int imgWidth, int imgHeight);
+    void SetActorPath(int actorId, string path);
+    //Getter for Serivice Calls
+    bool GetMedia(mediaMovies mediatype, cTvMedia *p);
+    void GetActors(vector<cActor> *a);
+    void Dump();
+};
+
+
+#endif //__TVSCRAPER_TVDBSERIES_H

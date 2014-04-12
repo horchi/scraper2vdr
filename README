@@ -1,0 +1,79 @@
+This is a "plugin" for the Video Disk Recorder (VDR).
+
+Written by:                  Louis Braun <louis.braun@gmx.de>
+
+Project's homepage:          http://projects.vdr-developer.org/projects/plg-scraper2vdr
+
+Latest version available at: http://projects.vdr-developer.org/git/vdr-plugin-scraper2vdr.git/
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+See the file COPYING for more information.
+
+Description 
+-----------
+
+scraper2vdr acts as client and provides scraped metadata for tvshows and
+movies from epgd to other plugins via its service interface. The plugin 
+cares about caching the images locally and also cleans up the images if
+not longer needed. 
+
+epgd itself uses the thetvdb.com API for collecting series metadata and
+themoviedb.org API for movies. Check the websites of both services for
+the terms of use.
+
+Requirements
+------------
+
+To run the plugin the following libaries have to be installed:
+ 
+ - VDR 1.7.x     
+ - libmysql >= 5.07
+ - uuid-dev
+ - imagemagick or graphicksmagick
+
+Installation and configuration
+------------------------------
+
+Just install the plugin depending on your used distribution. During VDR
+startup the following options can be set:
+
+-i <IMAGEDIR>, --imagedir=<IMAGEDIR>  Set directory where images are stored
+-m <MODE>, --mode=<MODE>   mode can be client or headless. 
+
+Each running scraper2vdr Plugin reports his recordings to the epgd 
+database, the epgd then checks these entries and tries to find
+appropriate scraping information. epgd performs first a lookup for a
+event in the database which belongs to the recording. If this fails, epgd
+checks if another client has already reported this recording to the database.
+After that, the scrapinfo file in the recording directory (if existing)
+is checked. If nothing is successfull, a new scrap process for the name
+of the recording is done. If in this case the length of the recording
+is less than 70 minutes, a series recording is assumed, otherwise
+the scraper searches for a movie.  
+
+In client mode both live epg and recordings metadata is loaded from the 
+database. In headless mode only recording metadata is loaded. This mode
+is useful for headless VDRs so that recordings which are done from this
+VDR during no other VDR client with running scraper2vdr Plugin is active
+are not missed. The recording information is then written to the database 
+in time before the related and already reliably scraped event entry is 
+deleted from the database.
+
+Service Interface
+-----------------
+
+Other Plugins can and should request information about meta data from 
+scraper2vdr via a call to the provided service interface. 
+
+First the service "GetEventType" which expects a pointer to a cEvent or 
+a cRecording object as input variable has to be called. This call provides
+the type of the event or recording (tSeries, tMovie, tNone) and the seriesId,
+episodeId and movieId. If type is tSeries, movieId is 0 and vice versa.
+With that then a second call to GetSeries or GetMovie with the appropriate IDs
+provides all stored information for the series or movie in form of a cSeries
+or cMovie object. 
+
+For further information just check the self explanatory services.h file. 

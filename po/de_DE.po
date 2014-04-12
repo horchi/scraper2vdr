@@ -1,0 +1,65 @@
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: vdr-scraper2vdr 0.0.1\n"
+"Report-Msgid-Bugs-To: <see README>\n"
+"POT-Creation-Date: 2014-03-30 14:37+0200\n"
+"PO-Revision-Date: 2014-03-30 18:30+0100\n"
+"Last-Translator: 3PO\n"
+"Language-Team: German <vdr@linuxtv.org>\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Update Scraper Information from Database"
+msgstr "Filme und Serien aus Datenbank aktualisieren"
+
+msgid "Update Scraper Recordings Information from Database"
+msgstr "Aufnahmen aus Datenbank aktualisieren"
+
+msgid "Scan for new recordings in video directory"
+msgstr "Videoverzeichnis nach neuen Aufnahmen scannen"
+
+msgid "Scan for new or updated scrapinfo files"
+msgstr "Nach neuen oder geänderten scrapinfo Dateien suchen"
+
+msgid "Cleanup Recordings in Database"
+msgstr "Aufnahmen in Datenbank bereinigen"
+
+msgid "Updating Scraper EPG Information from Database"
+msgstr "Filme und Serien werden aus Datenbank aktualisieren"
+
+msgid "Updating Scraper Recordings Information from Database"
+msgstr "Aufnahmen werden aus Datenbank aktualisieren"
+
+msgid "Scanning for new recordings in video directory"
+msgstr "Scanne Videoverzeichnis nach neuen Aufnahmen"
+
+msgid "Scanning for new or updated scrapinfo files"
+msgstr "Suche nach neuen oder geänderten scrapinfo Dateien"
+
+msgid "Cleaning up Recordings in Database"
+msgstr "Bereinige Aufnahmen in Datenbank"
+
+msgid "Show Main Menu Entry"
+msgstr "Hauptmenüeintrag anzeigen"
+
+msgid "MySQL Host"
+msgstr "MySQL Host"
+
+msgid "MySQL Port"
+msgstr "MySQL Port"
+
+msgid "MySQL Database Name"
+msgstr "MySQL Datenbannk Name"
+
+msgid "MySQL User"
+msgstr "MySQL Benutzer"
+
+msgid "MySQL Password"
+msgstr "MySQL Passwort"
+
