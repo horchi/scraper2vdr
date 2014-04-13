@@ -918,6 +918,8 @@ int cUpdate::ScanVideoDir(void) {
                 if (recEvent) {
                     eventId = recEvent->EventID();
                     channelId = *(recInfo->ChannelID().ToString());
+                    if (recInfo->Title())
+                        title = recInfo->Title();
                     subTitle = (recInfo->ShortText())?(recInfo->ShortText()):"";
                 }
             }
