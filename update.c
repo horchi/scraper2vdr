@@ -1169,10 +1169,10 @@ void cUpdate::Action() {
     mutex.Lock();
     loopActive = yes;
     int sleep = 10;
-    int scanFreq = 60;
+    int scanFreq = 60 * 2;
     int scanNewRecFreq = 60 * 5;
     int scanNewRecDBFreq = 60 * 5;
-    int cleanUpFreq = 60 * 5;
+    int cleanUpFreq = 60 * 10;
     forceUpdate = true;
     forceRecordingUpdate = true;
     time_t lastScan = time(0);

@@ -34,8 +34,8 @@ To run the plugin the following libaries have to be installed:
  - uuid-dev
  - imagemagick or graphicksmagick
 
-Installation, configuration and Usage
-----------------------------------------
+Installation, configuration
+---------------------------
 
 To download the plugin from the GIT repository, do a
 
@@ -45,9 +45,61 @@ Install the plugin depending on your used distribution. During VDR
 startup the following options can be set:
 
 -i <IMAGEDIR>, --imagedir=<IMAGEDIR>  Set directory where images are stored
--m <MODE>, --mode=<MODE>   mode can be client or headless. 
+-m <MODE>, --mode=<MODE>   mode can be client or headless (see below for 
+                           explanation). 
 
-Each running scraper2vdr Plugin reports his recordings to the epgd 
+Usage
+-----
+
+The plugin starts an own thread during startup. This thread runs in the
+background and performs the following tasks:
+
+- Update of events from Database: at startup and then every 2 minutes
+  the successfully scraped events from the database are read. New series 
+  and movies are added to the plugin in memory storage structure, images
+  are stored to the local filesystem if not available yet.
+- Update of recordings from Database: at startup and every 5 minutes
+  the recordings stored in the database are read and analogous to events
+  the series and movie are stored.
+- Scan for new recordings: at startup and every 5 minutes the VDR Recordings
+  List is checked for new recordings. These can be a recently started 
+  recording or recordings newly mounted from a remote share. If new
+  recordings are found, they will be stored in the database (including a check
+  for a srapinfo file) and will be marked to be newly scraped. This is then done
+  by epgd.
+- Cleanup: Each 10 minutes the local images directory will be cleaned up. If
+  images for a series or movie are not needed anymore, because they don't 
+  appear each in the stored events or recordings, these images get deleted.  
+
+The described actions and some more can also be triggered by OSD or by svdrp:
+
+- OSD: Update Scraper Information from Database / svdrp UPDT:
+  Force update from database
+
+- OSD: Update Scraper Recordings Information from Database / svdrp UPDR
+  Force scanning of recordings in database
+
+- OSD: Scan for new recordings in video directory / svdrp SCVD
+  Force scan for new recordings in video directory
+
+- OSD: Scan for new or updated scrapinfo files / svdrp SCSI
+  Scan for new or updated scrapinfo files. This job is not triggered 
+  automatically by the plugin main loop. So if you create or modify
+  scrapinfo files, this scan has to be triggered manually afterwards.
+  During regular scans of recordings, only for new recordings a scan for
+  a scrapinfo file is done.
+
+- OSD: Cleanup Recordings in Database / svdrp CRDB
+  Trigger cleanup of recordings in database. This job is also not performed
+  automatically in the plugin main loop and has to be triggered manually.
+  Be careful that all necessary recordings are "known" by VDR when running
+  this job. All remote shares with recordings which are relevant should be 
+  mounted. Otherwise not existing recordings get deleted in the database. 
+
+Recording Handling
+------------------
+
+As described each running scraper2vdr Plugin reports his recordings to the epgd 
 database, the epgd then checks these entries and tries to find
 appropriate scraping information. epgd performs first a lookup for a
 event in the database which belongs to the recording. If this fails, epgd
