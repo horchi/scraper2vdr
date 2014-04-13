@@ -60,7 +60,7 @@ background and performs the following tasks:
   are stored to the local filesystem if not available yet.
 - Update of recordings from Database: at startup and every 5 minutes
   the recordings stored in the database are read and analogous to events
-  the series and movie are stored.
+  the series and movies are stored.
 - Scan for new recordings: at startup and every 5 minutes the VDR Recordings
   List is checked for new recordings. These can be a recently started 
   recording or recordings newly mounted from a remote share. If new

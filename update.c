@@ -905,7 +905,12 @@ int cUpdate::ScanVideoDir(void) {
             ReadScrapInfo(rec->FileName(), scrapInfoMovieID, scrapInfoSeriesID, scrapInfoEpisodeID);
             int eventId = 0;
             string channelId = "";
-            string title = *(rec->BaseName());
+            string title = rec->Name();
+            //remove directory
+            size_t posDelim = title.find_last_of('~');
+            if (posDelim != string::npos) {
+                title = title.substr(posDelim+1);
+            }
             string subTitle = "";
             const cRecordingInfo *recInfo = rec->Info();
             if (recInfo) {
