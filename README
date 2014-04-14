@@ -150,7 +150,6 @@ For movies the format is
 
 movie
 id = <movie id from moviedb.org>
-episode = <episode id from tvdb.com>
 
 Service Interface
 -----------------
