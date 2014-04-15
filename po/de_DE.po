@@ -31,10 +31,10 @@ msgid "Cleanup Recordings in Database"
 msgstr "Aufnahmen in Datenbank bereinigen"
 
 msgid "Updating Scraper EPG Information from Database"
-msgstr "Filme und Serien werden aus Datenbank aktualisieren"
+msgstr "Filme und Serien werden aus Datenbank aktualisiert"
 
 msgid "Updating Scraper Recordings Information from Database"
-msgstr "Aufnahmen werden aus Datenbank aktualisieren"
+msgstr "Aufnahmen werden aus Datenbank aktualisiert"
 
 msgid "Scanning for new recordings in video directory"
 msgstr "Scanne Videoverzeichnis nach neuen Aufnahmen"
