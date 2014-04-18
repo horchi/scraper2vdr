@@ -389,7 +389,7 @@ class cTableVdrs : public cDbTable
    public:
 
       cTableVdrs(cDbConnection* aConnection)
-         : cDbTable(aConnection, fields) { }
+         : cDbTable(aConnection, fields, indices) { }
 
       virtual const char* TableName()    { return "vdrs"; }
 
@@ -413,6 +413,7 @@ class cTableVdrs : public cDbTable
       };
 
       static FieldDef fields[];
+      static IndexDef indices[];
 };
 
 //***************************************************************************
@@ -524,6 +525,36 @@ class cTableSnapshot : public cDbTable
 
       static FieldDef fields[];
       static IndexDef indices[];
+};
+
+//***************************************************************************
+// class cTableTimers
+//***************************************************************************
+
+class cTableTimers : public cDbTable
+{
+   public:
+
+      cTableTimers(cDbConnection* aConnection)
+         : cDbTable(aConnection, fields) { }
+
+      virtual const char* TableName()    { return "timers"; }
+
+      enum FieldIndex
+      {
+         fiEventId,
+         fiChannelId,
+         fiVdrUuid,
+         
+         fiInsSp,
+         fiUpdSp,
+         
+         fiState,
+         fiStartTime,
+         fiEndTime
+      };
+
+      static FieldDef fields[];
 };
 
 //***************************************************************************

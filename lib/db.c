@@ -151,6 +151,11 @@ int cDbStatement::bind(int field, int mode, const char* delim)
    return bind(table->getRow()->getValue(field), mode, delim);
 }
 
+int cDbStatement::bind(cDbTable* aTable, int field, int mode, const char* delim)
+{
+   return bind(aTable->getRow()->getValue(field), mode, delim);
+}
+
 int cDbStatement::bind(cDbValue* value, int mode, const char* delim)
 {
    if (!value || !value->getField())
@@ -185,7 +190,7 @@ int cDbStatement::bindCmp(const char* ctable, cDbValue* value,
    if (ctable)
       build("%s.", ctable);
 
-   build("%s%s %s ?", delim ? delim : "", value->getName(), comp);
+   build("%s%s%s %s ?", delim ? delim : "", bindPrefix ? bindPrefix : "", value->getName(), comp);
 
    appendBinding(value, bndIn);
 
@@ -201,7 +206,7 @@ int cDbStatement::bindCmp(const char* ctable, int field, cDbValue* value,
    if (ctable)
       build("%s.", ctable);
 
-   build("%s%s %s ?", delim ? delim : "", vf->getName(), comp);
+   build("%s%s%s %s ?", delim ? delim : "", bindPrefix ? bindPrefix : "", vf->getName(), comp);
 
    appendBinding(vv, bndIn);
 
@@ -349,7 +354,7 @@ int cDbStatement::prepare()
          return connection->errorSql(connection, "buildPrimarySelect(bind_param)", stmt);
    }
 
-   tell(2, "Statement '%s' with (%d) in parameters and (%d) out bindings prepared", 
+   tell(2, "Statement '%s' with (%ld) in parameters and (%d) out bindings prepared", 
         stmtTxt.c_str(), mysql_stmt_param_count(stmt), outCount);
    
    return success;
@@ -456,6 +461,10 @@ int cDbTable::init()
 
    if (createTable() != success)
       return fail;
+
+   // check/create indices
+
+   createIndices();
 
    // ------------------------------
    // prepare BASIC statements
@@ -675,10 +684,6 @@ int cDbTable::createTable()
    if (connection->query(statement.c_str()))
       return connection->errorSql(getConnection(), "createTable()", 
                                   0, statement.c_str());
-
-   // create indices
-
-   createIndices();  
 
    return success;
 }

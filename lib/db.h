@@ -12,6 +12,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <errno.h>
 
 #include <sstream>
 
@@ -306,28 +307,6 @@ class cDbValue : public cDbService
          return no;
       }
 
-//       int hasValue(float value)
-//       {
-//          if (field->format != ffFloat)
-//          {
-//             tell(0, "Checking invalid field format for '%s', expected FLOAT", field->name);
-//             return no;
-//          }
-
-//          return floatValue == value;
-//       }
-
-//       int hasValue(long value)
-//       {
-//          if (field->format != ffInt && field->format != ffUInt)
-//          {
-//             tell(0, "Checking invalid field format for '%s', expected INT", field->name);
-//             return no;
-//          }
-
-//          return numValue == value;
-//       }
-
       int hasValue(const char* value)
       { 
          if (!value)
@@ -345,8 +324,9 @@ class cDbValue : public cDbService
       time_t getTimeValue()
       {
          struct tm tm;
-         
          memset(&tm, 0, sizeof(tm));
+
+         tm.tm_isdst = -1;               // force DST auto detect
          tm.tm_year = timeValue.year - 1900;
          tm.tm_mon  = timeValue.month - 1;
          tm.tm_mday  = timeValue.day;
@@ -409,6 +389,7 @@ class cDbStatement : public cDbService
       void setBindPrefix(const char* p) { bindPrefix = p; }
       void clrBindPrefix()              { bindPrefix = 0; }
       int bind(cDbValue* value, int mode, const char* delim = 0);
+      int bind(cDbTable* aTable, int field, int mode, const char* delim);
       int bind(int field, int mode, const char* delim = 0);
 
       int bindCmp(const char* table, cDbValue* value,
@@ -634,10 +615,10 @@ class cDbConnection
 
          if (!getMySql())
             return fail;
-         
+
          if (!(f = fopen(file, "r")))
          {
-            tell(0, "Fatal: Can't access '%s'; %m", file);
+            tell(0, "Fatal: Can't access '%s'; %s", file, strerror(errno));
             return fail;
          }
          
@@ -816,6 +797,7 @@ class cDbTable : public cDbService
       int isNull(int f)                    const             { return row->isNull(f); }
 
       FieldDef* getField(int f)                              { return row->getField(f); }
+      cDbValue* getValue(int f)                              { return row->getValue(f); }
       int fieldCount()                                       { return row->fieldCount(); }
       cDbRow* getRow()                                       { return row; }
 

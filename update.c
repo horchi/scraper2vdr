@@ -188,18 +188,17 @@ int cUpdate::ReadScrapedEvents(void) {
                     tEvents->getField(cTableEvents::fiScrSp)->name, 
                     lastScrap);
     }
+    select->build(" order by %s", tEvents->getField(cTableEvents::fiInsSp)->name);
     status += select->prepare();
     if (status != success) {
         delete select;
         return 0;
     }
-
     int eventId = 0;
     int seriesId = 0;
     int episodeId = 0;
     int movieId = 0;
     string channelId = "";
-
     int numNew = 0;
     for (int res = select->find(); res; res = select->fetch()) {
         eventId = tEvents->getIntValue(cTableEvents::fiUseId);
@@ -266,23 +265,7 @@ void cUpdate::ReadEpisode(int episodeId, cTVDBSeries *series, string path) {
     int status = success;
     tEpisodes->clear();
     tEpisodes->setValue(cTableSeriesEpisode::fiEpisodeId, episodeId);
-    cDbStatement *selectEpisode = new cDbStatement(tEpisodes);
-    selectEpisode->build("select ");
-    selectEpisode->bind(cTableSeriesEpisode::fiEpisodeName, cDBS::bndOut);
-    selectEpisode->bind(cTableSeriesEpisode::fiEpisodeNumber, cDBS::bndOut, ", ");
-    selectEpisode->bind(cTableSeriesEpisode::fiSeasonNumber, cDBS::bndOut, ", ");
-    selectEpisode->bind(cTableSeriesEpisode::fiEpisodeOverview, cDBS::bndOut, ", ");
-    selectEpisode->bind(cTableSeriesEpisode::fiEpisodeFirstAired, cDBS::bndOut, ", ");
-    selectEpisode->bind(cTableSeriesEpisode::fiEpisodeGuestStars, cDBS::bndOut, ", ");
-    selectEpisode->bind(cTableSeriesEpisode::fiEpisodeRating, cDBS::bndOut, ", ");
-    selectEpisode->build(" from %s where ", tEpisodes->TableName());
-    selectEpisode->bind(cTableSeriesEpisode::fiEpisodeId, cDBS::bndIn | cDBS::bndSet);
-    status += selectEpisode->prepare();
-    if (status != success) {
-        delete selectEpisode;
-        return;
-    }
-    int res = selectEpisode->find();
+    int res = tEpisodes->find();
     if (res) {
         scrapManager->AddSeriesEpisode(series, tEpisodes);
         LoadEpisodeImage(series, episodeId, path);
@@ -290,8 +273,6 @@ void cUpdate::ReadEpisode(int episodeId, cTVDBSeries *series, string path) {
         if (season > 0)
             LoadSeasonPoster(series, season, path);
     }
-    selectEpisode->freeResult();
-    delete selectEpisode;
     return;
 }
 
@@ -301,8 +282,9 @@ void cUpdate::LoadEpisodeImage(cTVDBSeries *series, int episodeId, string path) 
     iPath << path << "/" << "episode_" << episodeId << ".jpg";
     string imgPath = iPath.str();
     bool imgExists = FileExists(imgPath);
-    if (!CreateDirectory(path))
-        return;
+    if (!imgExists)
+        if (!CreateDirectory(path))
+            return;
     tSeriesMedia->clear();
     cDbValue imageSize;
     cDBS::FieldDef imageSizeDef = { "media_content", cDBS::ffUInt,  0, 999, cDBS::ftData };
@@ -353,8 +335,9 @@ void cUpdate::LoadSeasonPoster(cTVDBSeries *series, int season, string path) {
     string imgPath = iPath.str();
     string thumbPath = tPath.str();
     bool imgExists = FileExists(imgPath);
-    if (!CreateDirectory(path))
-        return;
+    if (!imgExists)
+        if (!CreateDirectory(path))
+            return;
     tSeriesMedia->clear();
     cDbValue imageSize;
     cDBS::FieldDef imageSizeDef = { "media_content", cDBS::ffUInt,  0, 999, cDBS::ftData };
@@ -443,8 +426,9 @@ void cUpdate::LoadSeriesActorThumb(cTVDBSeries *series, int actorId, string path
     iPath << path << "/" << "actor_" << actorId << ".jpg";
     string imgPath = iPath.str();
     bool imgExists = FileExists(imgPath);
-    if (!CreateDirectory(path))
-        return;
+    if (!imgExists)
+        if (!CreateDirectory(path))
+            return;
     cDbValue imageSize;
     cDBS::FieldDef imageSizeDef = { "media_content", cDBS::ffUInt,  0, 999, cDBS::ftData };
     imageSize.setField(&imageSizeDef);
@@ -1193,35 +1177,6 @@ void cUpdate::Action() {
             waitCondition.TimedWait(mutex, reconnectTimeout*1000);
             continue;
         }
-        //Update Events
-        if (!config.headless && (forceUpdate || (time(0) - lastScan > scanFreq))) {
-            if (!init && CheckEpgdBusy())
-                continue;
-            int numNewEvents = ReadScrapedEvents();
-            if (numNewEvents > 0) {
-                tell(0, "Loaded %d new scraped Events from Database", numNewEvents);
-            } else {
-                lastScan = time(0);
-                forceUpdate = false;
-                init = false;
-                continue;
-            }
-            tell(0, "Loading new Series and Episodes from Database...");
-            time_t now = time(0);
-            int numNewSeries = ReadSeries(false);
-            int dur = time(0) - now;
-            tell(0, "Loaded %d new Series and Episodes in %ds from Database", numNewSeries, dur);
-            //scrapManager->DumpSeries(5);
-
-            tell(0, "Loading new Movies from Database...");
-            now = time(0);
-            int numNewMovies = ReadMovies(false);
-            dur = time(0) - now;
-            tell(0, "Loaded %d new Movies in %ds from Database", numNewMovies, dur);
-            //scrapManager->DumpMovies(5);
-            lastScan = time(0);
-            forceUpdate = false;
-        }
         //Update Recordings from Database
         if (forceRecordingUpdate || (time(0) - lastScanNewRecDB > scanNewRecDBFreq)) {
             if (!init && CheckEpgdBusy())
@@ -1235,6 +1190,35 @@ void cUpdate::Action() {
             forceRecordingUpdate = false;
         }
 
+        //Update Events
+        if (!config.headless && (forceUpdate || (time(0) - lastScan > scanFreq))) {
+            if (!init && CheckEpgdBusy())
+                continue;
+            int numNewEvents = ReadScrapedEvents();
+            if (numNewEvents > 0) {
+                tell(0, "Loaded %d new scraped Events from Database", numNewEvents);
+            } else {
+                lastScan = time(0);
+                forceUpdate = false;
+                init = false;
+                continue;
+            }
+            tell(0, "Loading new Movies from Database...");
+            time_t now = time(0);
+            int numNewMovies = ReadMovies(false);
+            int dur = time(0) - now;
+            tell(0, "Loaded %d new Movies in %ds from Database", numNewMovies, dur);
+
+            tell(0, "Loading new Series and Episodes from Database...");
+            now = time(0);
+            int numNewSeries = ReadSeries(false);
+            dur = time(0) - now;
+            tell(0, "Loaded %d new Series and Episodes in %ds from Database", numNewSeries, dur);
+
+            lastScan = time(0);
+            forceUpdate = false;
+        }
+        
         //Scan new recordings
         if (init || forceVideoDirUpdate || (time(0) - lastScanNewRec > scanNewRecFreq)) {
             if (CheckEpgdBusy()) {

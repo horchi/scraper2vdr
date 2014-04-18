@@ -146,14 +146,15 @@ cDbService::IndexDef cTableEvents::indices[] =
 {
    // index             fields  
 
-   { "comptitle",          { fiCompTitle, na            }, 0 },
-   { "source",             { fiSource, na               }, 0 },
-   { "FilerefSource",      { fiFileRef, fiSource,    na }, 0 },
-   { "channelid",          { fiChannelId, na            }, 0 },
-   { "useid",              { fiUseId, na                }, 0 },
-   { "useidchannelid",     { fiUseId, fiChannelId,   na }, 0 },
-   { "updflgupdsp",        { fiUpdFlg, fiUpdSp,      na }, 0 },
-   { "idxsourcechannelid", { fiSource, fiChannelId,  na }, 0 },
+   { "comptitle",               { fiCompTitle, na            }, 0 },
+   { "source",                  { fiSource, na               }, 0 },
+   { "FilerefSource",           { fiFileRef, fiSource,    na }, 0 },
+   { "channelid",               { fiChannelId, na            }, 0 },
+   { "useid",                   { fiUseId, na                }, 0 },
+   { "useidchannelid",          { fiUseId, fiChannelId,   na }, 0 },
+   { "updflgupdsp",             { fiUpdFlg, fiUpdSp,      na }, 0 },
+   { "sourcechannelid",         { fiSource, fiChannelId,  na }, 0 },
+   { "scrsp",                   { fiScrSp,  na               }, 0 },
 
    { 0 }
 };
@@ -335,12 +336,14 @@ cDbService::FieldDef cTableChannelMap::fields[] =
 
 cDbService::IndexDef cTableChannelMap::indices[] =
 {
-   // index           fields 
+   // index                fields 
 
    { "sourceExtid",        { fiSource, fiExternalId, na }, 0 },
    { "source",             { fiSource, na               }, 0 },
    { "updflg",             { fiUpdFlg, na               }, 0 },
-   { "idxsourcechannelid", { fiSource, fiChannelId,  na }, 0 },
+   { "sourcechannelid",    { fiSource, fiChannelId,  na }, 0 },
+   { "mergesp",            { fiMergeSp, na              }, 0 },
+   { "channelid",          { fiChannelId, na            }, 0 },
 
    { 0 }
 };
@@ -366,6 +369,15 @@ cDbService::FieldDef cTableVdrs::fields[] =
    { "state",            ffAscii,    20, fiState,        ftData },
    { "master",           ffAscii,     1, fiMaster,       ftData },
    { "ip",               ffAscii,    20, fiIp,           ftData },
+
+   { 0 }
+};
+
+cDbService::IndexDef cTableVdrs::indices[] =
+{
+   // index           fields 
+
+   { "state",        { fiState, na              }, 0 },
 
    { 0 }
 };
@@ -472,6 +484,27 @@ cDbService::IndexDef cTableSnapshot::indices[] =
    { 0 }
 };
 
+//***************************************************************************
+// Timers
+//***************************************************************************
+
+cDbService::FieldDef cTableTimers::fields[] =
+{
+   // name               format     size  index          type
+
+   { "eventid",          ffUInt,        0, fiEventId,     ftPrimary },
+   { "channelid",        ffAscii,      50, fiChannelId,   ftPrimary },
+   { "vdruuid",          ffAscii,      40, fiVdrUuid,     ftPrimary },
+
+   { "inssp",            ffInt,         0, fiInsSp,       ftMeta },
+   { "updsp",            ffInt,         0, fiUpdSp,       ftMeta },
+
+   { "state",            ffAscii,       1, fiState,       ftData },       // { 'D'eleted, 'N'ew, 'A'ssigned, pease 'R'eassign }
+   { "starttime",        ffInt,        10, fiStartTime,   ftData },
+   { "endtime",          ffInt,        10, fiEndTime,     ftData },
+
+   { 0 }
+};
 
 //***************************************************************************
 // Series Fields
@@ -482,8 +515,11 @@ cDbService::FieldDef cTableSeries::fields[] =
    // name                     format     size  index                  type
 
    // primary key
+
    { "series_id",              ffUInt,       0, fiSeriesId,            ftPrimary },
-   //Data
+
+   // data
+
    { "series_name",            ffAscii,    200, fiSeriesName,          ftData },
    { "series_last_scraped",    ffUInt,       0, fiSeriesLastScraped,   ftData },
    { "series_last_updated",    ffUInt,       0, fiSeriesLastUpdated,   ftData },
@@ -511,8 +547,10 @@ cDbService::FieldDef* cTableSeries::toField(const char* name)
 
 cDbService::IndexDef cTableSeries::indices[] =
 {
-   // index             fields  
-  
+   // index               fields  
+
+   { "seriesname",        { fiSeriesName, na }, 0 },
+
    { 0 }
 };
 
@@ -526,8 +564,11 @@ cDbService::FieldDef cTableSeriesEpisode::fields[] =
    // name                        format     size  index                  type
 
    // primary key
+
    { "episode_id",                  ffUInt,       0, fiEpisodeId,           ftPrimary },
-   //Data
+
+   // data
+
    { "episode_number",              ffUInt,       0, fiEpisodeNumber,       ftData },
    { "season_number",               ffUInt,       0, fiSeasonNumber,        ftData },
    { "episode_name",                ffAscii,    300, fiEpisodeName,         ftData },
@@ -569,12 +610,15 @@ cDbService::FieldDef cTableSeriesMedia::fields[] =
    // name                        format     size  index                    type
 
    // primary key
+
    { "series_id",                  ffUInt,       0, fiSeriesId,             ftPrimary },
    { "season_number",              ffUInt,       0, fiSeasonNumber,         ftPrimary },
    { "episode_id",                 ffUInt,       0, fiEpisodeId,            ftPrimary },
    { "actor_id",                   ffUInt,       0, fiActorId,              ftPrimary },
    { "media_type",                 ffUInt,       0, fiMediaType,            ftPrimary },
-   //Data
+
+   // data
+
    { "media_url",                  ffAscii,    100, fiMediaUrl,             ftData },
    { "media_width",                ffUInt,       0, fiMediaWidth,           ftData },
    { "media_height",               ffUInt,       0, fiMediaHeight,          ftData },
@@ -598,6 +642,7 @@ cDbService::FieldDef* cTableSeriesMedia::toField(const char* name)
 cDbService::IndexDef cTableSeriesMedia::indices[] =
 {
    // index               fields  
+
    { "series_id",         { fiSeriesId, na }, 0 },
    { "season_number",     { fiSeasonNumber, na }, 0 },
    { "episode_id",        { fiEpisodeId, na }, 0 },
@@ -615,8 +660,11 @@ cDbService::FieldDef cTableSeriesActor::fields[] =
    // name                        format     size  index                    type
 
    // primary key
+
    { "actor_id",                  ffUInt,       0, fiActorId,              ftPrimary },
-   //Data
+
+   // data
+
    { "actor_name",                ffAscii,    100, fiActorName,            ftData },
    { "actor_role",                ffAscii,    500, fiActorRole,            ftData },
    { "actor_sortorder",           ffUInt,       0, fiSortOrder,            ftData },
@@ -651,8 +699,11 @@ cDbService::FieldDef cTableMovies::fields[] =
    // name                        format     size  index                    type
 
    // primary key
+
    { "movie_id",                   ffUInt,       0, fiMovieId,              ftPrimary },
-   //Data
+
+   // data
+
    { "movie_title",                ffAscii,    300, fiTitle,                ftData },
    { "movie_original_title",       ffAscii,    300, fiOriginalTitle,        ftData },
    { "movie_tagline",              ffAscii,   1000, fiTagline,              ftData },
@@ -685,8 +736,10 @@ cDbService::FieldDef* cTableMovies::toField(const char* name)
 
 cDbService::IndexDef cTableMovies::indices[] =
 {
-   // index               fields  
+   // index              fields  
+
    { "movie_id",         { fiMovieId, na }, 0 },
+   { "movietitle",       { fiTitle, na }, 0 },
 
    { 0 }
 };
@@ -700,8 +753,11 @@ cDbService::FieldDef cTableMovieActor::fields[] =
    // name                        format     size  index                    type
 
    // primary key
+
    { "actor_id",                   ffUInt,       0, fiActorId,              ftPrimary },
-   //Data
+
+   // data
+
    { "actor_name",                 ffAscii,    300, fiActorName,            ftData },
    
    { 0 }
@@ -721,6 +777,7 @@ cDbService::FieldDef* cTableMovieActor::toField(const char* name)
 cDbService::IndexDef cTableMovieActor::indices[] =
 {
    // index               fields  
+
    { "actor_id",         { fiActorId, na }, 0 },
    
    { 0 }
@@ -735,9 +792,12 @@ cDbService::FieldDef cTableMovieActors::fields[] =
    // name                        format     size  index                    type
 
    // primary key
+
    { "movie_id",                   ffUInt,       0, fiMovieId,              ftPrimary },
    { "actor_id",                   ffUInt,       0, fiActorId,              ftPrimary },
-   //Data
+
+   // data
+
    { "actor_role",                 ffAscii,    300, fiRole,                 ftData },
    
    { 0 }
@@ -757,6 +817,7 @@ cDbService::FieldDef* cTableMovieActors::toField(const char* name)
 cDbService::IndexDef cTableMovieActors::indices[] =
 {
    // index               fields  
+
    { "movie_id",         { fiMovieId, na }, 0 },
    { "actor_id",         { fiActorId, na }, 0 },
    
@@ -772,10 +833,13 @@ cDbService::FieldDef cTableMovieMedia::fields[] =
    // name                        format     size  index                    type
 
    // primary key
+
    { "movie_id",                   ffUInt,       0, fiMovieId,              ftPrimary },
    { "actor_id",                   ffUInt,       0, fiActorId,              ftPrimary },
    { "media_type",                 ffUInt,       0, fiMediaType,            ftPrimary },
-   //Data
+
+   // data
+
    { "media_url",                  ffAscii,    100, fiMediaUrl,             ftData },
    { "media_width",                ffUInt,       0, fiMediaWidth,           ftData },
    { "media_height",               ffUInt,       0, fiMediaHeight,          ftData },
@@ -798,6 +862,7 @@ cDbService::FieldDef* cTableMovieMedia::toField(const char* name)
 cDbService::IndexDef cTableMovieMedia::indices[] =
 {
    // index               fields  
+
    { "movie_id",          { fiMovieId, na }, 0 },
    { "actor_id",          { fiActorId, na }, 0 },
 
@@ -813,11 +878,13 @@ cDbService::FieldDef cTableRecordings::fields[] =
    // name                        format     size  index                    type
 
    // primary key
+
    { "uuid",                       ffAscii,     40, fiUuid,                 ftPrimary },
    { "rec_path",                   ffAscii,    200, fiRecPath,              ftPrimary },
    { "rec_start",                  ffUInt,       0, fiRecStart,             ftPrimary },
    
-   //Data
+   // data
+
    { "event_id",                   ffUInt,       0, fiEventId,              ftData },
    { "channel_id",                 ffAscii,     50, fiChannelId,            ftData },
    { "scrapinfo_movie_id",         ffUInt,       0, fiScrapInfoMovieId,     ftData },
@@ -848,9 +915,12 @@ cDbService::FieldDef* cTableRecordings::toField(const char* name)
 cDbService::IndexDef cTableRecordings::indices[] =
 {
    // index                   fields  
-   { "uuid",                  { fiUuid, na }, 0 },
-   { "rec_path",              { fiRecPath, na }, 0 },
+ 
+   { "uuid",                  { fiUuid, na     }, 0 },
+   { "rec_path",              { fiRecPath, na  }, 0 },
    { "rec_start",             { fiRecStart, na }, 0 },
+   { "scrap_new",             { fiScrapNew, na }, 0 },
+
 
    { 0 }
 };
