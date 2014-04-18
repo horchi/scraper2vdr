@@ -879,7 +879,7 @@ int cUpdate::ReadRecordings(void) {
 int cUpdate::ScanVideoDir(void) {
     int newRecs = 0;
     for (cRecording *rec = Recordings.First(); rec; rec = Recordings.Next(rec)) {
-        string recPath = rec->FileName();
+        string recPath = getRecPath(rec);
         int recStart = rec->Start();
         if (!scrapManager->RecordingExists(recStart, recPath)) {
             newRecs++;
@@ -931,7 +931,7 @@ int cUpdate::ScanVideoDirScrapInfo(void) {
     int numUpdated = 0;
     for (cRecording *rec = Recordings.First(); rec; rec = Recordings.Next(rec)) {
         int recStart = rec->Start();
-        string recPath = rec->FileName();
+        string recPath = getRecPath(rec);
         bool recExists = LoadRecording(recStart, recPath);
         int scrapInfoMovieID = 0;
         int scrapInfoSeriesID = 0;        

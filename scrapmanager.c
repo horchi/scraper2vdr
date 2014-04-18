@@ -325,7 +325,7 @@ bool cScrapManager::GetEventType(ScraperGetEventType *call) {
 	} else if (call->recording) {
 		sRecordingsKey k;
 		k.recStart = call->recording->Start();
-        k.recPath = call->recording->FileName();
+        k.recPath = getRecPath(call->recording);
 		map<sRecordingsKey, sEventsValue>::iterator hit = recordings.find(k);
 		if (hit == recordings.end())
 			return false;
@@ -445,7 +445,7 @@ bool cScrapManager::GetPoster(ScraperGetPoster *call) {
     } else if (call->recording) {
 		sRecordingsKey k;
 		k.recStart = call->recording->Start();
-        k.recPath = call->recording->FileName();
+        k.recPath = getRecPath(call->recording);
 		map<sRecordingsKey, sEventsValue>::iterator hit = recordings.find(k);
         if (hit == recordings.end())
             return false;
@@ -480,7 +480,7 @@ bool cScrapManager::GetPosterThumb(ScraperGetPosterThumb *call) {
     } else if (call->recording) {
 		sRecordingsKey k;
 		k.recStart = call->recording->Start();
-        k.recPath = call->recording->FileName();
+        k.recPath = getRecPath(call->recording);
 		map<sRecordingsKey, sEventsValue>::iterator hit = recordings.find(k);
         if (hit == recordings.end())
             return false;

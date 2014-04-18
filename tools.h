@@ -19,6 +19,8 @@ void toLower(string &s);
 bool isNumber(const string& s);
 string replaceString(string content, string search, string repl);
 
+string getRecPath(const cRecording *rec);
+
 class splitstring : public string {
     vector<string> flds;
 public:

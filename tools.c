@@ -125,6 +125,15 @@ string replaceString(string content, string search, string repl) {
     return content;
 }
 
+string getRecPath(const cRecording *rec) {
+    if (!rec)
+        return "";
+    string recPath = rec->FileName();
+    if (recPath.size() > 200)
+        recPath = recPath.substr(0, 199);
+    return recPath;
+}
+
 
 /****************************************************************************************
 *            SPLTSTRING
