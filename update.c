@@ -132,7 +132,9 @@ int cUpdate::exitDb() {
 void cUpdate::Stop() { 
     loopActive = false;
     waitCondition.Broadcast();
-    Cancel(3);      
+    Cancel(1);
+    while (Active())
+        cCondWait::SleepMs(10);
 }
 
 int cUpdate::CheckConnection(int& timeout) {
@@ -200,7 +202,7 @@ int cUpdate::ReadScrapedEvents(void) {
     int movieId = 0;
     string channelId = "";
     int numNew = 0;
-    for (int res = select->find(); res; res = select->fetch()) {
+    for (int res = select->find(); res; res = select->fetch() && Running()) {
         eventId = tEvents->getIntValue(cTableEvents::fiUseId);
         channelId = tEvents->getStrValue(cTableEvents::fiChannelId);
         seriesId = tEvents->getIntValue(cTableEvents::fiScrSeriesId);
@@ -231,7 +233,7 @@ int cUpdate::ReadSeries(bool isRec) {
 
     bool isNew = false;
     int numNew = 0;
-    while (scrapManager->GetNextSeries(isRec, seriesId, episodeId)) {
+    while (scrapManager->GetNextSeries(isRec, seriesId, episodeId) && Running()) {
         cTVDBSeries *series = scrapManager->GetSeries(seriesId);
         if (!series) {
             tSeries->clear();
@@ -605,7 +607,7 @@ int cUpdate::ReadMovies(bool isRec) {
         return 0;
 
     int numNew = 0;
-    while (scrapManager->GetNextMovie(isRec, movieId)) {
+    while (scrapManager->GetNextMovie(isRec, movieId) && Running()) {
         cMovieDbMovie *movie = scrapManager->GetMovie(movieId);
         if (movie)
             continue;
@@ -1178,7 +1180,7 @@ void cUpdate::Action() {
             continue;
         }
         //Update Recordings from Database
-        if (forceRecordingUpdate || (time(0) - lastScanNewRecDB > scanNewRecDBFreq)) {
+        if (forceRecordingUpdate || (time(0) - lastScanNewRecDB > scanNewRecDBFreq) && Running()) {
             if (!init && CheckEpgdBusy())
                 continue;
             int numNewRecs = ReadRecordings();
@@ -1191,7 +1193,7 @@ void cUpdate::Action() {
         }
 
         //Update Events
-        if (!config.headless && (forceUpdate || (time(0) - lastScan > scanFreq))) {
+        if (!config.headless && (forceUpdate || (time(0) - lastScan > scanFreq)) && Running()) {
             if (!init && CheckEpgdBusy())
                 continue;
             int numNewEvents = ReadScrapedEvents();
@@ -1220,7 +1222,7 @@ void cUpdate::Action() {
         }
         
         //Scan new recordings
-        if (init || forceVideoDirUpdate || (time(0) - lastScanNewRec > scanNewRecFreq)) {
+        if ((init || forceVideoDirUpdate || (time(0) - lastScanNewRec > scanNewRecFreq)) && Running()) {
             if (CheckEpgdBusy()) {
                 waitCondition.TimedWait(mutex, 1000);
                 continue;
@@ -1251,7 +1253,7 @@ void cUpdate::Action() {
         }
         
         //Cleanup
-        if (time(0) - lastCleanup > cleanUpFreq) {
+        if ((time(0) - lastCleanup > cleanUpFreq) && Running()){
            if (CheckEpgdBusy()) {
                 waitCondition.TimedWait(mutex, 1000);
                 continue;
