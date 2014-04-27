@@ -21,6 +21,7 @@ void cScraper2VdrSetup::Setup(void) {
     Clear();
     
     Add(new cMenuEditBoolItem(tr("Show Main Menu Entry"), &tmpConfig.mainMenuEntry));
+    Add(new cMenuEditBoolItem(tr("Debug Mode"), &tmpConfig.debug));
     Add(new cMenuEditStrItem(tr("MySQL Host"), host, sizeof(host), tr(FileNameChars)));
     Add(new cMenuEditIntItem(tr("MySQL Port"), &tmpConfig.mysqlPort, 1, 99999));
     Add(new cMenuEditStrItem(tr("MySQL Database Name"), dbname, sizeof(dbname), tr(FileNameChars)));
@@ -75,4 +76,5 @@ void cScraper2VdrSetup::Store(void) {
     SetupStore("mysqlDBName", tmpConfig.mysqlDBName.c_str());
     SetupStore("mysqlDBUser", tmpConfig.mysqlDBUser.c_str());
     SetupStore("mysqlDBPass", tmpConfig.mysqlDBPass.c_str());
+    SetupStore("debug", tmpConfig.debug);
 }

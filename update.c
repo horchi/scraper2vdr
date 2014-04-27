@@ -1314,3 +1314,4 @@ void cUpdate::TriggerCleanRecordingsDB(void) {
     tell(0, "cleanup of recording DB triggered");
     forceCleanupRecordingDb = true;
 }
+

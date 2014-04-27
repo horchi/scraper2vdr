@@ -12,6 +12,7 @@ cScraper2VdrConfig::cScraper2VdrConfig() {
     mysqlDBUser = "epg2vdr";
     mysqlDBPass = "epg";
     recScrapInfoName = "scrapinfo";
+    debug = 0;
 }
 
 cScraper2VdrConfig::~cScraper2VdrConfig() {
@@ -50,6 +51,7 @@ bool cScraper2VdrConfig::SetupParse(const char *Name, const char *Value) {
     else if (strcmp(Name, "mysqlDBName") == 0)        mysqlDBName = Value;
     else if (strcmp(Name, "mysqlDBUser") == 0)        mysqlDBUser = Value;
     else if (strcmp(Name, "mysqlDBPass") == 0)        mysqlDBPass = Value;
+    else if (strcmp(Name, "debug") == 0)              debug = atoi(Value);
     else
         return false;
     return true;

@@ -27,5 +27,6 @@ class cScraper2VdrConfig {
         string mysqlDBUser;
         string mysqlDBPass;
         string recScrapInfoName;
+        int debug;
 };
 #endif //__SCRAPER2VDR_CONFIG_H

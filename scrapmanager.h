@@ -67,9 +67,9 @@ class cScrapManager  {
         bool SeriesInUse(int seriesId);
         bool MovieInUse(int movieId);
         //Debug
-        void DumpSeries(int num);
-        void DumpMovies(int num);
-        void DumpRecordings(int num);
+        void DumpSeries(void);
+        void DumpMovies(void);
+        void DumpRecordings(void);
         //Service Calls
         bool GetEventType(ScraperGetEventType *call);
         bool GetSeries(cSeries *series);

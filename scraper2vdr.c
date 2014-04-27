@@ -219,6 +219,12 @@ const char **cPluginScraper2vdr::SVDRPHelpPages(void) {
       "    Trigger scan for scrapinfo files in video directory.",
       "CRDB\n"
       "    Trigger cleanup of recordings database.",
+      "DSER\n"
+      "    Dump series kept in memory.",
+      "DMOV\n"
+      "    Dump movies kept in memory.",
+      "DREC\n"
+      "    Dump recordings kept in memory.",
       0
     };
     return HelpPages;
@@ -240,6 +246,15 @@ cString cPluginScraper2vdr::SVDRPCommand(const char *Command, const char *Option
     } else if (strcasecmp(Command, "CRDB") == 0) {
         update->TriggerCleanRecordingsDB();
         return "SCRAPER2VDR cleanup of recording DB triggered.";
+    } else if (strcasecmp(Command, "DSER") == 0) {
+        scrapManager->DumpSeries();
+        return "SCRAPER2VDR dumping available series";
+    } else if (strcasecmp(Command, "DMOV") == 0) {
+        scrapManager->DumpMovies();
+        return "SCRAPER2VDR dumping available movies";
+    } else if (strcasecmp(Command, "DREC") == 0) {
+        scrapManager->DumpRecordings();
+        return "SCRAPER2VDR dumping available recordings";
     }
     return NULL;
 }
