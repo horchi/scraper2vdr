@@ -173,7 +173,7 @@ int cUpdate::ReadScrapedEvents(void) {
     select->build("select ");
     select->bind(cTableEvents::fiEventId, cDBS::bndOut);
     select->bind(cTableEvents::fiChannelId, cDBS::bndOut, ", ");
-    select->bind(cTableEvents::fiUseId, cDBS::bndOut, ", ");
+    select->bind(cTableEvents::fiMasterId, cDBS::bndOut, ", ");
     select->bind(cTableEvents::fiScrSeriesId, cDBS::bndOut, ", ");
     select->bind(cTableEvents::fiScrSeriesEpisode, cDBS::bndOut, ", ");
     select->bind(cTableEvents::fiScrMovieId, cDBS::bndOut, ", ");
@@ -203,7 +203,7 @@ int cUpdate::ReadScrapedEvents(void) {
     string channelId = "";
     int numNew = 0;
     for (int res = select->find(); res; res = select->fetch() && Running()) {
-        eventId = tEvents->getIntValue(cTableEvents::fiUseId);
+        eventId = tEvents->getIntValue(cTableEvents::fiMasterId);
         channelId = tEvents->getStrValue(cTableEvents::fiChannelId);
         seriesId = tEvents->getIntValue(cTableEvents::fiScrSeriesId);
         episodeId = tEvents->getIntValue(cTableEvents::fiScrSeriesEpisode);
