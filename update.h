@@ -1,7 +1,6 @@
 #ifndef __UPDATE_H
 #define __UPDATE_H
 
-#include <mysql/mysql.h>
 #include <map>
 
 #include <vdr/thread.h>
@@ -71,6 +70,33 @@ class cUpdate : public cThread  {
         int CleanupSeries(void);
         int CleanupMovies(void);
         int CleanupRecordings(void);
+
+      // statements
+
+      cDbStatement* selectReadScrapedEventsInit;
+      cDbStatement* selectReadScrapedEvents;
+      cDbStatement* selectImg;
+      cDbStatement* selectSeasonPoster;
+      cDbStatement* selectActors;
+      cDbStatement* selectActorThumbs;
+      cDbStatement* selectSeriesMedia;
+      cDbStatement* selectMovieActors;
+      cDbStatement* selectMovieActorThumbs;
+      cDbStatement* selectMovieMedia;
+      cDbStatement* selectMediaMovie;
+      cDbStatement* selectRecordings;
+      cDbStatement* selectCleanupRecordings;
+
+      cDbValue imageSize;
+      cDbValue posterSize;
+      cDbValue series_id;
+      cDbValue actorImageSize;
+
+      cDbValue actorRole;
+      cDbValue actorMovie;
+      cDbValue thbWidth;
+      cDbValue thbHeight;
+
     public:
         cUpdate(cScrapManager *manager);
         virtual ~cUpdate(void);

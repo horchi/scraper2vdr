@@ -5,6 +5,8 @@
 #include <vdr/tools.h>
 #include <vdr/plugin.h>
 
+#include "lib/config.h"
+
 #include "config.h"
 #include "tools.h"
 #include "update.h"
@@ -24,6 +26,21 @@ cUpdate::cUpdate(cScrapManager *manager) : cThread("update thread started") {
     tMovieActors = NULL;
     tMovieMedia = NULL;
     tRecordings = NULL;
+
+    selectReadScrapedEventsInit = 0;
+    selectReadScrapedEvents = 0;
+    selectImg = 0;
+    selectSeasonPoster = 0;
+    selectActors = 0;
+    selectActorThumbs = 0;
+    selectSeriesMedia = 0;
+    selectMovieActors = 0;
+    selectMovieActorThumbs = 0;
+    selectMovieMedia = 0;
+    selectMediaMovie = 0;
+    selectRecordings = 0;
+    selectCleanupRecordings = 0;
+
     scrapManager = manager;
     imgPathSeries = config.imageDir + "/series";
     imgPathMovies = config.imageDir + "/movies";
@@ -44,6 +61,7 @@ cUpdate::cUpdate(cScrapManager *manager) : cThread("update thread started") {
     } else {
         tell(0, "Reseting locale for LC_CTYPE failed.");
     }
+
     cDbConnection::setEncoding(withutf8 ? "utf8": "latin1");
     cDbConnection::setHost(config.mysqlHost.c_str());
     cDbConnection::setPort(config.mysqlPort);
@@ -51,35 +69,19 @@ cUpdate::cUpdate(cScrapManager *manager) : cThread("update thread started") {
     cDbConnection::setUser(config.mysqlDBUser.c_str());
     cDbConnection::setPass(config.mysqlDBPass.c_str());
     cDbTable::setConfPath(cPlugin::ConfigDirectory("epg2vdr/"));
+
+    EPG2VDRConfig.loglevel = config.debug ? 2 : 1;
 }
 
 cUpdate::~cUpdate() {
     if (loopActive)
         Stop();
-    if (vdrDb)
-        delete vdrDb;
-    if (tEvents)
-        delete tEvents;
-    if (tSeries)
-        delete tSeries;
-    if (tEpisodes)
-        tEpisodes;
-    if (tSeriesMedia)
-        delete tSeriesMedia;
-    if (tSeriesActors)
-        delete tSeriesActors;
-    if (tMovies)
-        delete tMovies;
-    if (tMovieActor)
-        delete tMovieActor;
-    if (tMovieActors)
-        delete tMovieActors;
-    if (tMovieMedia)
-        delete tMovieMedia;
-    if (tRecordings)
-        delete tRecordings;
     exitDb();
 }
+
+// global field definitions
+
+cDBS::FieldDef imageSizeDef = { "media_content", cDBS::ffUInt,  0, 999, cDBS::ftData };
 
 int cUpdate::initDb() {
     int status = success;
@@ -120,12 +122,269 @@ int cUpdate::initDb() {
     tRecordings = new cTableRecordings(connection);
     if (tRecordings->open() != success) 
         return fail;
+
+    // --------------------
+    // prepare statements
+
+    // 
+
+    selectReadScrapedEventsInit = new cDbStatement(tEvents);
+    selectReadScrapedEventsInit->build("select ");
+    selectReadScrapedEventsInit->bind(cTableEvents::fiEventId, cDBS::bndOut);
+    selectReadScrapedEventsInit->bind(cTableEvents::fiChannelId, cDBS::bndOut, ", ");
+    selectReadScrapedEventsInit->bind(cTableEvents::fiMasterId, cDBS::bndOut, ", ");
+    selectReadScrapedEventsInit->bind(cTableEvents::fiScrSeriesId, cDBS::bndOut, ", ");
+    selectReadScrapedEventsInit->bind(cTableEvents::fiScrSeriesEpisode, cDBS::bndOut, ", ");
+    selectReadScrapedEventsInit->bind(cTableEvents::fiScrMovieId, cDBS::bndOut, ", ");
+    selectReadScrapedEventsInit->bind(cTableEvents::fiScrSp, cDBS::bndOut, ", ");
+    selectReadScrapedEventsInit->build(" from %s where ", tEvents->TableName());
+    selectReadScrapedEventsInit->build(" ((%s is not null and %s > 0) ", 
+                                   tEvents->getField(cTableEvents::fiScrSeriesId)->name, 
+                                   tEvents->getField(cTableEvents::fiScrSeriesId)->name);
+    selectReadScrapedEventsInit->build(" or (%s is not null and %s > 0)) ", 
+                                   tEvents->getField(cTableEvents::fiScrMovieId)->name, 
+                                   tEvents->getField(cTableEvents::fiScrMovieId)->name);
+    selectReadScrapedEventsInit->build(" order by %s", tEvents->getField(cTableEvents::fiInsSp)->name);
+    
+    status += selectReadScrapedEventsInit->prepare();
+
+    // 
+
+    selectReadScrapedEvents = new cDbStatement(tEvents);
+    selectReadScrapedEvents->build("select ");
+    selectReadScrapedEvents->bind(cTableEvents::fiEventId, cDBS::bndOut);
+    selectReadScrapedEvents->bind(cTableEvents::fiChannelId, cDBS::bndOut, ", ");
+    selectReadScrapedEvents->bind(cTableEvents::fiMasterId, cDBS::bndOut, ", ");
+    selectReadScrapedEvents->bind(cTableEvents::fiScrSeriesId, cDBS::bndOut, ", ");
+    selectReadScrapedEvents->bind(cTableEvents::fiScrSeriesEpisode, cDBS::bndOut, ", ");
+    selectReadScrapedEvents->bind(cTableEvents::fiScrMovieId, cDBS::bndOut, ", ");
+    selectReadScrapedEvents->bind(cTableEvents::fiScrSp, cDBS::bndOut, ", ");
+    selectReadScrapedEvents->build(" from %s where ", tEvents->TableName());
+    selectReadScrapedEvents->build(" ((%s is not null and %s > 0) ", 
+                                   tEvents->getField(cTableEvents::fiScrSeriesId)->name, 
+                                   tEvents->getField(cTableEvents::fiScrSeriesId)->name);
+    selectReadScrapedEvents->build(" or (%s is not null and %s > 0)) ", 
+                                   tEvents->getField(cTableEvents::fiScrMovieId)->name, 
+                                   tEvents->getField(cTableEvents::fiScrMovieId)->name);
+    selectReadScrapedEvents->bind(cTableEvents::fiScrSp, cDBS::bndIn | cDBS::bndSet, " and ");
+    selectReadScrapedEvents->build(" order by %s", tEvents->getField(cTableEvents::fiInsSp)->name);
+    
+    status += selectReadScrapedEvents->prepare();
+    
+    // select image
+
+    imageSize.setField(&imageSizeDef);
+    selectImg = new cDbStatement(tSeriesMedia);
+    selectImg->build("select ");
+    selectImg->bind(cTableSeriesMedia::fiMediaWidth, cDBS::bndOut);
+    selectImg->bind(cTableSeriesMedia::fiMediaHeight, cDBS::bndOut, ", ");
+    selectImg->bind(cTableSeriesMedia::fiMediaContent, cDBS::bndOut, ", ");
+    selectImg->build(", length(");
+    selectImg->bind(&imageSize, cDBS::bndOut);
+    selectImg->build(")");
+    selectImg->build(" from %s where ", tSeriesMedia->TableName());
+    selectImg->bind(cTableSeriesMedia::fiSeriesId, cDBS::bndIn | cDBS::bndSet);
+    selectImg->bind(cTableSeriesMedia::fiEpisodeId, cDBS::bndIn | cDBS::bndSet, " and ");
+    status += selectImg->prepare();
+
+    // select poster image
+
+    posterSize.setField(&imageSizeDef);
+    selectSeasonPoster = new cDbStatement(tSeriesMedia);
+    selectSeasonPoster->build("select ");
+    selectSeasonPoster->bind(cTableSeriesMedia::fiMediaWidth, cDBS::bndOut);
+    selectSeasonPoster->bind(cTableSeriesMedia::fiMediaHeight, cDBS::bndOut, ", ");
+    selectSeasonPoster->bind(cTableSeriesMedia::fiMediaContent, cDBS::bndOut, ", ");
+    selectSeasonPoster->build(", length(");
+    selectSeasonPoster->bind(&posterSize, cDBS::bndOut);
+    selectSeasonPoster->build(")");
+    selectSeasonPoster->build(" from %s where ", tSeriesMedia->TableName());
+    selectSeasonPoster->bind(cTableSeriesMedia::fiSeriesId, cDBS::bndIn | cDBS::bndSet);
+    selectSeasonPoster->bind(cTableSeriesMedia::fiSeasonNumber, cDBS::bndIn | cDBS::bndSet, " and ");
+    selectSeasonPoster->bind(cTableSeriesMedia::fiMediaType, cDBS::bndIn | cDBS::bndSet, " and ");
+    status += selectSeasonPoster->prepare();
+
+    // select actor
+
+    series_id.setField(tSeriesMedia->getField(cTableSeriesMedia::fiSeriesId));
+    selectActors = new cDbStatement(tSeriesActors);
+    selectActors->build("select ");
+    selectActors->setBindPrefix("series_actor.");
+    selectActors->bind(cTableSeriesActor::fiActorId, cDBS::bndOut);
+    selectActors->bind(cTableSeriesActor::fiActorName, cDBS::bndOut, ", ");
+    selectActors->bind(cTableSeriesActor::fiActorRole, cDBS::bndOut, ", ");
+    selectActors->clrBindPrefix();
+    selectActors->build(" from %s, %s where ", tSeriesActors->TableName(), tSeriesMedia->TableName());
+    selectActors->build(" %s.%s  = %s.%s ", tSeriesActors->TableName(),
+                                            tSeriesActors->getField(cTableSeriesActor::fiActorId)->name,
+                                            tSeriesMedia->TableName(),
+                                            tSeriesMedia->getField(cTableSeriesMedia::fiActorId)->name);
+    selectActors->setBindPrefix("series_media.");
+    selectActors->bind(&series_id, cDBS::bndIn | cDBS::bndSet, " and ");
+    selectActors->build(" order by %s, %s asc", tSeriesActors->getField(cTableSeriesActor::fiSortOrder)->name, 
+                                                tSeriesActors->getField(cTableSeriesActor::fiActorRole)->name);    
+    status += selectActors->prepare();
+
+    // select actor thumbs
+
+    actorImageSize.setField(&imageSizeDef);
+    selectActorThumbs = new cDbStatement(tSeriesMedia);
+    selectActorThumbs->build("select ");
+    selectActorThumbs->bind(cTableSeriesMedia::fiMediaWidth, cDBS::bndOut);
+    selectActorThumbs->bind(cTableSeriesMedia::fiMediaHeight, cDBS::bndOut, ", ");
+    selectActorThumbs->bind(cTableSeriesMedia::fiMediaContent, cDBS::bndOut, ", ");
+    selectActorThumbs->build(", length(");
+    selectActorThumbs->bind(&actorImageSize, cDBS::bndOut);
+    selectActorThumbs->build(")");
+    selectActorThumbs->build(" from %s where ", tSeriesMedia->TableName());
+    selectActorThumbs->bind(cTableSeriesMedia::fiActorId, cDBS::bndIn | cDBS::bndSet);
+    status += selectActorThumbs->prepare();
+    
+    // 
+
+    selectSeriesMedia = new cDbStatement(tSeriesMedia);
+    selectSeriesMedia->build("select ");
+    selectSeriesMedia->bind(cTableSeriesMedia::fiMediaWidth, cDBS::bndOut);
+    selectSeriesMedia->bind(cTableSeriesMedia::fiMediaHeight, cDBS::bndOut, ", ");
+    selectSeriesMedia->bind(cTableSeriesMedia::fiMediaType, cDBS::bndOut, ", ");
+    selectSeriesMedia->build(" from %s where ", tSeriesMedia->TableName());
+    selectSeriesMedia->bind(cTableSeriesMedia::fiSeriesId, cDBS::bndIn | cDBS::bndSet);
+    selectSeriesMedia->build(" and %s in (%d, %d, %d, %d, %d, %d, %d, %d, %d)",
+                             tSeriesMedia->getField(cTableSeriesMedia::fiMediaType)->name,
+                             msPoster1, msPoster2, msPoster3,
+                             msFanart1, msFanart2, msFanart3,
+                             msBanner1, msBanner2, msBanner3);
+    status += selectSeriesMedia->prepare();
+
+    // 
+
+    actorRole.setField(tMovieActors->getField(cTableMovieActors::fiRole));
+    actorMovie.setField(tMovieActors->getField(cTableMovieActors::fiMovieId));
+    thbWidth.setField(tMovieMedia->getField(cTableMovieMedia::fiMediaWidth));
+    thbHeight.setField(tMovieMedia->getField(cTableMovieMedia::fiMediaHeight));
+
+    selectMovieActors = new cDbStatement(tMovieActor);
+    selectMovieActors->build("select ");
+    selectMovieActors->setBindPrefix("act.");
+    selectMovieActors->bind(cTableMovieActor::fiActorId, cDBS::bndOut);
+    selectMovieActors->bind(cTableMovieActor::fiActorName, cDBS::bndOut, ", ");
+    selectMovieActors->setBindPrefix("role.");
+    selectMovieActors->bind(&actorRole, cDBS::bndOut, ", ");
+    selectMovieActors->setBindPrefix("thumb.");
+    selectMovieActors->bind(&thbWidth, cDBS::bndOut, ", ");
+    selectMovieActors->bind(&thbHeight, cDBS::bndOut, ", ");
+    selectMovieActors->clrBindPrefix();
+    selectMovieActors->build(" from %s act, %s role, %s thumb where ", 
+                        tMovieActor->TableName(), tMovieActors->TableName(), tMovieMedia->TableName());
+    selectMovieActors->build("act.%s = role.%s ",
+                        tMovieActor->getField(cTableMovieActor::fiActorId)->name, 
+                        tMovieActors->getField(cTableMovieActors::fiActorId)->name);
+    selectMovieActors->build(" and role.%s = thumb.%s ",
+                        tMovieActors->getField(cTableMovieActors::fiActorId)->name, 
+                        tMovieMedia->getField(cTableMovieMedia::fiActorId)->name);
+    selectMovieActors->setBindPrefix("role.");
+    selectMovieActors->bind(&actorMovie, cDBS::bndIn | cDBS::bndSet, " and ");
+    status += selectMovieActors->prepare();
+
+    // 
+
+    selectMovieActorThumbs = new cDbStatement(tMovieMedia);
+    selectMovieActorThumbs->build("select ");
+    selectMovieActorThumbs->bind(cTableMovieMedia::fiMediaContent, cDBS::bndOut);
+    selectMovieActorThumbs->build(", length(");
+    selectMovieActorThumbs->bind(&imageSize, cDBS::bndOut);
+    selectMovieActorThumbs->build(")");
+    selectMovieActorThumbs->build(" from %s where ", tMovieMedia->TableName());
+    selectMovieActorThumbs->bind(cTableMovieMedia::fiActorId, cDBS::bndIn | cDBS::bndSet);
+    status += selectMovieActorThumbs->prepare();
+
+    //
+
+    selectMovieMedia = new cDbStatement(tMovieMedia);
+    selectMovieMedia->build("select ");
+    selectMovieMedia->bind(cTableMovieMedia::fiMediaWidth, cDBS::bndOut);
+    selectMovieMedia->bind(cTableMovieMedia::fiMediaHeight, cDBS::bndOut, ", ");
+    selectMovieMedia->bind(cTableMovieMedia::fiMediaType, cDBS::bndOut, ", ");
+    selectMovieMedia->build(" from %s where ", tMovieMedia->TableName());
+    selectMovieMedia->bind(cTableMovieMedia::fiMovieId, cDBS::bndIn | cDBS::bndSet);
+    selectMovieMedia->build(" and %s in (%d, %d, %d, %d)",
+                        tMovieMedia->getField(cTableMovieMedia::fiMediaType)->name,
+                        mmPoster,
+                        mmFanart,
+                        mmCollectionPoster,
+                        mmCollectionFanart);
+    status += selectMovieMedia->prepare();
+
+    // 
+
+    selectMediaMovie = new cDbStatement(tMovieMedia);
+    selectMediaMovie->build("select ");
+    selectMediaMovie->bind(cTableMovieMedia::fiMediaContent, cDBS::bndOut);
+    selectMediaMovie->build(", length(");
+    selectMediaMovie->bind(&imageSize, cDBS::bndOut);
+    selectMediaMovie->build(")");
+    selectMediaMovie->build(" from %s where ", tMovieMedia->TableName());
+    selectMediaMovie->bind(cTableMovieMedia::fiMovieId, cDBS::bndIn | cDBS::bndSet);
+    selectMediaMovie->bind(cTableMovieMedia::fiMediaType, cDBS::bndIn | cDBS::bndSet, " and ");
+    status += selectMediaMovie->prepare();
+
+    // 
+
+    selectRecordings = new cDbStatement(tRecordings);
+    selectRecordings->build("select ");
+    selectRecordings->bind(cTableRecordings::fiRecPath, cDBS::bndOut);
+    selectRecordings->bind(cTableRecordings::fiRecStart, cDBS::bndOut, ", ");
+    selectRecordings->bind(cTableRecordings::fiMovieId, cDBS::bndOut, ", ");
+    selectRecordings->bind(cTableRecordings::fiSeriesId, cDBS::bndOut, ", ");
+    selectRecordings->bind(cTableRecordings::fiEpisodeId, cDBS::bndOut, ", ");
+    selectRecordings->build(" from %s where ", tRecordings->TableName());
+    selectRecordings->bind(cTableRecordings::fiUuid, cDBS::bndIn | cDBS::bndSet);
+    selectRecordings->build(" and %s = 0", tRecordings->getField(cTableRecordings::fiScrapNew)->name);
+    status += selectRecordings->prepare();
+    
+    // 
+
+    selectCleanupRecordings = new cDbStatement(tRecordings);
+    selectCleanupRecordings->build("select ");
+    selectCleanupRecordings->bind(cTableRecordings::fiRecPath, cDBS::bndOut);
+    selectCleanupRecordings->bind(cTableRecordings::fiRecStart, cDBS::bndOut, ", ");
+    selectCleanupRecordings->build(" from %s where ", tRecordings->TableName());
+    selectCleanupRecordings->bind(cTableRecordings::fiUuid, cDBS::bndIn | cDBS::bndSet);
+    status += selectCleanupRecordings->prepare();
+
     return status;
 }
 
 int cUpdate::exitDb() {
-    delete connection; 
-    connection = 0;
+
+    delete selectReadScrapedEvents;     selectReadScrapedEvents = 0;
+    delete selectReadScrapedEventsInit; selectReadScrapedEventsInit = 0;
+    delete selectImg;                   selectImg = 0;
+    delete selectSeasonPoster;          selectSeasonPoster = 0;
+    delete selectActors;                selectActors = 0;
+    delete selectActorThumbs;           selectActorThumbs = 0;
+    delete selectSeriesMedia;           selectSeriesMedia = 0;
+    delete selectMovieActors;           selectMovieActors = 0;
+    delete selectMovieActorThumbs;      selectMovieActorThumbs = 0;
+    delete selectMovieMedia;            selectMovieMedia = 0;
+    delete selectMediaMovie;            selectMediaMovie = 0;
+    delete selectRecordings;            selectRecordings = 0;
+    delete selectCleanupRecordings;     selectCleanupRecordings = 0;
+
+    delete vdrDb;         vdrDb = 0;
+    delete tEvents;       tEvents = 0;
+    delete tSeries;       tSeries = 0;
+    delete tEpisodes;     tEpisodes = 0;
+    delete tSeriesMedia;  tSeriesMedia = 0;
+    delete tSeriesActors; tSeriesActors = 0;
+    delete tMovies;       tMovies = 0;
+    delete tMovieActor;   tMovieActor = 0;
+    delete tMovieActors;  tMovieActors = 0;
+    delete tMovieMedia;   tMovieMedia = 0;
+    delete tRecordings;   tRecordings = 0;
+
+    delete connection;    connection = 0;
+
     return done;
 }
 
@@ -157,51 +416,34 @@ int cUpdate::CheckConnection(int& timeout) {
 }
 
 bool cUpdate::CheckEpgdBusy(void) {
-    vdrDb->clear();
-    vdrDb->setValue(cTableVdrs::fiUuid, EPGDNAME);
-    if (vdrDb->find()) {
-        Es::State epgdState = cEpgdState::toState(vdrDb->getStrValue(cTableVdrs::fiState));
-        if (epgdState >= cEpgdState::esBusy)
-            return true;
-    }
-    return false;
+   int busy = false;
+   vdrDb->clear();
+   vdrDb->setValue(cTableVdrs::fiUuid, EPGDNAME);
+
+   if (vdrDb->find()) {
+      Es::State epgdState = cEpgdState::toState(vdrDb->getStrValue(cTableVdrs::fiState));
+      // ignore esBusyImages until we don't write this table
+      if (epgdState >= cEpgdState::esBusy && epgdState < cEpgdState::esBusyImages)
+         busy = true;
+   }
+
+   vdrDb->reset();
+   return busy;
 }
 
 int cUpdate::ReadScrapedEvents(void) {
-    int status = success;
-    cDbStatement *select = new cDbStatement(tEvents);
-    select->build("select ");
-    select->bind(cTableEvents::fiEventId, cDBS::bndOut);
-    select->bind(cTableEvents::fiChannelId, cDBS::bndOut, ", ");
-    select->bind(cTableEvents::fiMasterId, cDBS::bndOut, ", ");
-    select->bind(cTableEvents::fiScrSeriesId, cDBS::bndOut, ", ");
-    select->bind(cTableEvents::fiScrSeriesEpisode, cDBS::bndOut, ", ");
-    select->bind(cTableEvents::fiScrMovieId, cDBS::bndOut, ", ");
-    select->bind(cTableEvents::fiScrSp, cDBS::bndOut, ", ");
-    select->build(" from %s where ", tEvents->TableName());
-    select->build(" ((%s is not null and %s > 0) ", 
-                    tEvents->getField(cTableEvents::fiScrSeriesId)->name, 
-                    tEvents->getField(cTableEvents::fiScrSeriesId)->name);
-    select->build(" or (%s is not null and %s > 0)) ", 
-                    tEvents->getField(cTableEvents::fiScrMovieId)->name, 
-                    tEvents->getField(cTableEvents::fiScrMovieId)->name);
-    if (lastScrap > 0) {
-        select->build(" and %s > %d", 
-                    tEvents->getField(cTableEvents::fiScrSp)->name, 
-                    lastScrap);
-    }
-    select->build(" order by %s", tEvents->getField(cTableEvents::fiInsSp)->name);
-    status += select->prepare();
-    if (status != success) {
-        delete select;
-        return 0;
-    }
     int eventId = 0;
     int seriesId = 0;
     int episodeId = 0;
     int movieId = 0;
     string channelId = "";
     int numNew = 0;
+
+    cDbStatement* select = lastScrap > 0 ? selectReadScrapedEvents : selectReadScrapedEventsInit;
+
+    tEvents->clear();
+    tEvents->setValue(cTableEvents::fiScrSp, lastScrap);
+    
     for (int res = select->find(); res; res = select->fetch() && Running()) {
         eventId = tEvents->getIntValue(cTableEvents::fiMasterId);
         channelId = tEvents->getStrValue(cTableEvents::fiChannelId);
@@ -212,8 +454,9 @@ int cUpdate::ReadScrapedEvents(void) {
         lastScrap = max(lastScrap, (int)tEvents->getIntValue(cTableEvents::fiScrSp));
         numNew++;
     }
+
     select->freeResult();
-    delete select;
+
     return numNew;
 }
 
@@ -247,7 +490,7 @@ int cUpdate::ReadSeries(bool isRec) {
             isNew = false;
         }
         if (series) {
-            stringstream sPath;
+           stringstream sPath("");
             sPath << imgPathSeries << "/" << seriesId;
             string seriesPath = sPath.str();
             if (episodeId) {
@@ -264,7 +507,6 @@ int cUpdate::ReadSeries(bool isRec) {
 }
 
 void cUpdate::ReadEpisode(int episodeId, cTVDBSeries *series, string path) {
-    int status = success;
     tEpisodes->clear();
     tEpisodes->setValue(cTableSeriesEpisode::fiEpisodeId, episodeId);
     int res = tEpisodes->find();
@@ -279,39 +521,20 @@ void cUpdate::ReadEpisode(int episodeId, cTVDBSeries *series, string path) {
 }
 
 void cUpdate::LoadEpisodeImage(cTVDBSeries *series, int episodeId, string path) {
-    int status = success;
-    stringstream iPath;
+    stringstream iPath("");
     iPath << path << "/" << "episode_" << episodeId << ".jpg";
     string imgPath = iPath.str();
     bool imgExists = FileExists(imgPath);
     if (!imgExists)
         if (!CreateDirectory(path))
             return;
+
     tSeriesMedia->clear();
-    cDbValue imageSize;
-    cDBS::FieldDef imageSizeDef = { "media_content", cDBS::ffUInt,  0, 999, cDBS::ftData };
-    imageSize.setField(&imageSizeDef);
-    cDbStatement *selectImg = new cDbStatement(tSeriesMedia);
-    selectImg->build("select ");
-    selectImg->bind(cTableSeriesMedia::fiMediaWidth, cDBS::bndOut);
-    selectImg->bind(cTableSeriesMedia::fiMediaHeight, cDBS::bndOut, ", ");
-    if (!imgExists) {
-        selectImg->bind(cTableSeriesMedia::fiMediaContent, cDBS::bndOut, ", ");
-        selectImg->build(", length(");
-        selectImg->bind(&imageSize, cDBS::bndOut);
-        selectImg->build(")");
-    }
-    selectImg->build(" from %s where ", tSeriesMedia->TableName());
-    selectImg->bind(cTableSeriesMedia::fiSeriesId, cDBS::bndIn | cDBS::bndSet);
-    selectImg->bind(cTableSeriesMedia::fiEpisodeId, cDBS::bndIn | cDBS::bndSet, " and ");
-    status += selectImg->prepare();
-    if (status != success) {
-        delete selectImg;
-        return;
-    }
     tSeriesMedia->setValue(cTableSeriesMedia::fiSeriesId, series->id);
     tSeriesMedia->setValue(cTableSeriesMedia::fiEpisodeId, episodeId);
+
     int res = selectImg->find();
+
     if (res) {
         if (!imgExists) {
             int size = imageSize.getIntValue();
@@ -324,15 +547,14 @@ void cUpdate::LoadEpisodeImage(cTVDBSeries *series, int episodeId, string path) 
         int imgHeight = tSeriesMedia->getIntValue(cTableSeriesMedia::fiMediaHeight);
         series->InsertEpisodeImage(episodeId, imgWidth, imgHeight, imgPath);
     }
+
     selectImg->freeResult();
-    delete selectImg;
 }
 
 void cUpdate::LoadSeasonPoster(cTVDBSeries *series, int season, string path) {
-    int status = success;
-    stringstream iPath;
+    stringstream iPath("");
     iPath << path << "/" << "season_" << season << ".jpg";
-    stringstream tPath;
+    stringstream tPath("");
     tPath << path << "/" << "season_" << season << "_thumb.jpg";
     string imgPath = iPath.str();
     string thumbPath = tPath.str();
@@ -340,36 +562,17 @@ void cUpdate::LoadSeasonPoster(cTVDBSeries *series, int season, string path) {
     if (!imgExists)
         if (!CreateDirectory(path))
             return;
+
     tSeriesMedia->clear();
-    cDbValue imageSize;
-    cDBS::FieldDef imageSizeDef = { "media_content", cDBS::ffUInt,  0, 999, cDBS::ftData };
-    imageSize.setField(&imageSizeDef);
-    cDbStatement *selectImg = new cDbStatement(tSeriesMedia);
-    selectImg->build("select ");
-    selectImg->bind(cTableSeriesMedia::fiMediaWidth, cDBS::bndOut);
-    selectImg->bind(cTableSeriesMedia::fiMediaHeight, cDBS::bndOut, ", ");
-    if (!imgExists) {
-        selectImg->bind(cTableSeriesMedia::fiMediaContent, cDBS::bndOut, ", ");
-        selectImg->build(", length(");
-        selectImg->bind(&imageSize, cDBS::bndOut);
-        selectImg->build(")");
-    }
-    selectImg->build(" from %s where ", tSeriesMedia->TableName());
-    selectImg->bind(cTableSeriesMedia::fiSeriesId, cDBS::bndIn | cDBS::bndSet);
-    selectImg->bind(cTableSeriesMedia::fiSeasonNumber, cDBS::bndIn | cDBS::bndSet, " and ");
-    selectImg->bind(cTableSeriesMedia::fiMediaType, cDBS::bndIn | cDBS::bndSet, " and ");
-    status += selectImg->prepare();
-    if (status != success) {
-        delete selectImg;
-        return;
-    }
     tSeriesMedia->setValue(cTableSeriesMedia::fiSeriesId, series->id);
     tSeriesMedia->setValue(cTableSeriesMedia::fiSeasonNumber, season);
     tSeriesMedia->setValue(cTableSeriesMedia::fiMediaType, msSeasonPoster);
-    int res = selectImg->find();
+
+    int res = selectSeasonPoster->find();
+
     if (res) {
         if (!imgExists) {
-            int size = imageSize.getIntValue();
+            int size = posterSize.getIntValue();
             if (FILE* fh = fopen(imgPath.c_str(), "w")) {
                 fwrite(tSeriesMedia->getStrValue(cTableSeriesMedia::fiMediaContent), 1, size, fh);
                 fclose(fh);
@@ -383,80 +586,39 @@ void cUpdate::LoadSeasonPoster(cTVDBSeries *series, int season, string path) {
         series->InsertMedia(msSeasonPoster, imgWidth, imgHeight, imgPath, season);
         series->InsertMedia(msSeasonPosterThumb, imgWidth/2, imgHeight/2, thumbPath, season);
     }
-    selectImg->freeResult();
-    delete selectImg;
+
+    selectSeasonPoster->freeResult();
 }
 
 void cUpdate::ReadSeriesActors(cTVDBSeries *series, string path) {
-    int status = success;
     tSeriesActors->clear();
-    cDbValue series_id;
-    series_id.setField(tSeriesMedia->getField(cTableSeriesMedia::fiSeriesId));
     series_id.setValue(series->id);
-    cDbStatement *selectActors = new cDbStatement(tSeriesActors);
-    selectActors->build("select ");
-    selectActors->setBindPrefix("series_actor.");
-    selectActors->bind(cTableSeriesActor::fiActorId, cDBS::bndOut);
-    selectActors->bind(cTableSeriesActor::fiActorName, cDBS::bndOut, ", ");
-    selectActors->bind(cTableSeriesActor::fiActorRole, cDBS::bndOut, ", ");
-    selectActors->clrBindPrefix();
-    selectActors->build(" from %s, %s where ", tSeriesActors->TableName(), tSeriesMedia->TableName());
-    selectActors->build(" %s.%s  = %s.%s ", tSeriesActors->TableName(),
-                                            tSeriesActors->getField(cTableSeriesActor::fiActorId)->name,
-                                            tSeriesMedia->TableName(),
-                                            tSeriesMedia->getField(cTableSeriesMedia::fiActorId)->name);
-    selectActors->setBindPrefix("series_media.");
-    selectActors->bind(&series_id, cDBS::bndIn | cDBS::bndSet, " and ");
-    selectActors->build(" order by %s, %s asc", tSeriesActors->getField(cTableSeriesActor::fiSortOrder)->name, 
-                                                tSeriesActors->getField(cTableSeriesActor::fiActorRole)->name);    
-    status += selectActors->prepare();
-    if (status != success) {
-        delete selectActors;
-        return;
-    }
+
     for (int res = selectActors->find(); res; res = selectActors->fetch()) {
         scrapManager->AddSeriesActor(series, tSeriesActors);
         LoadSeriesActorThumb(series, tSeriesActors->getIntValue(cTableSeriesActor::fiActorId), path);
     }
+
     selectActors->freeResult();
-    delete selectActors;
 }
 
 void cUpdate::LoadSeriesActorThumb(cTVDBSeries *series, int actorId, string path) {
-    int status = success;
-    stringstream iPath;
+    stringstream iPath("");
     iPath << path << "/" << "actor_" << actorId << ".jpg";
     string imgPath = iPath.str();
     bool imgExists = FileExists(imgPath);
     if (!imgExists)
         if (!CreateDirectory(path))
             return;
-    cDbValue imageSize;
-    cDBS::FieldDef imageSizeDef = { "media_content", cDBS::ffUInt,  0, 999, cDBS::ftData };
-    imageSize.setField(&imageSizeDef);
+
     tSeriesMedia->clear();
-    cDbStatement *selectActorThumbs = new cDbStatement(tSeriesMedia);
-    selectActorThumbs->build("select ");
-    selectActorThumbs->bind(cTableSeriesMedia::fiMediaWidth, cDBS::bndOut);
-    selectActorThumbs->bind(cTableSeriesMedia::fiMediaHeight, cDBS::bndOut, ", ");
-    if (!imgExists) {
-        selectActorThumbs->bind(cTableSeriesMedia::fiMediaContent, cDBS::bndOut, ", ");
-        selectActorThumbs->build(", length(");
-        selectActorThumbs->bind(&imageSize, cDBS::bndOut);
-        selectActorThumbs->build(")");
-    }
-    selectActorThumbs->build(" from %s where ", tSeriesMedia->TableName());
-    selectActorThumbs->bind(cTableSeriesMedia::fiActorId, cDBS::bndIn | cDBS::bndSet);
-    status += selectActorThumbs->prepare();
-    if (status != success) {
-        delete selectActorThumbs;
-        return;
-    }
     tSeriesMedia->setValue(cTableSeriesMedia::fiActorId, actorId);
+
     int res = selectActorThumbs->find();
+
     if (res) {
         if (!imgExists) {
-            int size = imageSize.getIntValue();
+            int size = actorImageSize.getIntValue();
             if (FILE* fh = fopen(imgPath.c_str(), "w")) {
                 fwrite(tSeriesMedia->getStrValue(cTableSeriesMedia::fiMediaContent), 1, size, fh);
                 fclose(fh);
@@ -466,52 +628,34 @@ void cUpdate::LoadSeriesActorThumb(cTVDBSeries *series, int actorId, string path
         int tmbHeight = tSeriesMedia->getIntValue(cTableSeriesMedia::fiMediaHeight);
         series->InsertActorThumb(actorId, tmbWidth, tmbHeight, imgPath);
     }
+
     selectActorThumbs->freeResult();
-    delete selectActorThumbs;
 }
 
-void cUpdate::LoadSeriesMedia(cTVDBSeries *series, string path) {
-    int status = success;
-    tSeriesMedia->clear();
-    cDbStatement *selectImg = new cDbStatement(tSeriesMedia);
-    selectImg->build("select ");
-    selectImg->bind(cTableSeriesMedia::fiMediaWidth, cDBS::bndOut);
-    selectImg->bind(cTableSeriesMedia::fiMediaHeight, cDBS::bndOut, ", ");
-    selectImg->bind(cTableSeriesMedia::fiMediaType, cDBS::bndOut, ", ");
-    selectImg->build(" from %s where ", tSeriesMedia->TableName());
-    selectImg->bind(cTableSeriesMedia::fiSeriesId, cDBS::bndIn | cDBS::bndSet);
-    selectImg->build(" and %s in (%d, %d, %d, %d, %d, %d, %d, %d, %d)",
-                        tSeriesMedia->getField(cTableSeriesMedia::fiMediaType)->name,
-                        msPoster1, msPoster2, msPoster3,
-                        msFanart1, msFanart2, msFanart3,
-                        msBanner1, msBanner2, msBanner3);
-    status += selectImg->prepare();
-    if (status != success) {
-        delete selectImg;
-        return;
-    }
-    tSeriesMedia->setValue(cTableSeriesMedia::fiSeriesId, series->id);
-    for (int res = selectImg->find(); res; res = selectImg->fetch()) {
-        int mediaType = tSeriesMedia->getIntValue(cTableSeriesMedia::fiMediaType);
-        int mediaWidth = tSeriesMedia->getIntValue(cTableSeriesMedia::fiMediaWidth);
-        int mediaHeight = tSeriesMedia->getIntValue(cTableSeriesMedia::fiMediaHeight);
-        string mediaPath = LoadMediaSeries(series->id, mediaType, path, mediaWidth, mediaHeight);
-        series->InsertMedia(mediaType, mediaWidth, mediaHeight, mediaPath);
-        if (mediaType == msPoster1) {
-            string thumbPath = path + "/poster_thumb.jpg";
-            series->InsertMedia(msPosterThumb, mediaWidth/5, mediaHeight/5, thumbPath);
-        }
-    }
-    selectImg->freeResult();
-    delete selectImg;
+void cUpdate::LoadSeriesMedia(cTVDBSeries *series, string path) {  
+   tSeriesMedia->clear();  
+   tSeriesMedia->setValue(cTableSeriesMedia::fiSeriesId, series->id);
+   
+   for (int res = selectSeriesMedia->find(); res; res = selectSeriesMedia->fetch()) {
+      int mediaType = tSeriesMedia->getIntValue(cTableSeriesMedia::fiMediaType);
+      int mediaWidth = tSeriesMedia->getIntValue(cTableSeriesMedia::fiMediaWidth);
+      int mediaHeight = tSeriesMedia->getIntValue(cTableSeriesMedia::fiMediaHeight);
+      string mediaPath = LoadMediaSeries(series->id, mediaType, path, mediaWidth, mediaHeight);
+      series->InsertMedia(mediaType, mediaWidth, mediaHeight, mediaPath);
+      if (mediaType == msPoster1) {
+         string thumbPath = path + "/poster_thumb.jpg";
+         series->InsertMedia(msPosterThumb, mediaWidth/5, mediaHeight/5, thumbPath);
+      }
+   }
+
+   selectSeriesMedia->freeResult();
 }
 
 string cUpdate::LoadMediaSeries(int seriesId, int mediaType, string path, int width, int height) {
-    int status = success;
-    stringstream iPath;
+    stringstream iPath("");
     iPath << path << "/";
     bool createThumb = false;
-    stringstream tPath;
+    stringstream tPath("");
     tPath << path << "/";
     switch (mediaType) {
         case msPoster1:
@@ -556,26 +700,11 @@ string cUpdate::LoadMediaSeries(int seriesId, int mediaType, string path, int wi
     }
     if (!CreateDirectory(path))
         return "";
+
     tSeriesMedia->clear();
-    cDbValue imageSize;
-    cDBS::FieldDef imageSizeDef = { "media_content", cDBS::ffUInt,  0, 999, cDBS::ftData };
-    imageSize.setField(&imageSizeDef);
-    cDbStatement *selectImg = new cDbStatement(tSeriesMedia);
-    selectImg->build("select ");
-    selectImg->bind(cTableSeriesMedia::fiMediaContent, cDBS::bndOut);
-    selectImg->build(", length(");
-    selectImg->bind(&imageSize, cDBS::bndOut);
-    selectImg->build(")");
-    selectImg->build(" from %s where ", tSeriesMedia->TableName());
-    selectImg->bind(cTableSeriesMedia::fiSeriesId, cDBS::bndIn | cDBS::bndSet);
-    selectImg->bind(cTableSeriesMedia::fiMediaType, cDBS::bndIn | cDBS::bndSet, " and ");
-    status += selectImg->prepare();
-    if (status != success) {
-        delete selectImg;
-        return "";
-    }
     tSeriesMedia->setValue(cTableSeriesMedia::fiSeriesId, seriesId);
     tSeriesMedia->setValue(cTableSeriesMedia::fiMediaType, mediaType);
+
     int res = selectImg->find();
     if (res) {
         int size = imageSize.getIntValue();
@@ -587,8 +716,8 @@ string cUpdate::LoadMediaSeries(int seriesId, int mediaType, string path, int wi
             CreateThumbnail(imgPath, thumbPath, width, height, 5);
         }
     }
+
     selectImg->freeResult();
-    delete selectImg;
     return imgPath;
 }
 
@@ -599,8 +728,7 @@ string cUpdate::LoadMediaSeries(int seriesId, int mediaType, string path, int wi
 int cUpdate::ReadMovies(bool isRec) {
     scrapManager->InitIterator(isRec);
     int movieId = 0;
-    int i=0;
-    
+   
     if (!CreateDirectory(config.imageDir))
         return 0;
     if (!CreateDirectory(imgPathMovies))
@@ -617,7 +745,7 @@ int cUpdate::ReadMovies(bool isRec) {
         if (!res)
             continue;
         movie = scrapManager->AddMovie(tMovies);
-        stringstream mPath;
+        stringstream mPath("");
         mPath << imgPathMovies << "/" << movieId;
         string moviePath = mPath.str();
         ReadMovieActors(movie);
@@ -629,71 +757,24 @@ int cUpdate::ReadMovies(bool isRec) {
 }
 
 void cUpdate::ReadMovieActors(cMovieDbMovie *movie) {
-    int status = success;
-    cDbValue actorRole;
-    cDbValue actorMovie;
-    cDbValue thbWidth;
-    cDbValue thbHeight;
-    actorRole.setField(tMovieActors->getField(cTableMovieActors::fiRole));
-    actorMovie.setField(tMovieActors->getField(cTableMovieActors::fiMovieId));
-    thbWidth.setField(tMovieMedia->getField(cTableMovieMedia::fiMediaWidth));
-    thbHeight.setField(tMovieMedia->getField(cTableMovieMedia::fiMediaHeight));
-    cDbStatement *selectActors = new cDbStatement(tMovieActor);
-    selectActors->build("select ");
-    selectActors->setBindPrefix("act.");
-    selectActors->bind(cTableMovieActor::fiActorId, cDBS::bndOut);
-    selectActors->bind(cTableMovieActor::fiActorName, cDBS::bndOut, ", ");
-    selectActors->setBindPrefix("role.");
-    selectActors->bind(&actorRole, cDBS::bndOut, ", ");
-    selectActors->setBindPrefix("thumb.");
-    selectActors->bind(&thbWidth, cDBS::bndOut, ", ");
-    selectActors->bind(&thbHeight, cDBS::bndOut, ", ");
-    selectActors->clrBindPrefix();
-    selectActors->build(" from %s act, %s role, %s thumb where ", 
-                        tMovieActor->TableName(), tMovieActors->TableName(), tMovieMedia->TableName());
-    selectActors->build("act.%s = role.%s ",
-                        tMovieActor->getField(cTableMovieActor::fiActorId)->name, 
-                        tMovieActors->getField(cTableMovieActors::fiActorId)->name);
-    selectActors->build(" and role.%s = thumb.%s ",
-                        tMovieActors->getField(cTableMovieActors::fiActorId)->name, 
-                        tMovieMedia->getField(cTableMovieMedia::fiActorId)->name);
-    selectActors->setBindPrefix("role.");
-    selectActors->bind(&actorMovie, cDBS::bndIn | cDBS::bndSet, " and ");
-    status += selectActors->prepare();
-    if (status != success) {
-        delete selectActors;
-        return;
-    }
+    tMovieActor->clear();
+    tMovieMedia->clear();
     actorMovie.setValue(movie->id);
-    for (int res = selectActors->find(); res; res = selectActors->fetch()) {
+
+    for (int res = selectMovieActors->find(); res; res = selectMovieActors->fetch()) {
         scrapManager->AddMovieActor(movie, tMovieActor, actorRole.getStrValue());
         int tmbWidth = thbWidth.getIntValue();
         int tmbHeight = thbHeight.getIntValue();
         movie->SetActorThumbSize(tMovieActor->getIntValue(cTableMovieActor::fiActorId), tmbWidth, tmbHeight);
     }
-    selectActors->freeResult();
-    delete selectActors;
+
+    selectMovieActors->freeResult();
 }
 
 void cUpdate::LoadMovieActorThumbs(cMovieDbMovie *movie) {
-    int status = success;
-    cDbValue imageSize;
-    cDBS::FieldDef imageSizeDef = { "media_content", cDBS::ffUInt,  0, 999, cDBS::ftData };
-    imageSize.setField(&imageSizeDef);
     tMovieMedia->clear();
-    cDbStatement *selectActorThumbs = new cDbStatement(tMovieMedia);
-    selectActorThumbs->build("select ");
-    selectActorThumbs->bind(cTableMovieMedia::fiMediaContent, cDBS::bndOut);
-    selectActorThumbs->build(", length(");
-    selectActorThumbs->bind(&imageSize, cDBS::bndOut);
-    selectActorThumbs->build(")");
-    selectActorThumbs->build(" from %s where ", tMovieMedia->TableName());
-    selectActorThumbs->bind(cTableMovieMedia::fiActorId, cDBS::bndIn | cDBS::bndSet);
-    status += selectActorThumbs->prepare();
-    if (status != success) {
-        delete selectActorThumbs;
-        return;
-    }
+    imageSize.setField(&imageSizeDef);
+
     string movieActorsPath = imgPathMovies + "/actors";
     if (!CreateDirectory(movieActorsPath))
         return;
@@ -701,13 +782,13 @@ void cUpdate::LoadMovieActorThumbs(cMovieDbMovie *movie) {
     vector<int> IDs = movie->GetActorIDs();
     for (vector<int>::iterator it = IDs.begin(); it != IDs.end(); it++) {
         int actorId = (int)*it;
-        stringstream tName;
+        stringstream tName("");
         tName << "actor_" << actorId << ".jpg";
         string thumbName = tName.str();
         string thumbFullPath = movieActorsPath + "/" + thumbName; 
         if (!FileExists(thumbFullPath)) {
             tMovieMedia->setValue(cTableMovieMedia::fiActorId, actorId);
-            int res = selectActorThumbs->find();
+            int res = selectMovieActorThumbs->find();
             if (res) {
                 int size = imageSize.getIntValue();
                 if (FILE* fh = fopen(thumbFullPath.c_str(), "w")) {
@@ -720,33 +801,15 @@ void cUpdate::LoadMovieActorThumbs(cMovieDbMovie *movie) {
             movie->SetActorPath(actorId, thumbFullPath);
         }
     }
-    selectActorThumbs->freeResult();
-    delete selectActorThumbs;
+
+    selectMovieActorThumbs->freeResult();
 }        
 
 void cUpdate::LoadMovieMedia(cMovieDbMovie *movie, string moviePath) {
-    int status = success;
     tMovieMedia->clear();
-    cDbStatement *selectImg = new cDbStatement(tMovieMedia);
-    selectImg->build("select ");
-    selectImg->bind(cTableMovieMedia::fiMediaWidth, cDBS::bndOut);
-    selectImg->bind(cTableMovieMedia::fiMediaHeight, cDBS::bndOut, ", ");
-    selectImg->bind(cTableMovieMedia::fiMediaType, cDBS::bndOut, ", ");
-    selectImg->build(" from %s where ", tMovieMedia->TableName());
-    selectImg->bind(cTableMovieMedia::fiMovieId, cDBS::bndIn | cDBS::bndSet);
-    selectImg->build(" and %s in (%d, %d, %d, %d)",
-                        tMovieMedia->getField(cTableMovieMedia::fiMediaType)->name,
-                        mmPoster,
-                        mmFanart,
-                        mmCollectionPoster,
-                        mmCollectionFanart);
-    status += selectImg->prepare();
-    if (status != success) {
-        delete selectImg;
-        return;
-    }
     tMovieMedia->setValue(cTableMovieMedia::fiMovieId, movie->id);
-    for (int res = selectImg->find(); res; res = selectImg->fetch()) {
+
+    for (int res = selectMovieMedia->find(); res; res = selectMovieMedia->fetch()) {
         int mediaType = tMovieMedia->getIntValue(cTableMovieMedia::fiMediaType);
         int mediaWidth = tMovieMedia->getIntValue(cTableMovieMedia::fiMediaWidth);
         int mediaHeight = tMovieMedia->getIntValue(cTableMovieMedia::fiMediaHeight);
@@ -761,18 +824,16 @@ void cUpdate::LoadMovieMedia(cMovieDbMovie *movie, string moviePath) {
             m->path = moviePath + "/poster_thumb.jpg";
             movie->InsertMedia(m);
         }
-
     }
-    selectImg->freeResult();
-    delete selectImg;
+
+    selectMovieMedia->freeResult();
 }
 
 string cUpdate::LoadMediaMovie(int movieId, int mediaType, string path, int width, int height) {
-    int status = success;
-    stringstream iPath;
+    stringstream iPath("");
     iPath << path << "/";
     bool createThumb = false;
-    stringstream tPath;
+    stringstream tPath("");
     tPath << path << "/";
     switch (mediaType) {
         case mmPoster:
@@ -802,27 +863,13 @@ string cUpdate::LoadMediaMovie(int movieId, int mediaType, string path, int widt
     }
     if (!CreateDirectory(path))
         return imgPath;
+
     tMovieMedia->clear();
-    cDbValue imageSize;
-    cDBS::FieldDef imageSizeDef = { "media_content", cDBS::ffUInt,  0, 999, cDBS::ftData };
     imageSize.setField(&imageSizeDef);
-    cDbStatement *selectImg = new cDbStatement(tMovieMedia);
-    selectImg->build("select ");
-    selectImg->bind(cTableMovieMedia::fiMediaContent, cDBS::bndOut);
-    selectImg->build(", length(");
-    selectImg->bind(&imageSize, cDBS::bndOut);
-    selectImg->build(")");
-    selectImg->build(" from %s where ", tMovieMedia->TableName());
-    selectImg->bind(cTableMovieMedia::fiMovieId, cDBS::bndIn | cDBS::bndSet);
-    selectImg->bind(cTableMovieMedia::fiMediaType, cDBS::bndIn | cDBS::bndSet, " and ");
-    status += selectImg->prepare();
-    if (status != success) {
-        delete selectImg;
-        return "";
-    }
     tMovieMedia->setValue(cTableMovieMedia::fiMovieId, movieId);
     tMovieMedia->setValue(cTableMovieMedia::fiMediaType, mediaType);
-    int res = selectImg->find();
+
+    int res = selectMediaMovie->find();
     if (res) {
         int size = imageSize.getIntValue();
         if (FILE* fh = fopen(imgPath.c_str(), "w")) {
@@ -833,37 +880,21 @@ string cUpdate::LoadMediaMovie(int movieId, int mediaType, string path, int widt
             CreateThumbnail(imgPath, thumbPath, width, height, 4);
         }
     }
-    selectImg->freeResult();
-    delete selectImg;
+
+    selectMediaMovie->freeResult();
     return imgPath;
 }
 
 //***************************************************************************
 // RECORDINGS
 //***************************************************************************
+
 int cUpdate::ReadRecordings(void) {
-    int status = success;
-    cDbStatement *select = new cDbStatement(tRecordings);
-    select->build("select ");
-    select->bind(cTableRecordings::fiRecPath, cDBS::bndOut);
-    select->bind(cTableRecordings::fiRecStart, cDBS::bndOut, ", ");
-    select->bind(cTableRecordings::fiMovieId, cDBS::bndOut, ", ");
-    select->bind(cTableRecordings::fiSeriesId, cDBS::bndOut, ", ");
-    select->bind(cTableRecordings::fiEpisodeId, cDBS::bndOut, ", ");
-    select->build(" from %s where ", tRecordings->TableName());
-    select->bind(cTableRecordings::fiUuid, cDBS::bndIn | cDBS::bndSet);
-    select->build(" and %s = 0", tRecordings->getField(cTableRecordings::fiScrapNew)->name);
-
-    status += select->prepare();
-    if (status != success) {
-        delete select;
-        return 0;
-    }
-
     tRecordings->clear();
     tRecordings->setValue(cTableRecordings::fiUuid, config.uuid.c_str());
     int numRecs = 0;
-    for (int res = select->find(); res; res = select->fetch()) {
+
+    for (int res = selectRecordings->find(); res; res = selectRecordings->fetch()) {
         int recStart = tRecordings->getIntValue(cTableRecordings::fiRecStart);
         string recPath = tRecordings->getStrValue(cTableRecordings::fiRecPath);
         int movieId = tRecordings->getIntValue(cTableRecordings::fiMovieId);
@@ -873,8 +904,8 @@ int cUpdate::ReadRecordings(void) {
         if (isNew)
             numRecs++;
     }
-    select->freeResult();
-    delete select;
+
+    selectRecordings->freeResult();
     return numRecs;
 }
 
@@ -934,7 +965,7 @@ int cUpdate::ScanVideoDirScrapInfo(void) {
     for (cRecording *rec = Recordings.First(); rec; rec = Recordings.Next(rec)) {
         int recStart = rec->Start();
         string recPath = getRecPath(rec);
-        bool recExists = LoadRecording(recStart, recPath);
+        /* bool recExists = */ LoadRecording(recStart, recPath);  
         int scrapInfoMovieID = 0;
         int scrapInfoSeriesID = 0;        
         int scrapInfoEpisodeID = 0;
@@ -975,13 +1006,13 @@ bool cUpdate::ScrapInfoChanged(int scrapInfoMovieID, int scrapInfoSeriesID, int 
 }
 
 void cUpdate::ReadScrapInfo(string recDir, int &scrapInfoMovieID, int &scrapInfoSeriesID, int &scrapInfoEpisodeID) {
-    stringstream sInfoName;
+    stringstream sInfoName("");
     sInfoName << recDir << "/" << config.recScrapInfoName;
     string scrapInfoName = sInfoName.str();
     if (!FileExists(scrapInfoName, false)) {
         string twoHigher = TwoFoldersHigher(recDir);
         if (twoHigher.size() > 0) {
-            stringstream sInfoNameAlt;
+            stringstream sInfoNameAlt("");
             sInfoNameAlt << twoHigher << "/" << config.recScrapInfoName;
             scrapInfoName = sInfoNameAlt.str();
             if (!FileExists(scrapInfoName, false)) {
@@ -1119,168 +1150,187 @@ int cUpdate::CleanupMovies(void) {
 }
 
 int cUpdate::CleanupRecordings(void) {
-    //delete all not anymore existing recordings in database
-    int status = success;
-    cDbStatement *select = new cDbStatement(tRecordings);
-    select->build("select ");
-    select->bind(cTableRecordings::fiRecPath, cDBS::bndOut);
-    select->bind(cTableRecordings::fiRecStart, cDBS::bndOut, ", ");
-    select->build(" from %s where ", tRecordings->TableName());
-    select->bind(cTableRecordings::fiUuid, cDBS::bndIn | cDBS::bndSet);
-    
-    status += select->prepare();
-    if (status != success) {
-        delete select;
-        return 0;
-    }
+    // delete all not anymore existing recordings in database
 
     tRecordings->clear();
     tRecordings->setValue(cTableRecordings::fiUuid, config.uuid.c_str());
     int numRecsDeleted = 0;
-    for (int res = select->find(); res; res = select->fetch()) {
+
+    for (int res = selectCleanupRecordings->find(); res; res = selectCleanupRecordings->fetch()) {
         int recStart = tRecordings->getIntValue(cTableRecordings::fiRecStart);
         string recPath = tRecordings->getStrValue(cTableRecordings::fiRecPath);
         if (!Recordings.GetByName(recPath.c_str())) {
-            stringstream delWhere;
+            stringstream delWhere("");
             delWhere << "uuid = '" << config.uuid << "' and rec_path = '" << recPath << "' and rec_start = " << recStart;
             tRecordings->deleteWhere(delWhere.str().c_str());
             numRecsDeleted++;
         }
     }
-    select->freeResult();
-    delete select;
+    selectCleanupRecordings->freeResult();
     return numRecsDeleted;
 }
-
 
 //***************************************************************************
 // Action
 //***************************************************************************
 
-void cUpdate::Action() {
+void cUpdate::Action() 
+{
     tell(0, "Update thread started (pid=%d)", getpid());
     mutex.Lock();
     loopActive = yes;
-    int sleep = 10;
+
+    int worked = no;
+    int sleep = 60;
     int scanFreq = 60 * 2;
     int scanNewRecFreq = 60 * 5;
     int scanNewRecDBFreq = 60 * 5;
     int cleanUpFreq = 60 * 10;
+
     forceUpdate = true;
     forceRecordingUpdate = true;
+
     time_t lastScan = time(0);
     time_t lastScanNewRec = time(0);
     time_t lastScanNewRecDB = time(0);
     time_t lastCleanup = time(0);
     bool init = true;
-    while (loopActive && Running()) {
-        int reconnectTimeout; //set by checkConnection
-        if (CheckConnection(reconnectTimeout) != success) {
-            waitCondition.TimedWait(mutex, reconnectTimeout*1000);
-            continue;
+
+    while (loopActive && Running()) 
+    {
+        int reconnectTimeout; // set by checkConnection
+
+        waitCondition.TimedWait(mutex, init ? sleep*500 : sleep*1000);
+
+        if (CheckConnection(reconnectTimeout) != success) 
+           continue;
+
+        // auch beim init auf den epgd warten, wenn der gerade busy ist müssen die sich User etwas gedulden ;) 
+
+        if (CheckEpgdBusy())
+        {
+           tell(1, "epgd busy, trying again in %d seconds ...", sleep);
+           continue;
         }
-        //Update Recordings from Database
-        if (forceRecordingUpdate || (time(0) - lastScanNewRecDB > scanNewRecDBFreq) && Running()) {
-            if (!init && CheckEpgdBusy())
-                continue;
-            int numNewRecs = ReadRecordings();
-            if (numNewRecs > 0) {
-                int numSeries = ReadSeries(true);
-                int numMovies = ReadMovies(true);
-                tell(0, "Loaded %d new Recordings from Database, %d series, %d movies", numNewRecs, numSeries, numMovies);
-            }
-            forceRecordingUpdate = false;
-        }
 
-        //Update Events
-        if (!config.headless && (forceUpdate || (time(0) - lastScan > scanFreq)) && Running()) {
-            if (!init && CheckEpgdBusy())
-                continue;
-            int numNewEvents = ReadScrapedEvents();
-            if (numNewEvents > 0) {
-                tell(0, "Loaded %d new scraped Events from Database", numNewEvents);
-            } else {
-                lastScan = time(0);
-                forceUpdate = false;
-                init = false;
-                continue;
-            }
-            tell(0, "Loading new Movies from Database...");
-            time_t now = time(0);
-            int numNewMovies = ReadMovies(false);
-            int dur = time(0) - now;
-            tell(0, "Loaded %d new Movies in %ds from Database", numNewMovies, dur);
+        // Update Recordings from Database
 
-            tell(0, "Loading new Series and Episodes from Database...");
-            now = time(0);
-            int numNewSeries = ReadSeries(false);
-            dur = time(0) - now;
-            tell(0, "Loaded %d new Series and Episodes in %ds from Database", numNewSeries, dur);
+        if (forceRecordingUpdate || (time(0) - lastScanNewRecDB > scanNewRecDBFreq) && Running()) 
+        {
+           worked++;
+           int numNewRecs = ReadRecordings();
+           lastScanNewRecDB = time(0);
 
-            lastScan = time(0);
-            forceUpdate = false;
+           if (numNewRecs > 0) 
+           {
+              int numSeries = ReadSeries(true);
+              int numMovies = ReadMovies(true);
+              tell(0, "Loaded %d new Recordings from Database, %d series, %d movies", numNewRecs, numSeries, numMovies);
+           }
+           
+           forceRecordingUpdate = false;
         }
         
-        //Scan new recordings
-        if ((init || forceVideoDirUpdate || (time(0) - lastScanNewRec > scanNewRecFreq)) && Running()) {
-            if (CheckEpgdBusy()) {
-                waitCondition.TimedWait(mutex, 1000);
-                continue;
-            }
-            static int recState = 0;
-            if (Recordings.StateChanged(recState)) {
-                tell(0, "Searching for new recordings because of Recordings State Change...");
-                int newRecs = ScanVideoDir();
-                tell(0, "found %d new recordings", newRecs);
-            }
-            lastScanNewRec = time(0);
-            forceVideoDirUpdate = false;
-        }
+        // Update Events
 
+        if (!config.headless && (forceUpdate || (time(0) - lastScan > scanFreq)) && Running()) 
+        {
+           worked++;
+           int numNewEvents = ReadScrapedEvents();
+
+           if (numNewEvents > 0) 
+           {
+              tell(0, "Loaded %d new scraped Events from Database", numNewEvents);
+           } 
+           else 
+           {
+              lastScan = time(0);
+              forceUpdate = false;
+              init = false;
+              continue;
+           }
+           
+           tell(0, "Loading new Movies from Database...");
+           time_t now = time(0);
+           worked++;
+           int numNewMovies = ReadMovies(false);
+           int dur = time(0) - now;
+           tell(0, "Loaded %d new Movies in %ds from Database", numNewMovies, dur);
+           
+           tell(0, "Loading new Series and Episodes from Database...");
+           now = time(0);
+           worked++;
+           int numNewSeries = ReadSeries(false);
+           dur = time(0) - now;
+           tell(0, "Loaded %d new Series and Episodes in %ds from Database", numNewSeries, dur);
+           
+           lastScan = time(0);
+           forceUpdate = false;
+        }
+        
+        // Scan new recordings
+
+        if ((init || forceVideoDirUpdate || (time(0) - lastScanNewRec > scanNewRecFreq)) && Running()) 
+        {
+           static int recState = 0;
+
+           if (Recordings.StateChanged(recState)) 
+           {
+              tell(0, "Searching for new recordings because of Recordings State Change...");
+              worked++;
+              int newRecs = ScanVideoDir();
+              tell(0, "found %d new recordings", newRecs);
+           }
+           
+           lastScanNewRec = time(0);
+           forceVideoDirUpdate = false;
+        }
+        
         init = false;
+        
+        // Scan Video dir for scrapinfo files
 
-        //Scan Video dir for scrapinfo files
-        if (forceScrapInfoUpdate) {
-            if (CheckEpgdBusy()) {
-                tell(0, "epgd busy, try again in 1s...");
-                waitCondition.TimedWait(mutex, 1000);
-                continue;
-            }
-            tell(0, "Checking for new or updated scrapinfo files in recordings...");
-            int numUpdated = ScanVideoDirScrapInfo();
-            tell(0, "found %d new or updated scrapinfo files", numUpdated);
-            forceScrapInfoUpdate = false;
+        if (forceScrapInfoUpdate) 
+        {
+           worked++;
+           tell(0, "Checking for new or updated scrapinfo files in recordings...");
+           int numUpdated = ScanVideoDirScrapInfo();
+           tell(0, "found %d new or updated scrapinfo files", numUpdated);
+           forceScrapInfoUpdate = false;
         }
         
-        //Cleanup
-        if ((time(0) - lastCleanup > cleanUpFreq) && Running()){
-           if (CheckEpgdBusy()) {
-                waitCondition.TimedWait(mutex, 1000);
-                continue;
-            }
-            int seriesDeleted = CleanupSeries();
-            int moviesDeleted = CleanupMovies();
-            if (seriesDeleted > 0 || moviesDeleted > 0) {
-                tell(0, "Deleted %d outdated series image folders", seriesDeleted);            
-                tell(0, "Deleted %d outdated movie image folders", moviesDeleted);
-            }
-            lastCleanup = time(0);
+        // Cleanup
+
+        if ((time(0) - lastCleanup > cleanUpFreq) && Running())
+        {
+           worked++;
+           int seriesDeleted = CleanupSeries();
+           int moviesDeleted = CleanupMovies();
+
+           if (seriesDeleted > 0 || moviesDeleted > 0) 
+           {
+              tell(0, "Deleted %d outdated series image folders", seriesDeleted);            
+              tell(0, "Deleted %d outdated movie image folders", moviesDeleted);
+           }
+           
+           lastCleanup = time(0);
         }
         
-        //Cleanup Recording DB
-        if (forceCleanupRecordingDb) {
-            if (CheckEpgdBusy()) {
-                waitCondition.TimedWait(mutex, 1000);
-                continue;
-            }
+        // Cleanup Recording DB
+        
+        if (forceCleanupRecordingDb) 
+        {
+            worked++;
             tell(0, "Cleaning up recordings in database...");
             int recsDeleted = CleanupRecordings();
             tell(0, "Deleted %d not anymore existing recordings in database", recsDeleted);
             forceCleanupRecordingDb = false;
         }
+        
+        if (worked && config.debug) 
+           connection->showStat();
 
-        waitCondition.TimedWait(mutex, sleep*1000);
-
+        worked = no;
     }
 
     loopActive = no;
@@ -1290,6 +1340,7 @@ void cUpdate::Action() {
 //***************************************************************************
 // External trigggering of Actions
 //***************************************************************************
+
 void cUpdate::ForceUpdate(void) {
     tell(0, "full update from database forced");
     forceUpdate = true;

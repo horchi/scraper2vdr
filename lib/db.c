@@ -7,7 +7,7 @@
 
 #include <stdio.h>
 
-#include <mysql/errmsg.h>
+#include <errmsg.h>
 
 #include "db.h"
 
@@ -16,6 +16,8 @@
 //***************************************************************************
 // DB Statement
 //***************************************************************************
+
+int cDbStatement::explain = no;
 
 cDbStatement::cDbStatement(cDbTable* aTable)
 {
@@ -30,6 +32,14 @@ cDbStatement::cDbStatement(cDbTable* aTable)
    affected = 0;
    metaResult = 0;
    bindPrefix = 0;
+   firstExec = yes;
+
+   callsPeriod = 0;
+   callsTotal = 0;
+   duration = 0;
+
+   if (connection)
+      connection->statements.append(this);
 }
 
 cDbStatement::cDbStatement(cDbConnection* aConnection, const char* stmt)
@@ -45,6 +55,22 @@ cDbStatement::cDbStatement(cDbConnection* aConnection, const char* stmt)
    affected = 0;
    metaResult = 0;
    bindPrefix = 0;
+   firstExec = yes;
+
+   callsPeriod = 0;
+   callsTotal = 0;
+   duration = 0;
+
+   if (connection)
+      connection->statements.append(this);
+}
+
+cDbStatement::~cDbStatement()  
+{ 
+   if (connection)
+      connection->statements.remove(this);
+
+   clear();
 }
 
 //***************************************************************************
@@ -61,10 +87,42 @@ int cDbStatement::execute(int noResult)
    if (!stmt)
       return connection->errorSql(connection, "execute(missing statement)");
 
+//    if (explain && firstExec)
+//    {
+//       firstExec = no;
+
+//       if (strstr(stmtTxt.c_str(), "select "))
+//       {
+//          MYSQL_RES* result;
+//          MYSQL_ROW row;
+//          string q = "explain " + stmtTxt;
+
+//          if (connection->query(q.c_str()) != success)
+//             connection->errorSql(connection, "explain ", 0);
+//          else if ((result = mysql_store_result(connection->getMySql())))
+//          {
+//             while ((row = mysql_fetch_row(result)))
+//             {
+//                tell(0, "EXPLAIN: %s) %s %s %s %s %s %s %s %s %s", 
+//                     row[0], row[1], row[2], row[3],
+//                     row[4], row[5], row[6], row[7], row[8], row[9]);
+//             }
+            
+//             mysql_free_result(result);
+//          }
+//       }
+//    }
+
    // tell(0, "execute %d [%s]", stmt, stmtTxt.c_str());
+
+   long start = usNow();
 
    if (mysql_stmt_execute(stmt))
       return connection->errorSql(connection, "execute(stmt_execute)", stmt, stmtTxt.c_str());
+
+   duration += usNow() - start;
+   callsPeriod++;
+   callsTotal++;
 
    // out binding - if needed
 
@@ -270,7 +328,7 @@ int cDbStatement::appendBinding(cDbValue* value, BindType bt)
    if (!bindings)
       *bindings = (MYSQL_BIND*)malloc(count * sizeof(MYSQL_BIND));
    else
-      *bindings = (MYSQL_BIND*)realloc(*bindings, count * sizeof(MYSQL_BIND));
+      *bindings = (MYSQL_BIND*)srealloc(*bindings, count * sizeof(MYSQL_BIND));
 
    newBinding = &((*bindings)[count-1]);
 
@@ -361,6 +419,22 @@ int cDbStatement::prepare()
 }
 
 //***************************************************************************
+// Show Statistic
+//***************************************************************************
+
+void cDbStatement::showStat()
+{
+   if (callsPeriod)
+   {
+      tell(0, "calls %4ld in %6.2fms; total %4ld [%s]", 
+           callsPeriod, duration/1000, callsTotal, stmtTxt.c_str());
+
+      callsPeriod = 0;
+      duration = 0;
+   }
+}
+
+//***************************************************************************
 // cDbService
 //***************************************************************************
 
@@ -380,6 +454,50 @@ const char* cDbService::formats[] =
 const char* cDbService::toString(FieldFormat t)
 {
    return formats[t];
+}
+
+const char* cDbService::dictFormats[] =
+{
+   "int",
+   "uint",
+   "ascii",
+   "text",
+   "mlob",
+   "float",
+   "datetime",
+
+   0
+};
+
+cDbService::FieldFormat cDbService::toDictFormat(const char* format)
+{
+   for (int i = 0; i < ffCount; i++)
+      if (strcasecmp(dictFormats[i], format) == 0)
+         return (FieldFormat)i;
+
+   return ffUnknown;
+}
+
+const char* cDbService::types[] =
+{
+   "data",
+   "primary",
+   "meta",
+   "calc",
+   "autoinc",
+
+   0
+};
+
+cDbService::FieldType cDbService::toType(const char* type)
+{
+   // #TODO  !!!
+
+   for (int i = 0; i < 3; i++)
+      if (strcasecmp(types[i], type) == 0)
+         return (FieldType)i;
+
+   return ftUnknown;
 }
 
 //***************************************************************************

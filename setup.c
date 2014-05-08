@@ -1,3 +1,6 @@
+
+#include "lib/config.h"
+
 #include "setup.h"
 
 extern cScraper2VdrConfig config;
@@ -39,7 +42,7 @@ void cScraper2VdrSetup::Setup(void) {
 }
 
 eOSState cScraper2VdrSetup::ProcessKey(eKeys Key) {
-    bool hadSubMenu = HasSubMenu();   
+    // bool hadSubMenu = HasSubMenu();   
     eOSState state = cMenuSetupPage::ProcessKey(Key);
     if (Key == kOk) {
         tmpConfig.mysqlHost = host;
@@ -77,4 +80,6 @@ void cScraper2VdrSetup::Store(void) {
     SetupStore("mysqlDBUser", tmpConfig.mysqlDBUser.c_str());
     SetupStore("mysqlDBPass", tmpConfig.mysqlDBPass.c_str());
     SetupStore("debug", tmpConfig.debug);
+
+    EPG2VDRConfig.loglevel = tmpConfig.debug ? 2 : 1;
 }

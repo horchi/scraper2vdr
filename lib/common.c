@@ -6,6 +6,7 @@
  */
 
 #include <sys/stat.h>
+#include <sys/time.h>
 
 #ifdef USEUUID
 # include <uuid/uuid.h>
@@ -17,6 +18,7 @@
 #include <syslog.h>
 #include <unistd.h>
 #include <zlib.h>
+#include <errno.h>
 
 #ifdef USELIBARCHIVE
 # include <archive.h>
@@ -54,7 +56,7 @@ void tell(int eloquence, const char* format, ...)
    va_start(ap, format);
 
 #ifdef VDR_PLUGIN
-   snprintf(t, sizeBuffer, "scraper2vdr: ");
+   snprintf(t, sizeBuffer, LOG_PREFIX);
 #endif
 
    vsnprintf(t+strlen(t), sizeBuffer-strlen(t), format, ap);
@@ -62,15 +64,53 @@ void tell(int eloquence, const char* format, ...)
    if (EPG2VDRConfig.logstdout)
    {
       char buf[50+TB];
-      time_t now;
-      time(&now);
-      strftime(buf, 50, "%y.%m.%d %H:%M:%S", localtime(&now));
+      timeval tp;
+
+      gettimeofday(&tp, 0);
+      
+      tm* tm = localtime(&tp.tv_sec);
+      
+      sprintf(buf,"%2.2d:%2.2d:%2.2d,%3.3ld ",
+              tm->tm_hour, tm->tm_min, tm->tm_sec, 
+              tp.tv_usec / 1000);
+
       printf("%s %s\n", buf, t);
+      
    }
    else
       syslog(LOG_ERR, "%s", t);
 
    va_end(ap);
+}
+
+//***************************************************************************
+// Save Realloc
+//***************************************************************************
+
+char* srealloc(void* ptr, size_t size)
+{
+   void* n = realloc(ptr, size);
+
+   if (!n)
+   {
+      free(ptr);
+      ptr = 0;
+   }
+
+   return (char*)n;
+}
+
+//***************************************************************************
+// us now
+//***************************************************************************
+
+double usNow()
+{
+   struct timeval tp;
+
+   gettimeofday(&tp, 0); 
+
+   return tp.tv_sec * 1000000.0 + tp.tv_usec;
 }
 
 //***************************************************************************
@@ -119,6 +159,38 @@ void toUpper(std::string& str)
 
    str = dest;
    free(dest);
+}
+
+//***************************************************************************
+// To Case (UTF-8 save)
+//***************************************************************************
+
+const char* toCase(Case cs, char* str)
+{
+   char* s = str;
+   int lenSrc = strlen(str);
+
+   int csSrc;  // size of character
+
+   for (int ps = 0; ps < lenSrc; ps += csSrc)
+   {
+      csSrc = max(mblen(&s[ps], lenSrc-ps), 1);
+      
+      if (csSrc == 1)
+         s[ps] = cs == cUpper ? toupper(s[ps]) : tolower(s[ps]);
+      else if (csSrc == 2 && s[ps] == (char)0xc3 && s[ps+1] >= (char)0xa0)
+      {
+         s[ps] = s[ps];
+         s[ps+1] = cs == cUpper ? toupper(s[ps+1]) : tolower(s[ps+1]);
+      }
+      else
+      {
+         for (int i = 0; i < csSrc; i++)
+            s[ps+i] = s[ps+i];
+      }
+   }
+
+   return str;
 }
 
 void removeChars(std::string& str, const char* ignore)
@@ -330,6 +402,86 @@ const char* c2s(char c, char* buf)
 }
 
 //***************************************************************************
+// Store To File
+//***************************************************************************
+
+int storeToFile(const char* filename, const char* data, int size)
+{
+   FILE* fout;
+
+   if ((fout = fopen(filename, "w+")))
+   {
+      fwrite(data, sizeof(char), size, fout);
+      fclose(fout);
+   }
+   else
+   {
+      tell(0, "Error, can't store '%s' to filesystem '%s'", filename, strerror(errno));
+      return fail;
+   }
+
+   return success;
+}
+
+//***************************************************************************
+// Load From File
+//***************************************************************************
+
+int loadFromFile(const char* infile, MemoryStruct* data)
+{
+   FILE* fin;
+   struct stat sb;
+
+   data->clear();
+
+   if (!fileExists(infile))
+   {
+      tell(0, "File '%s' not found'", infile);
+      return fail;
+   }
+
+   if (stat(infile, &sb) < 0)
+   {
+      tell(0, "Can't get info of '%s', error was '%s'", infile, strerror(errno));
+      return fail;
+   }
+
+   if ((fin = fopen(infile, "r")))
+   {
+      const char* sfx = suffixOf(infile);
+
+      data->size = sb.st_size;
+      data->modTime = sb.st_mtime;
+      data->memory = (char*)malloc(data->size);
+      fread(data->memory, sizeof(char), data->size, fin);
+      fclose(fin);
+      sprintf(data->tag, "%ld", data->size);
+
+      if (strcmp(sfx, "gz") == 0)
+         sprintf(data->contentEncoding, "gzip");
+      
+      if (strcmp(sfx, "js") == 0)
+         sprintf(data->contentType, "application/javascript");
+
+      else if (strcmp(sfx, "png") == 0 || strcmp(sfx, "jpg") == 0 || strcmp(sfx, "gif") == 0)
+         sprintf(data->contentType, "image/%s", sfx);
+
+      else if (strcmp(sfx, "ico") == 0)
+         strcpy(data->contentType, "image/x-icon");
+
+      else
+         sprintf(data->contentType, "text/%s", sfx);
+   }
+   else
+   {
+      tell(0, "Error, can't open '%s' for reading, error was '%s'", infile, strerror(errno));
+      return fail;
+   }
+
+   return success;
+}
+
+//***************************************************************************
 // TOOLS
 //***************************************************************************
 
@@ -337,6 +489,33 @@ int isEmpty(const char* str)
 {
    return !str || !*str;
 }
+
+const char* notNull(const char* str)
+{
+   if (!str)
+      return "<null>";
+
+   return str;
+}
+
+int isZero(const char* str)
+{
+   const char* p = str;
+
+   while (p && *p)
+   {
+      if (*p != '0')
+         return no;
+
+      p++;
+   }
+
+   return yes;
+}
+
+//***************************************************************************
+// 
+//***************************************************************************
 
 char* sstrcpy(char* dest, const char* src, int max)
 {
@@ -356,9 +535,19 @@ int isLink(const char* path)
    if (lstat(path, &sb) == 0)
       return S_ISLNK(sb.st_mode);
 
-   tell(0, "Error: Detecting state for '%s' failed, error was '%m'", path);
+   tell(0, "Error: Detecting state for '%s' failed, error was '%s'", path, strerror(errno));
 
    return false;
+}
+
+const char* suffixOf(const char* path)
+{
+   const char* p;
+
+   if (path && (p = strrchr(path, '.')))
+      return p+1;
+
+   return "";
 }
 
 int fileSize(const char* path)
@@ -368,9 +557,21 @@ int fileSize(const char* path)
    if (lstat(path, &sb) == 0)
       return sb.st_size;
 
-   tell(0, "Error: Detecting state for '%s' failed, error was '%m'", path);
+   tell(0, "Error: Detecting state for '%s' failed, error was '%s'", path, strerror(errno));
 
-   return false;
+   return 0;
+}
+
+time_t fileModTime(const char* path)
+{
+   struct stat sb;
+
+   if (lstat(path, &sb) == 0)
+      return sb.st_mtime;
+
+   tell(0, "Error: Detecting state for '%s' failed, error was '%s'", path, strerror(errno));
+
+   return 0;
 }
 
 
@@ -390,7 +591,7 @@ int createLink(const char* link, const char* dest, int force)
       
       if (symlink(dest, link) != 0)
       {
-         tell(0, "Failed to create symlink '%s', error was '%m'", link);
+         tell(0, "Failed to create symlink '%s', error was '%s'", link, strerror(errno));
          return fail;
       }
    }
@@ -408,7 +609,7 @@ int removeFile(const char* filename)
 
    if (unlink(filename) != 0)
    {
-      tell(0, "Can't remove file '%s', '%m'", filename);
+      tell(0, "Can't remove file '%s', '%s'", filename, strerror(errno));
       
       return 1;
    }
@@ -432,7 +633,7 @@ int chkDir(const char* path)
       
       if (mkdir(path, ACCESSPERMS) == -1)
       {
-         tell(0, "Can't create directory '%m'");
+         tell(0, "Can't create directory '%s'", strerror(errno));
          return fail;
       }
    }
@@ -541,6 +742,63 @@ int gunzip(MemoryStruct* zippedData, MemoryStruct* unzippedData)
    return success;
 }
 
+//***************************************************************************
+// gzip
+//***************************************************************************
+
+int _gzip(Bytef* dest, uLongf* destLen, const Bytef* source, uLong sourceLen)
+{
+    z_stream stream;
+    int res;
+
+    stream.next_in = (Bytef *)source;
+    stream.avail_in = (uInt)sourceLen;
+    stream.next_out = dest;
+    stream.avail_out = (uInt)*destLen;
+    if ((uLong)stream.avail_out != *destLen) return Z_BUF_ERROR;
+
+    stream.zalloc = (alloc_func)0;
+    stream.zfree = (free_func)0;
+    stream.opaque = (voidpf)0;
+
+    if ((res = deflateInit2(&stream, Z_DEFAULT_COMPRESSION, Z_DEFLATED, 15 + 16, 8, Z_DEFAULT_STRATEGY)) != Z_OK)
+       return res;
+
+    res = deflate(&stream, Z_FINISH);
+
+    if (res != Z_STREAM_END) 
+    {
+        deflateEnd(&stream);
+        return res == Z_OK ? Z_BUF_ERROR : res;
+    }
+
+    *destLen = stream.total_out;
+    res = deflateEnd(&stream);
+
+    return res;
+}
+
+int gzip(MemoryStruct* data, MemoryStruct* zippedData)
+{
+   int res;
+   uLong sizeMax = compressBound(data->size) + 512;
+
+   zippedData->clear();
+   zippedData->memory = (char*)malloc(sizeMax);
+
+   if ((res = _gzip((Bytef*)zippedData->memory, &sizeMax, (Bytef*)data->memory, data->size)) != Z_OK)
+   {
+      tellZipError(res, " during compression", "");
+      return fail;
+   }
+
+   zippedData->copyAttributes(data);
+   zippedData->size = sizeMax;
+   sprintf(zippedData->contentEncoding, "gzip");
+
+   return success;
+}
+
 //*************************************************************************
 // tellZipError
 //*************************************************************************
@@ -554,11 +812,11 @@ void tellZipError(int errorCode, const char* op, const char* msg)
    {
       case Z_OK:           return;
       case Z_STREAM_END:   return;
-      case Z_MEM_ERROR:    tell(0, "Error: Not enough memory to unzip file%s!\n", op); return;
-      case Z_BUF_ERROR:    tell(0, "Error: Couldn't unzip data due to output buffer size problem%s!\n", op); return;
+      case Z_MEM_ERROR:    tell(0, "Error: Not enough memory to zip/unzip file%s!\n", op); return;
+      case Z_BUF_ERROR:    tell(0, "Error: Couldn't zip/unzip data due to output buffer size problem%s!\n", op); return;
       case Z_DATA_ERROR:   tell(0, "Error: Zipped input data corrupted%s! Details: %s\n", op, msg); return;
       case Z_STREAM_ERROR: tell(0, "Error: Invalid stream structure%s. Details: %s\n", op, msg); return;
-      default:             tell(0, "Error: Couldn't unzip data for unknown reason (%6d)%s!\n", errorCode, op); return;
+      default:             tell(0, "Error: Couldn't zip/unzip data for unknown reason (%6d)%s!\n", errorCode, op); return;
    }
 }
 
@@ -659,7 +917,7 @@ int unzip(const char* file, const char* filter, char*& buffer, int& size, char* 
 
    if (r != ARCHIVE_OK)
    {
-      tell(0, "Error: Open '%s' failed - %m", file);
+      tell(0, "Error: Open '%s' failed - %s", file, strerror(errno));
       return 1;
    }
 
@@ -720,13 +978,13 @@ LogDuration::LogDuration(const char* aMessage, int aLogLevel)
 
 LogDuration::~LogDuration()
 {
-   tell(logLevel, "duration '%s' was (%dms)",
+   tell(logLevel, "duration '%s' was (%ldms)",
      message, cTimeMs::Now() - durationStart);
 }
 
 void LogDuration::show(const char* label)
 {
-   tell(logLevel, "elapsed '%s' at '%s' was (%dms)",
+   tell(logLevel, "elapsed '%s' at '%s' was (%ldms)",
         message, label, cTimeMs::Now() - durationStart);
 }
 
@@ -785,7 +1043,7 @@ int createMd5OfFile(const char* path, const char* name, md5* md5)
    
    if (!(f = fopen(file, "r")))
    {
-      tell(0, "Fatal: Can't access '%s'; %m", file);
+      tell(0, "Fatal: Can't access '%s'; %s", file, strerror(errno));
       free(file);
       return fail;
    }
@@ -810,3 +1068,137 @@ int createMd5OfFile(const char* path, const char* name, md5* md5)
 }
 
 #endif // USEMD5
+
+//***************************************************************************
+// Url Unescape
+//***************************************************************************
+/*
+ * The buffer pointed to by @dst must be at least strlen(@src) bytes.
+ * Decoding stops at the first character from @src that decodes to null.
+
+ * Path normalization will remove redundant slashes and slash+dot sequences,
+ * as well as removing path components when slash+dot+dot is found. It will
+ * keep the root slash (if one was present) and will stop normalization
+ * at the first questionmark found (so query parameters won't be normalized).
+ *
+ * @param dst       destination buffer
+ * @param src       source buffer
+ * @param normalize perform path normalization if nonzero
+ * @return          number of valid characters in @dst
+ */
+
+int urlUnescape(char* dst, const char* src, int normalize)
+{
+//    CURL* curl;
+//    int resultSize;
+
+//    if (curl_global_init(CURL_GLOBAL_ALL) != 0)
+//    {
+//       tell(0, "Error, something went wrong with curl_global_init()");
+      
+//       return fail;
+//    }
+   
+//    curl = curl_easy_init();
+   
+//    if (!curl)
+//    {
+//       tell(0, "Error, unable to get handle from curl_easy_init()");
+      
+//       return fail;
+//    }
+
+//    dst = curl_easy_unescape(curl, src, strlen(src), &resultSize);
+
+//    tell(0, " [%.40s]", src);
+
+//    tell(0, "res size %d [%.40s]", resultSize, dst);
+//    return resultSize;
+
+   char* org_dst = dst;
+   int slash_dot_dot = 0;
+   char ch, a, b;
+
+   a = 0;
+
+   do {
+      ch = *src++;
+
+      if (ch == '%' && isxdigit(a = src[0]) && isxdigit(b = src[1])) 
+      {
+         if (a < 'A') 
+            a -= '0';
+         else if 
+            (a < 'a') a -= 'A' - 10;
+         else 
+            a -= 'a' - 10;
+         
+         if (b < 'A') 
+            b -= '0';
+         else if (b < 'a') 
+            b -= 'A' - 10;
+         else 
+            b -= 'a' - 10;
+         
+         ch = 16 * a + b;
+         src += 2;
+      }
+      
+      if (normalize) 
+      {
+         switch (ch) 
+         {
+            case '/':                         // compress consecutive slashes and remove slash-dot
+               if (slash_dot_dot < 3) 
+               {
+                  
+                  dst -= slash_dot_dot;
+                  slash_dot_dot = 1;
+                  break;
+               }
+               // fall-through
+
+            case '?':                         // at start of query, stop normalizing
+               if (ch == '?')
+                  normalize = 0;
+
+               // fall-through
+
+            case '\0':                        // remove trailing slash-dot-(dot)
+               if (slash_dot_dot > 1) 
+               {
+                  dst -= slash_dot_dot;
+
+                  // remove parent directory if it was two dots
+
+                  if (slash_dot_dot == 3)
+                     while (dst > org_dst && *--dst != '/')
+                        ; //  empty body
+                  slash_dot_dot = (ch == '/') ? 1 : 0;
+
+                  // keep the root slash if any
+
+                  if (!slash_dot_dot && dst == org_dst && *dst == '/')
+                     ++dst;
+
+               }
+               break;
+
+            case '.':
+               if (slash_dot_dot == 1 || slash_dot_dot == 2) 
+               {
+                  ++slash_dot_dot;
+                  break;
+               }
+               // fall-through
+
+            default:
+               slash_dot_dot = 0;
+         }
+      }
+
+      *dst++ = ch;
+   } while(ch);
+   
+   return (dst - org_dst) - 1;
+}

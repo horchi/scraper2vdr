@@ -354,7 +354,7 @@ void cScrapManager::DumpMovies(void) {
 }
 
 void cScrapManager::DumpRecordings(void) {
-	tell(0, "%d recordings in memory:", recordings.size());
+	tell(0, "%ld recordings in memory:", recordings.size());
 	for (map<sRecordingsKey, sEventsValue>::iterator it = recordings.begin(); it != recordings.end(); it++) {
 		sRecordingsKey key = it->first;
 		sEventsValue val = it->second;
@@ -373,6 +373,7 @@ bool cScrapManager::GetEventType(ScraperGetEventType *call) {
 		tell(0, "scraper2vdr plugin service call GetEventType called");
 	}
 	sEventsValue v;
+   memset(&v, 0, sizeof(sEventsValue));
 	if (call->event) {
 		sEventsKey k;
 		k.eventId = call->event->EventID();
@@ -543,6 +544,7 @@ bool cScrapManager::GetPoster(ScraperGetPoster *call) {
         return m->GetMedia(mmPoster, &call->poster);
     }
 
+    return true;
 }
 
 bool cScrapManager::GetPosterThumb(ScraperGetPosterThumb *call) {

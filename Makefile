@@ -25,7 +25,7 @@ TMPDIR ?= /tmp
 ### The compiler options:
 
 export CFLAGS   = $(call PKGCFG,cflags)
-export CXXFLAGS = $(call PKGCFG,cxxflags)
+export CXXFLAGS = $(call PKGCFG,cxxflags) -Wno-unused-result -Wunused-value -Wunused-variable -Wreturn-type -Wuninitialized -Wsign-compare
 
 ### The version number of VDR's plugin API:
 
@@ -35,7 +35,7 @@ APIVERSION = $(call PKGCFG,apiversion)
 
 -include $(PLGCFG)
 
-LIBS = -lmysqlclient_r -luuid
+LIBS = $(shell mysql_config --libs_r) -luuid
 
 ### The name of the distribution archive:
 
@@ -48,9 +48,9 @@ SOFILE = libvdr-$(PLUGIN).so
 
 ### Includes and Defines (add further entries here):
 
-INCLUDES +=
+INCLUDES += $(shell mysql_config --include)
 
-DEFINES += -DPLUGIN_NAME_I18N='"$(PLUGIN)"'
+DEFINES += -DPLUGIN_NAME_I18N='"$(PLUGIN)"' -DLOG_PREFIX='"$(PLUGIN): "'
 DEFINES += -DVDR_PLUGIN -DUSEUUID
 
 ifeq ($(IMAGELIB), imagemagick)
@@ -129,4 +129,7 @@ dist: $(I18Npo) clean
 
 clean:
 	@-rm -f $(PODIR)/*.mo $(PODIR)/*.pot
-	@-rm -f $(OBJS) $(DEPFILE) *.so *.tgz core* *~
+	@-rm -f $(OBJS) $(DEPFILE) *.so *.tgz core* *~ lib/*~
+
+cppchk:
+	cppcheck --template="{file}:{line}:{severity}:{message}" --quiet --force *.c *.h lib/*.c lib/*.h

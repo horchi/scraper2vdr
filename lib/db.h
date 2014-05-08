@@ -13,10 +13,10 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <errno.h>
-
-#include <sstream>
-
 #include <mysql/mysql.h>
+
+#include <list>
+#include <sstream>
 
 #include "common.h"
 
@@ -40,6 +40,8 @@ class cDbService
 
       enum FieldFormat
       {
+         ffUnknown = na,
+
          ffInt,
          ffUInt,
          ffAscii,      // -> VARCHAR
@@ -52,6 +54,8 @@ class cDbService
 
       enum FieldType
       {
+         ftUnknown    = na,
+
          ftData       = 1,
          ftPrimary    = 2,
          ftMeta       = 4,
@@ -90,7 +94,12 @@ class cDbService
       };
 
       static const char* toString(FieldFormat t);
+      static FieldFormat toDictFormat(const char* format);
       static const char* formats[];
+      static const char* dictFormats[];
+
+      static FieldType toType(const char* type);      
+      static const char* types[];
 };
 
 typedef cDbService cDBS;
@@ -374,8 +383,7 @@ class cDbStatement : public cDbService
 
       cDbStatement(cDbTable* aTable);
       cDbStatement(cDbConnection* aConnection, const char* stmt = "");
-
-      virtual ~cDbStatement()  { clear(); }
+      virtual ~cDbStatement();
       
       int execute(int noResult = no);
       int find();
@@ -404,6 +412,12 @@ class cDbStatement : public cDbService
       int getResultCount();
       const char* asText() { return stmtTxt.c_str(); }
 
+      void showStat();
+
+      // data
+
+      static int explain;          // debug explain
+
    private:
 
       void clear();
@@ -415,11 +429,49 @@ class cDbStatement : public cDbService
       cDbConnection* connection;
       cDbTable* table;
       int inCount;
-      MYSQL_BIND* inBind;   // to db
+      MYSQL_BIND* inBind;         // to db
       int outCount;
-      MYSQL_BIND* outBind;  // from db (result)
+      MYSQL_BIND* outBind;        // from db (result)
       MYSQL_RES* metaResult;
       const char* bindPrefix;
+      int firstExec;               // debug explain
+
+      unsigned long callsPeriod;
+      unsigned long callsTotal;
+      double duration;
+};
+
+//***************************************************************************
+// cDbStatements
+//***************************************************************************
+
+class cDbStatements
+{
+   public:
+
+      cDbStatements()  { statisticPeriod = time(0); }
+      ~cDbStatements() {};
+      
+      void append(cDbStatement* s)  { statements.push_back(s); }
+      void remove(cDbStatement* s)  { statements.remove(s); }
+
+      void showStat()
+      {
+         tell(0, "Statement statistic of last %ld seconds:", statisticPeriod);
+
+         for (std::list<cDbStatement*>::iterator it = statements.begin() ; it != statements.end(); ++it)
+         {
+            if (*it)
+               (*it)->showStat();
+         }
+
+         statisticPeriod = time(0);
+      }
+
+   private:
+
+      time_t statisticPeriod;
+      std::list<cDbStatement*> statements;
 };
 
 //***************************************************************************
@@ -628,7 +680,7 @@ class cDbConnection
          {
             nread += res;
             size += 1000;
-            buffer = (char*)realloc(buffer, size+1);
+            buffer = srealloc(buffer, size+1);
          }
          
          fclose(f);
@@ -704,6 +756,8 @@ class cDbConnection
 
       int errorSql(cDbConnection* mysql, const char* prefix, MYSQL_STMT* stmt = 0, const char* stmtTxt = 0);
 
+      void showStat()   { statements.showStat(); }
+
       static int init()
       {
          if (mysql_library_init(0, 0, 0)) 
@@ -728,6 +782,8 @@ class cDbConnection
       }
 
       MYSQL* mysql;
+
+      cDbStatements statements;         // all statements of this connection
 
    private:
 

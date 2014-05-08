@@ -19,8 +19,8 @@ const char* cEpgdState::states[] =
 
    "busy (events)",
    "busy (match)",
-   "busy (images)",
    "busy (scraping)",
+   "busy (images)",
 
    0
 };

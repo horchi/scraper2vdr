@@ -44,10 +44,13 @@ cEPG2VDRConfig::cEPG2VDRConfig(void)
    scheduleBoot = no;
 #else
    sstrcpy(cachePath, "/var/cache/epgd", sizeof(cachePath));
+   sstrcpy(httpPath, "/var/epgd/www", sizeof(httpPath));
    sstrcpy(pluginPath, PLGDIR, sizeof(pluginPath));
    sstrcpy(epgView, "eventsview.sql", sizeof(epgView));
+   sstrcpy(theTvDBView, "thetvdbview.sql", sizeof(epgView));
    updateThreshold = 200;
    maintanance = no;
+   httpPort = 9999;
 #endif
 
    sstrcpy(dbHost, "localhost", sizeof(dbHost));
@@ -60,4 +63,7 @@ cEPG2VDRConfig::cEPG2VDRConfig(void)
    loglevel = 1;
 
    uuid[0] = 0;
+
+   scrapEpg = yes;
+   scrapRecordings = yes;
 } 

@@ -26,13 +26,16 @@ class cEpgdState
          esStandby,
          esStopped,
 
+         // handler pause on this states!
+
          esBusy,
          esBusyEvents = esBusy,
          esBusyMatch,
+         esBusyScraping,
+
+         // handler don't pause on this states!
 
          esBusyImages,
-
-         esBusyScraping,
 
          esCount
       };
@@ -78,6 +81,7 @@ class cUpdateState
 
       static const char* getDeletable()      { return "'A','L','P','R','I'"; }
       static const char* getNeeded()         { return "'A','L','P','C','D','R'"; }
+      static const char* getVisible()        { return "'A','L','P'"; }
 
       // checks fpr c++ code
 

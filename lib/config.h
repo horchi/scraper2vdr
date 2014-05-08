@@ -47,10 +47,13 @@ struct cEPG2VDRConfig
       int scheduleBoot;
 #else
       char cachePath[256+TB];
+      char httpPath[256+TB];
       char pluginPath[256+TB];
       char epgView[100+TB];
+      char theTvDBView[100+TB];
       int updateThreshold;
       int maintanance;
+      int httpPort;
 #endif
 
       char dbHost[100+TB];
@@ -66,6 +69,10 @@ struct cEPG2VDRConfig
       int mainmenuFullupdate;
       int masterMode;
       char uuid[sizeUuid+TB];
+
+      int scrapEpg;
+      int scrapRecordings;
+
 };
 
 extern cEPG2VDRConfig EPG2VDRConfig;
