@@ -25,20 +25,19 @@
 # include <archive_entry.h>
 #endif
 
-#ifdef VDR_PLUGIN
-# include <vdr/thread.h>
-#endif
-
 #include "common.h"
 #include "config.h"
 
-#ifdef VDR_PLUGIN
-  cMutex logMutex;
-#endif
+cMyMutex logMutex;
 
 //***************************************************************************
 // Debug
 //***************************************************************************
+
+const char* getLogPrefix() 
+{ 
+   return logPrefix; 
+}
 
 void tell(int eloquence, const char* format, ...)
 {
@@ -49,15 +48,12 @@ void tell(int eloquence, const char* format, ...)
    char t[sizeBuffer+100]; *t = 0;
    va_list ap;
 
-#ifdef VDR_PLUGIN
-   cMutexLock lock(&logMutex);
-#endif
+   logMutex.Lock();
 
    va_start(ap, format);
 
-#ifdef VDR_PLUGIN
-   snprintf(t, sizeBuffer, LOG_PREFIX);
-#endif
+   if (getLogPrefix())
+      snprintf(t, sizeBuffer, "%s", getLogPrefix());
 
    vsnprintf(t+strlen(t), sizeBuffer-strlen(t), format, ap);
    
@@ -74,11 +70,12 @@ void tell(int eloquence, const char* format, ...)
               tm->tm_hour, tm->tm_min, tm->tm_sec, 
               tp.tv_usec / 1000);
 
-      printf("%s %s\n", buf, t);
-      
+      printf("%s %s\n", buf, t);     
    }
    else
       syslog(LOG_ERR, "%s", t);
+
+   logMutex.Unlock();
 
    va_end(ap);
 }
@@ -959,12 +956,103 @@ int unzip(const char* file, const char* filter, char*& buffer, int& size, char* 
 #endif
 
 //***************************************************************************
-// Class LogDuration
+// cMyMutex
 //***************************************************************************
 
-#ifdef VDR_PLUGIN
+cMyMutex::cMyMutex (void)
+{
+  locked = 0;
+  pthread_mutexattr_t attr;
+  pthread_mutexattr_init(&attr);
+  pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK_NP);
+  pthread_mutex_init(&mutex, &attr);
+}
 
-# include <vdr/plugin.h>
+cMyMutex::~cMyMutex()
+{
+  pthread_mutex_destroy(&mutex);
+}
+
+void cMyMutex::Lock(void)
+{
+  pthread_mutex_lock(&mutex);
+  locked++;
+}
+
+void cMyMutex::Unlock(void)
+{
+ if (!--locked)
+    pthread_mutex_unlock(&mutex);
+}
+
+//***************************************************************************
+// cMyTimeMs
+//***************************************************************************
+
+cMyTimeMs::cMyTimeMs(int Ms)
+{
+  if (Ms >= 0)
+     Set(Ms);
+  else
+     begin = 0;
+}
+
+uint64_t cMyTimeMs::Now(void)
+{
+#define MIN_RESOLUTION 5 // ms
+  static bool initialized = false;
+  static bool monotonic = false;
+  struct timespec tp;
+  if (!initialized) {
+     // check if monotonic timer is available and provides enough accurate resolution:
+     if (clock_getres(CLOCK_MONOTONIC, &tp) == 0) {
+        // long Resolution = tp.tv_nsec;
+        // require a minimum resolution:
+        if (tp.tv_sec == 0 && tp.tv_nsec <= MIN_RESOLUTION * 1000000) {
+           if (clock_gettime(CLOCK_MONOTONIC, &tp) == 0) {
+              monotonic = true;
+              }
+           else
+              tell(0, "cMyTimeMs: clock_gettime(CLOCK_MONOTONIC) failed");
+           }
+        else
+           tell(0, "cMyTimeMs: not using monotonic clock - resolution is too bad (%ld s %ld ns)", tp.tv_sec, tp.tv_nsec);
+        }
+     else
+        tell(0, "cMyTimeMs: clock_getres(CLOCK_MONOTONIC) failed");
+     initialized = true;
+     }
+  if (monotonic) {
+     if (clock_gettime(CLOCK_MONOTONIC, &tp) == 0)
+        return (uint64_t(tp.tv_sec)) * 1000 + tp.tv_nsec / 1000000;
+     tell(0, "cMyTimeMs: clock_gettime(CLOCK_MONOTONIC) failed");
+     monotonic = false;
+     // fall back to gettimeofday()
+     }
+  struct timeval t;
+  if (gettimeofday(&t, NULL) == 0)
+     return (uint64_t(t.tv_sec)) * 1000 + t.tv_usec / 1000;
+  return 0;
+}
+
+void cMyTimeMs::Set(int Ms)
+{
+  begin = Now() + Ms;
+}
+
+bool cMyTimeMs::TimedOut(void)
+{
+  return Now() >= begin;
+}
+
+uint64_t cMyTimeMs::Elapsed(void)
+{
+  return Now() - begin;
+}
+
+//***************************************************************************
+// Class LogDuration
+//***************************************************************************
 
 LogDuration::LogDuration(const char* aMessage, int aLogLevel)
 {
@@ -973,22 +1061,20 @@ LogDuration::LogDuration(const char* aMessage, int aLogLevel)
    
    // at last !
 
-   durationStart = cTimeMs::Now();
+   durationStart = cMyTimeMs::Now();
 }
 
 LogDuration::~LogDuration()
 {
    tell(logLevel, "duration '%s' was (%ldms)",
-     message, cTimeMs::Now() - durationStart);
+     message, cMyTimeMs::Now() - durationStart);
 }
 
 void LogDuration::show(const char* label)
 {
    tell(logLevel, "elapsed '%s' at '%s' was (%ldms)",
-        message, label, cTimeMs::Now() - durationStart);
+        message, label, cMyTimeMs::Now() - durationStart);
 }
-
-#endif
 
 //***************************************************************************
 // Get Unique ID

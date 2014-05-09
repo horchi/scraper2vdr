@@ -32,7 +32,7 @@ CFLAGS += -fPIC -Wreturn-type -Wall -Wno-parentheses -Wformat -pedantic -Wunused
 
 CFLAGS   += $(shell mysql_config --include)
 
-DEFINES = -DPLGDIR='"."' -DUSEUUID -DUSEMD5
+DEFINES = -DPLGDIR='"."' -DUSEUUID -DUSEMD5 -USELIBXML
 
 all: lib $(TEST) $(DEMO)
 lib: $(LIBTARGET).a

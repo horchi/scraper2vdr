@@ -39,10 +39,13 @@ cEPG2VDRConfig::cEPG2VDRConfig(void)
    seriesPort = 2006;
    storeSeriesToFs = no;
 
-#ifdef VDR_PLUGIN
+   // for VDR_PLUGIN
+
    activeOnEpgd = no;
    scheduleBoot = no;
-#else
+
+   // for epgd
+
    sstrcpy(cachePath, "/var/cache/epgd", sizeof(cachePath));
    sstrcpy(httpPath, "/var/epgd/www", sizeof(httpPath));
    sstrcpy(pluginPath, PLGDIR, sizeof(pluginPath));
@@ -51,7 +54,8 @@ cEPG2VDRConfig::cEPG2VDRConfig(void)
    updateThreshold = 200;
    maintanance = no;
    httpPort = 9999;
-#endif
+
+   // 
 
    sstrcpy(dbHost, "localhost", sizeof(dbHost));
    dbPort = 3306;

@@ -14,7 +14,9 @@ Version 0.1.0
 - fixed bug that scraped events are not displayed randomly
 
 Version 0.1.1
+- ...
 
+Version 0.1.2
 - update of db api
 - prepare statements only once
 - added statement statistic
@@ -23,5 +25,3 @@ Version 0.1.1
 - added path detection for libmysql
 - fixed epgd state detection
 - added cppcheck to Makefile
-
-Version 0.1.2

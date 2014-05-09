@@ -15,9 +15,10 @@
 
 #include <openssl/md5.h> // MD5_*
 
-#ifdef VDR_PLUGIN
-#  include <vdr/tools.h>
-#endif
+//#ifdef VDR_PLUGIN
+//#  include <vdr/tools.h>
+//#  include <vdr/thread.h>
+//#endif
 
 #ifdef USELIBXML
 # include <libxslt/transform.h>
@@ -29,10 +30,10 @@
 // Misc
 //***************************************************************************
 
-#ifndef VDR_PLUGIN
-  inline long min(long a, long b) { return a < b ? a : b; }
-  inline long max(long a, long b) { return a > b ? a : b; }
-#endif
+// #ifndef VDR_PLUGIN
+inline long min(long a, long b) { return a < b ? a : b; }
+inline long max(long a, long b) { return a > b ? a : b; }
+// #endif
 
 enum Misc
 {
@@ -69,6 +70,9 @@ const char* toCase(Case cs, char* str);
 // Tell
 //***************************************************************************
 
+extern const char* logPrefix;
+
+const char* getLogPrefix();
 void __attribute__ ((format(printf, 2, 3))) tell(int eloquence, const char* format, ...);
 
 //***************************************************************************
@@ -220,7 +224,41 @@ int unzip(const char* file, const char* filter, char*& buffer,
           int& size, char* entryName);
 #endif
 
-#ifdef VDR_PLUGIN
+//***************************************************************************
+// cMyMutex
+//***************************************************************************
+
+class cMyMutex 
+{
+  friend class cCondVar;
+private:
+  pthread_mutex_t mutex;
+  int locked;
+public:
+  cMyMutex(void);
+  ~cMyMutex();
+  void Lock(void);
+  void Unlock(void);
+  };
+
+//***************************************************************************
+// cMyTimeMs
+//***************************************************************************
+
+class cMyTimeMs 
+{
+   private:
+
+      uint64_t begin;
+
+   public:
+
+      cMyTimeMs(int Ms = 0);
+      static uint64_t Now(void);
+      void Set(int Ms = 0);
+      bool TimedOut(void);
+      uint64_t Elapsed(void);
+};
 
 //***************************************************************************
 // Log Duration
@@ -241,7 +279,6 @@ class LogDuration
       uint64_t durationStart;
       int logLevel;
 };
-#endif
 
 //***************************************************************************
 #endif //___COMMON_H

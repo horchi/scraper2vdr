@@ -42,10 +42,13 @@ struct cEPG2VDRConfig
       int seriesPort;
       int storeSeriesToFs;
 
-#ifdef VDR_PLUGIN
+      // for VDR_PLUGIN
+
       int activeOnEpgd;
       int scheduleBoot;
-#else
+
+      // for epgd
+
       char cachePath[256+TB];
       char httpPath[256+TB];
       char pluginPath[256+TB];
@@ -54,7 +57,8 @@ struct cEPG2VDRConfig
       int updateThreshold;
       int maintanance;
       int httpPort;
-#endif
+
+      // 
 
       char dbHost[100+TB];
       int dbPort;

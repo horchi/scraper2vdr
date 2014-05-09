@@ -7,6 +7,7 @@
  */
 
 #include "scraper2vdr.h"
+const char* logPrefix = LOG_PREFIX;
 
 #if defined (APIVERSNUM) && (APIVERSNUM < 10600)
 # error VDR API versions < 1.6.0 are not supported !

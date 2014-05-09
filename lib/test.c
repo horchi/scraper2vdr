@@ -13,25 +13,7 @@
 #include "dbdict.h"
 
 cDbConnection* connection = 0;
-
-//***************************************************************************
-// 
-//***************************************************************************
-
-class cTimeMs 
-{
-   private:
-
-      uint64_t begin;
-
-   public:
-
-      cTimeMs(int Ms = 0);
-      static uint64_t Now(void);
-      void Set(int Ms = 0);
-      bool TimedOut(void);
-      uint64_t Elapsed(void);
-};
+const char* logPrefix = "test";
 
 //***************************************************************************
 // Init Connection
@@ -271,69 +253,6 @@ void chkStatement3()
    delete s;
    delete epgDb;
    delete mapDb;
-}
-
-// --- cTimeMs ---------------------------------------------------------------
-
-cTimeMs::cTimeMs(int Ms)
-{
-  if (Ms >= 0)
-     Set(Ms);
-  else
-     begin = 0;
-}
-
-uint64_t cTimeMs::Now(void)
-{
-#define MIN_RESOLUTION 5 // ms
-  static bool initialized = false;
-  static bool monotonic = false;
-  struct timespec tp;
-  if (!initialized) {
-     // check if monotonic timer is available and provides enough accurate resolution:
-     if (clock_getres(CLOCK_MONOTONIC, &tp) == 0) {
-        // long Resolution = tp.tv_nsec;
-        // require a minimum resolution:
-        if (tp.tv_sec == 0 && tp.tv_nsec <= MIN_RESOLUTION * 1000000) {
-           if (clock_gettime(CLOCK_MONOTONIC, &tp) == 0) {
-              monotonic = true;
-              }
-           else
-              tell(0, "cTimeMs: clock_gettime(CLOCK_MONOTONIC) failed");
-           }
-        else
-           tell(0, "cTimeMs: not using monotonic clock - resolution is too bad (%ld s %ld ns)", tp.tv_sec, tp.tv_nsec);
-        }
-     else
-        tell(0, "cTimeMs: clock_getres(CLOCK_MONOTONIC) failed");
-     initialized = true;
-     }
-  if (monotonic) {
-     if (clock_gettime(CLOCK_MONOTONIC, &tp) == 0)
-        return (uint64_t(tp.tv_sec)) * 1000 + tp.tv_nsec / 1000000;
-     tell(0, "cTimeMs: clock_gettime(CLOCK_MONOTONIC) failed");
-     monotonic = false;
-     // fall back to gettimeofday()
-     }
-  struct timeval t;
-  if (gettimeofday(&t, NULL) == 0)
-     return (uint64_t(t.tv_sec)) * 1000 + t.tv_usec / 1000;
-  return 0;
-}
-
-void cTimeMs::Set(int Ms)
-{
-  begin = Now() + Ms;
-}
-
-bool cTimeMs::TimedOut(void)
-{
-  return Now() >= begin;
-}
-
-uint64_t cTimeMs::Elapsed(void)
-{
-  return Now() - begin;
 }
 
 //***************************************************************************

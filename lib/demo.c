@@ -7,6 +7,7 @@
 #include "tabledef.h"
 
 cDbConnection* connection = 0;
+const char* logPrefix = "demo";
 
 //***************************************************************************
 // Init Connection

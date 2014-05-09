@@ -4,10 +4,11 @@
 # $Id$
 
 # External image lib to use: imagemagick, graphicsmagick
+
 IMAGELIB = imagemagick
 
 PLUGIN = scraper2vdr
-HLIB     = -L./lib -lhorchi
+HLIB   = -L./lib -lhorchi
 
 ### The version number of this plugin (taken from the main source file):
 
@@ -36,7 +37,7 @@ APIVERSION = $(call PKGCFG,apiversion)
 
 -include $(PLGCFG)
 
-LIBS = $(HLIB) $(shell mysql_config --libs_r) -luuid
+LIBS = $(HLIB) $(shell mysql_config --libs_r) -luuid -lcrypto
 
 ### The name of the distribution archive:
 
