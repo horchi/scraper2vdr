@@ -7,6 +7,7 @@
 IMAGELIB = imagemagick
 
 PLUGIN = scraper2vdr
+HLIB     = -L./lib -lhorchi
 
 ### The version number of this plugin (taken from the main source file):
 
@@ -35,7 +36,7 @@ APIVERSION = $(call PKGCFG,apiversion)
 
 -include $(PLGCFG)
 
-LIBS = $(shell mysql_config --libs_r) -luuid
+LIBS = $(HLIB) $(shell mysql_config --libs_r) -luuid
 
 ### The name of the distribution archive:
 
@@ -63,11 +64,14 @@ endif
 
 ### The object files (add further files here):
 
-OBJS = $(PLUGIN).o config.o setup.o update.o scrapmanager.o tvdbseries.o moviedbmovie.o tools.o lib/db.o lib/tabledef.o lib/common.o lib/config.o
+OBJS = $(PLUGIN).o config.o setup.o update.o scrapmanager.o tvdbseries.o moviedbmovie.o tools.o 
 
 ### The main target:
 
-all: $(SOFILE) i18n
+all: hlib $(SOFILE) i18n
+
+hlib: 
+	(cd lib && make -s lib)
 
 ### Implicit rules:
 
@@ -129,7 +133,8 @@ dist: $(I18Npo) clean
 
 clean:
 	@-rm -f $(PODIR)/*.mo $(PODIR)/*.pot
-	@-rm -f $(OBJS) $(DEPFILE) *.so *.tgz core* *~ lib/*~
+	@-rm -f $(OBJS) $(DEPFILE) *.so *.tgz core* *~ 
+	(cd lib && make clean)
 
 cppchk:
 	cppcheck --template="{file}:{line}:{severity}:{message}" --quiet --force *.c *.h lib/*.c lib/*.h

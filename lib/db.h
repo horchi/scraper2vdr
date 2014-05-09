@@ -455,9 +455,9 @@ class cDbStatements
       void append(cDbStatement* s)  { statements.push_back(s); }
       void remove(cDbStatement* s)  { statements.remove(s); }
 
-      void showStat()
+      void showStat(const char* name)
       {
-         tell(0, "Statement statistic of last %ld seconds:", statisticPeriod);
+         tell(0, "Statement statistic of last %ld seconds from '%s':", time(0) - statisticPeriod, name);
 
          for (std::list<cDbStatement*>::iterator it = statements.begin() ; it != statements.end(); ++it)
          {
@@ -756,7 +756,7 @@ class cDbConnection
 
       int errorSql(cDbConnection* mysql, const char* prefix, MYSQL_STMT* stmt = 0, const char* stmtTxt = 0);
 
-      void showStat()   { statements.showStat(); }
+      void showStat(const char* name = "")   { statements.showStat(name); }
 
       static int init()
       {
