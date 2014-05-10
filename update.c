@@ -166,9 +166,9 @@ int cUpdate::initDb() {
     selectReadScrapedEvents->build(" or (%s is not null and %s > 0)) ", 
                                    tEvents->getField(cTableEvents::fiScrMovieId)->name, 
                                    tEvents->getField(cTableEvents::fiScrMovieId)->name);
-    selectReadScrapedEvents->bind(cTableEvents::fiScrSp, cDBS::bndIn | cDBS::bndSet, " and ");
+    selectReadScrapedEvents->bindCmp(0, cTableEvents::fiScrSp, 0, ">", " and ");
     selectReadScrapedEvents->build(" order by %s", tEvents->getField(cTableEvents::fiInsSp)->name);
-    
+   
     status += selectReadScrapedEvents->prepare();
     
     // select image
