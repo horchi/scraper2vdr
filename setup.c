@@ -50,19 +50,19 @@ eOSState cScraper2VdrSetup::ProcessKey(eKeys Key) {
         tmpConfig.mysqlDBUser = user;
         tmpConfig.mysqlDBPass = password;
         Store();
-        if (Current() == 6) {
+        if (Current() == 7) {
             Skins.Message(mtInfo, tr("Updating Scraper EPG Information from Database"));
             update->ForceUpdate();
-        } else if (Current() == 7) {
+        } else if (Current() == 8) {
             Skins.Message(mtInfo, tr("Updating Scraper Recordings Information from Database"));
             update->ForceRecordingUpdate();
-        } else if (Current() == 8) {
+        } else if (Current() == 9) {
             Skins.Message(mtInfo, tr("Scanning for new recordings in video directory"));
             update->ForceVideoDirUpdate();
-        } else if (Current() == 9) {
+        } else if (Current() == 10 ) {
             Skins.Message(mtInfo, tr("Scanning for new or updated scrapinfo files"));
             update->ForceScrapInfoUpdate();
-        } else if (Current() == 10) {
+        } else if (Current() == 11) {
             Skins.Message(mtInfo, tr("Cleaning up Recordings in Database"));
             update->TriggerCleanRecordingsDB();
         }
