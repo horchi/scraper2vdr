@@ -115,7 +115,7 @@ int cDbStatement::execute(int noResult)
 
    // tell(0, "execute %d [%s]", stmt, stmtTxt.c_str());
 
-   long start = usNow();
+   double start = usNow();
 
    if (mysql_stmt_execute(stmt))
       return connection->errorSql(connection, "execute(stmt_execute)", stmt, stmtTxt.c_str());
