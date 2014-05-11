@@ -13,7 +13,7 @@
 
 extern cScraper2VdrConfig config;
 
-cUpdate::cUpdate(cScrapManager *manager) : cThread("update thread started") {
+cUpdate::cUpdate(cScrapManager *manager) : cThread("update thread started", true) {
     connection = NULL;
     vdrDb = NULL;
     tEvents = NULL;
@@ -476,6 +476,7 @@ int cUpdate::ReadSeries(bool isRec) {
 
     bool isNew = false;
     int numNew = 0;
+    int i=0;
     while (scrapManager->GetNextSeries(isRec, seriesId, episodeId) && Running()) {
         cTVDBSeries *series = scrapManager->GetSeries(seriesId);
         if (!series) {
@@ -490,7 +491,7 @@ int cUpdate::ReadSeries(bool isRec) {
             isNew = false;
         }
         if (series) {
-           stringstream sPath("");
+            stringstream sPath("");
             sPath << imgPathSeries << "/" << seriesId;
             string seriesPath = sPath.str();
             if (episodeId) {
@@ -501,6 +502,9 @@ int cUpdate::ReadSeries(bool isRec) {
                 LoadSeriesMedia(series, seriesPath);
             }
         }
+        waitCondition.TimedWait(mutex, 3);
+        if (++i % 500 == 0)
+            tell(0, "Loaded %d series, continuing...", i);
         numNew++;
     }
     return numNew;
