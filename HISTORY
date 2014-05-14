@@ -25,3 +25,7 @@ Version 0.1.2
 - added path detection for libmysql
 - fixed epgd state detection
 - added cppcheck to Makefile
+
+Version 0.1.3
+- fixed a bug that series meta data is not loaded completely
+- fixed crash during shutdown of plugin
