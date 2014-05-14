@@ -46,6 +46,7 @@ cUpdate::cUpdate(cScrapManager *manager) : cThread("update thread started", true
     imgPathSeries = config.imageDir + "/series";
     imgPathMovies = config.imageDir + "/movies";
     lastScrap = 0;
+    lastInit = 0;
     forceUpdate = false;
     forceRecordingUpdate = false;
     forceVideoDirUpdate = false;
@@ -185,18 +186,19 @@ int cUpdate::initDb() {
     selectImg->build(")");
     selectImg->build(" from %s where ", tSeriesMedia->TableName());
     selectImg->bind(cTableSeriesMedia::fiSeriesId, cDBS::bndIn | cDBS::bndSet);
+    selectImg->bind(cTableSeriesMedia::fiMediaType, cDBS::bndIn | cDBS::bndSet, " and ");
     status += selectImg->prepare();
 
     // select episode image
 
-    imageSize.setField(&imageSizeDef);
+    episodeImageSize.setField(&imageSizeDef);
     selectEpisodeImg = new cDbStatement(tSeriesMedia);
     selectEpisodeImg->build("select ");
     selectEpisodeImg->bind(cTableSeriesMedia::fiMediaWidth, cDBS::bndOut);
     selectEpisodeImg->bind(cTableSeriesMedia::fiMediaHeight, cDBS::bndOut, ", ");
     selectEpisodeImg->bind(cTableSeriesMedia::fiMediaContent, cDBS::bndOut, ", ");
     selectEpisodeImg->build(", length(");
-    selectEpisodeImg->bind(&imageSize, cDBS::bndOut);
+    selectEpisodeImg->bind(&episodeImageSize, cDBS::bndOut);
     selectEpisodeImg->build(")");
     selectEpisodeImg->build(" from %s where ", tSeriesMedia->TableName());
     selectEpisodeImg->bind(cTableSeriesMedia::fiSeriesId, cDBS::bndIn | cDBS::bndSet);
@@ -433,19 +435,48 @@ int cUpdate::CheckConnection(int& timeout) {
 }
 
 bool cUpdate::CheckEpgdBusy(void) {
-   int busy = false;
-   vdrDb->clear();
-   vdrDb->setValue(cTableVdrs::fiUuid, EPGDNAME);
+    int busy = false;
+    vdrDb->clear();
+    vdrDb->setValue(cTableVdrs::fiUuid, EPGDNAME);
 
-   if (vdrDb->find()) {
-      Es::State epgdState = cEpgdState::toState(vdrDb->getStrValue(cTableVdrs::fiState));
-      // ignore esBusyImages until we don't write this table
-      if (epgdState >= cEpgdState::esBusy && epgdState < cEpgdState::esBusyImages)
-         busy = true;
-   }
+    if (vdrDb->find()) {
+        Es::State epgdState = cEpgdState::toState(vdrDb->getStrValue(cTableVdrs::fiState));
+        // ignore esBusyImages until we don't write this table
+        if (epgdState >= cEpgdState::esBusy && epgdState < cEpgdState::esBusyImages)
+            busy = true;
+    }
 
-   vdrDb->reset();
-   return busy;
+    vdrDb->reset();
+    return busy;
+}
+
+time_t cUpdate::LastPluginInit(void) {
+    time_t init = 0;
+    vdrDb->clear();
+    vdrDb->setValue(cTableVdrs::fiUuid, config.uuid.c_str());
+    if (vdrDb->find()) {
+        init = vdrDb->getIntValue(cTableVdrs::fiUpdSp);
+    }
+    char buf[50+TB];
+    strftime(buf, 50, "%y.%m.%d %H:%M:%S", localtime(&init));
+    tell(0, "Last plugin init was at '%s'", buf);
+    vdrDb->setValue(cTableVdrs::fiState, "attached");
+    vdrDb->store();
+    return init;
+}
+
+void cUpdate::SaveLastPluginInit(void) {
+    char* v;
+    asprintf(&v, "vdr %s scraper2vdr 0.1.3", VDRVERSION);
+    vdrDb->clear();
+    vdrDb->setValue(cTableVdrs::fiUuid, config.uuid.c_str());
+    vdrDb->setValue(cTableVdrs::fiIp, getFirstIp());
+    vdrDb->setValue(cTableVdrs::fiName, getHostName());
+    vdrDb->setValue(cTableVdrs::fiVersion, v);
+    vdrDb->setValue(cTableVdrs::fiState, "detached");
+    vdrDb->setValue(cTableVdrs::fiMaster, "n");
+    vdrDb->store();
+    free(v);
 }
 
 int cUpdate::ReadScrapedEvents(void) {
@@ -558,7 +589,7 @@ void cUpdate::LoadEpisodeImage(cTVDBSeries *series, int episodeId, string path) 
 
     if (res) {
         if (!imgExists) {
-            int size = imageSize.getIntValue();
+            int size = episodeImageSize.getIntValue();
             if (FILE* fh = fopen(imgPath.c_str(), "w")) {
                 fwrite(tSeriesMedia->getStrValue(cTableSeriesMedia::fiMediaContent), 1, size, fh);
                 fclose(fh);
@@ -1216,6 +1247,7 @@ void cUpdate::Action()
     time_t lastCleanup = time(0);
     bool init = true;
 
+
     while (loopActive && Running()) 
     {
         int reconnectTimeout; // set by checkConnection
@@ -1224,6 +1256,9 @@ void cUpdate::Action()
 
         if (CheckConnection(reconnectTimeout) != success) 
            continue;
+    
+        if (init)
+            lastInit = LastPluginInit();
 
         // auch beim init auf den epgd warten, wenn der gerade busy ist müssen die sich User etwas gedulden ;) 
 
@@ -1352,7 +1387,7 @@ void cUpdate::Action()
 
         worked = no;
     }
-
+    SaveLastPluginInit();
     loopActive = no;
     tell(0, "Update thread ended (pid=%d)", getpid());
 }

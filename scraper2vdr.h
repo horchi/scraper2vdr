@@ -14,6 +14,8 @@
 // Constants
 //***************************************************************************
 static const char *VERSION        = "0.1.3";
+static const char *VERSION_DATE   = "14.05.2014";
+#define DB_API  4
 static const char *DESCRIPTION    = "'scraper2vdr' plugin";
 static const char *MAINMENUENTRY  = "Scraper2Vdr";
 
@@ -34,6 +36,7 @@ public:
     cPluginScraper2vdr(void);
     virtual ~cPluginScraper2vdr();
     virtual const char *Version(void) { return VERSION; }
+    virtual const char *VersionDate(void) { return VERSION_DATE; }
     virtual const char *Description(void) { return DESCRIPTION; }
     virtual const char *CommandLineHelp(void);
     virtual bool ProcessArgs(int argc, char *argv[]);

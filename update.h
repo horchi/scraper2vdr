@@ -31,6 +31,7 @@ class cUpdate : public cThread  {
         cTableMovieMedia* tMovieMedia;
         cTableRecordings* tRecordings;
         int lastScrap;
+        time_t lastInit;
         cCondVar waitCondition;
         cMutex mutex;
         bool forceUpdate;
@@ -42,6 +43,8 @@ class cUpdate : public cThread  {
         int dbConnected(int force = no) { return connection && (!force || connection->check() == success); };
         int CheckConnection(int& timeout);
         bool CheckEpgdBusy(void);
+        time_t LastPluginInit(void);
+        void SaveLastPluginInit(void);
         void Action(void);
         int ReadScrapedEvents(void);
         //SERIES
@@ -89,6 +92,7 @@ class cUpdate : public cThread  {
       cDbStatement* selectCleanupRecordings;
 
       cDbValue imageSize;
+      cDbValue episodeImageSize;
       cDbValue posterSize;
       cDbValue series_id;
       cDbValue actorImageSize;
