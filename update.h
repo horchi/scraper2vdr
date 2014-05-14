@@ -76,6 +76,7 @@ class cUpdate : public cThread  {
       cDbStatement* selectReadScrapedEventsInit;
       cDbStatement* selectReadScrapedEvents;
       cDbStatement* selectImg;
+      cDbStatement* selectEpisodeImg;
       cDbStatement* selectSeasonPoster;
       cDbStatement* selectActors;
       cDbStatement* selectActorThumbs;

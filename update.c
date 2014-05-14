@@ -30,6 +30,7 @@ cUpdate::cUpdate(cScrapManager *manager) : cThread("update thread started", true
     selectReadScrapedEventsInit = 0;
     selectReadScrapedEvents = 0;
     selectImg = 0;
+    selectEpisodeImg = 0;
     selectSeasonPoster = 0;
     selectActors = 0;
     selectActorThumbs = 0;
@@ -184,8 +185,23 @@ int cUpdate::initDb() {
     selectImg->build(")");
     selectImg->build(" from %s where ", tSeriesMedia->TableName());
     selectImg->bind(cTableSeriesMedia::fiSeriesId, cDBS::bndIn | cDBS::bndSet);
-    selectImg->bind(cTableSeriesMedia::fiEpisodeId, cDBS::bndIn | cDBS::bndSet, " and ");
     status += selectImg->prepare();
+
+    // select episode image
+
+    imageSize.setField(&imageSizeDef);
+    selectEpisodeImg = new cDbStatement(tSeriesMedia);
+    selectEpisodeImg->build("select ");
+    selectEpisodeImg->bind(cTableSeriesMedia::fiMediaWidth, cDBS::bndOut);
+    selectEpisodeImg->bind(cTableSeriesMedia::fiMediaHeight, cDBS::bndOut, ", ");
+    selectEpisodeImg->bind(cTableSeriesMedia::fiMediaContent, cDBS::bndOut, ", ");
+    selectEpisodeImg->build(", length(");
+    selectEpisodeImg->bind(&imageSize, cDBS::bndOut);
+    selectEpisodeImg->build(")");
+    selectEpisodeImg->build(" from %s where ", tSeriesMedia->TableName());
+    selectEpisodeImg->bind(cTableSeriesMedia::fiSeriesId, cDBS::bndIn | cDBS::bndSet);
+    selectEpisodeImg->bind(cTableSeriesMedia::fiEpisodeId, cDBS::bndIn | cDBS::bndSet, " and ");
+    status += selectEpisodeImg->prepare();
 
     // select poster image
 
@@ -360,6 +376,7 @@ int cUpdate::exitDb() {
     delete selectReadScrapedEvents;     selectReadScrapedEvents = 0;
     delete selectReadScrapedEventsInit; selectReadScrapedEventsInit = 0;
     delete selectImg;                   selectImg = 0;
+    delete selectEpisodeImg;            selectEpisodeImg = 0;
     delete selectSeasonPoster;          selectSeasonPoster = 0;
     delete selectActors;                selectActors = 0;
     delete selectActorThumbs;           selectActorThumbs = 0;
@@ -537,7 +554,7 @@ void cUpdate::LoadEpisodeImage(cTVDBSeries *series, int episodeId, string path) 
     tSeriesMedia->setValue(cTableSeriesMedia::fiSeriesId, series->id);
     tSeriesMedia->setValue(cTableSeriesMedia::fiEpisodeId, episodeId);
 
-    int res = selectImg->find();
+    int res = selectEpisodeImg->find();
 
     if (res) {
         if (!imgExists) {
@@ -552,7 +569,7 @@ void cUpdate::LoadEpisodeImage(cTVDBSeries *series, int episodeId, string path) 
         series->InsertEpisodeImage(episodeId, imgWidth, imgHeight, imgPath);
     }
 
-    selectImg->freeResult();
+    selectEpisodeImg->freeResult();
 }
 
 void cUpdate::LoadSeasonPoster(cTVDBSeries *series, int season, string path) {
@@ -708,7 +725,6 @@ string cUpdate::LoadMediaSeries(int seriesId, int mediaType, string path, int wi
     tSeriesMedia->clear();
     tSeriesMedia->setValue(cTableSeriesMedia::fiSeriesId, seriesId);
     tSeriesMedia->setValue(cTableSeriesMedia::fiMediaType, mediaType);
-
     int res = selectImg->find();
     if (res) {
         int size = imageSize.getIntValue();

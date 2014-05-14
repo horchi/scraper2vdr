@@ -108,6 +108,7 @@ void cTVDBSeries::InsertMedia(int mediaType, int imgWidth, int imgHeight, string
         case msBanner2:
         case msBanner3:
             banners.push_back(media);
+            break;
         case msSeasonPoster:
             seasonPosters.insert(pair<int, cTVDBMedia*>(season, media));
             break;
