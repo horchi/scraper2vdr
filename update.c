@@ -1181,8 +1181,10 @@ int cUpdate::CleanupRecordings(void) {
         int recStart = tRecordings->getIntValue(cTableRecordings::fiRecStart);
         string recPath = tRecordings->getStrValue(cTableRecordings::fiRecPath);
         if (!Recordings.GetByName(recPath.c_str())) {
+            char escapedPath[recPath.size()+1];
+            mysql_real_escape_string(connection->getMySql(), escapedPath, recPath.c_str(), recPath.size());            
             stringstream delWhere("");
-            delWhere << "uuid = '" << config.uuid << "' and rec_path = '" << recPath << "' and rec_start = " << recStart;
+            delWhere << "uuid = '" << config.uuid << "' and rec_path = '" << escapedPath << "' and rec_start = " << recStart;
             tRecordings->deleteWhere(delWhere.str().c_str());
             numRecsDeleted++;
         }
