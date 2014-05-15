@@ -46,7 +46,6 @@ cUpdate::cUpdate(cScrapManager *manager) : cThread("update thread started", true
     imgPathSeries = config.imageDir + "/series";
     imgPathMovies = config.imageDir + "/movies";
     lastScrap = 0;
-    lastInit = 0;
     forceUpdate = false;
     forceRecordingUpdate = false;
     forceVideoDirUpdate = false;
@@ -448,35 +447,6 @@ bool cUpdate::CheckEpgdBusy(void) {
 
     vdrDb->reset();
     return busy;
-}
-
-time_t cUpdate::LastPluginInit(void) {
-    time_t init = 0;
-    vdrDb->clear();
-    vdrDb->setValue(cTableVdrs::fiUuid, config.uuid.c_str());
-    if (vdrDb->find()) {
-        init = vdrDb->getIntValue(cTableVdrs::fiUpdSp);
-    }
-    char buf[50+TB];
-    strftime(buf, 50, "%y.%m.%d %H:%M:%S", localtime(&init));
-    tell(0, "Last plugin init was at '%s'", buf);
-    vdrDb->setValue(cTableVdrs::fiState, "attached");
-    vdrDb->store();
-    return init;
-}
-
-void cUpdate::SaveLastPluginInit(void) {
-    char* v;
-    asprintf(&v, "vdr %s scraper2vdr 0.1.3", VDRVERSION);
-    vdrDb->clear();
-    vdrDb->setValue(cTableVdrs::fiUuid, config.uuid.c_str());
-    vdrDb->setValue(cTableVdrs::fiIp, getFirstIp());
-    vdrDb->setValue(cTableVdrs::fiName, getHostName());
-    vdrDb->setValue(cTableVdrs::fiVersion, v);
-    vdrDb->setValue(cTableVdrs::fiState, "detached");
-    vdrDb->setValue(cTableVdrs::fiMaster, "n");
-    vdrDb->store();
-    free(v);
 }
 
 int cUpdate::ReadScrapedEvents(void) {
@@ -1256,9 +1226,6 @@ void cUpdate::Action()
 
         if (CheckConnection(reconnectTimeout) != success) 
            continue;
-    
-        if (init)
-            lastInit = LastPluginInit();
 
         // auch beim init auf den epgd warten, wenn der gerade busy ist müssen die sich User etwas gedulden ;) 
 
@@ -1387,7 +1354,6 @@ void cUpdate::Action()
 
         worked = no;
     }
-    SaveLastPluginInit();
     loopActive = no;
     tell(0, "Update thread ended (pid=%d)", getpid());
 }
