@@ -186,9 +186,18 @@ bool cPluginScraper2vdr::Service(const char *Id, void *Data) {
 
     if (strcmp(Id, "GetPosterBanner") == 0) {
         ScraperGetPosterBanner* call = (ScraperGetPosterBanner*) Data;
-        if (!call->event)
+        if (!call->event) {
             return false;
+        }
         return scrapManager->GetPosterBanner(call);
+    }
+
+    if (strcmp(Id, "GetPosterBannerV2") == 0) {
+        ScraperGetPosterBannerV2* call = (ScraperGetPosterBannerV2*) Data;
+        if (!call->event && !call->recording) {
+            return false;
+        }
+        return scrapManager->GetPosterBannerV2(call);
     }
 
     if (strcmp(Id, "GetPoster") == 0) {

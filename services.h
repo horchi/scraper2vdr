@@ -162,11 +162,29 @@ class ScraperGetPosterBanner {
 public:
 	ScraperGetPosterBanner(void) {
 		type = tNone;
+        event = NULL;
 	};
 // in
-    const cEvent *event;             // check type for this event 
+    const cEvent *event;             // check type for this event
 //out
     tvType type;                	 //typeSeries or typeMovie
+    cTvMedia poster;
+    cTvMedia banner;
+};
+
+// Data structure for service "GetPosterBannerV2"
+class ScraperGetPosterBannerV2 {
+public:
+    ScraperGetPosterBannerV2(void) {
+        type = tNone;
+        event = NULL;
+        recording = NULL;
+    };
+// in
+    const cEvent *event;             // check type for this event
+    const cRecording *recording;     // check type for this recording
+//out
+    tvType type;                     //typeSeries or typeMovie
     cTvMedia poster;
     cTvMedia banner;
 };

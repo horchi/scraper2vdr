@@ -354,7 +354,7 @@ void cScrapManager::DumpMovies(void) {
 }
 
 void cScrapManager::DumpRecordings(void) {
-	tell(0, "%ld recordings in memory:", recordings.size());
+	tell(0, "%d recordings in memory:", recordings.size());
 	for (map<sRecordingsKey, sEventsValue>::iterator it = recordings.begin(); it != recordings.end(); it++) {
 		sRecordingsKey key = it->first;
 		sEventsValue val = it->second;
@@ -480,13 +480,60 @@ bool cScrapManager::GetMovie(cMovie *m) {
 }
 
 bool cScrapManager::GetPosterBanner(ScraperGetPosterBanner *call) {
-	sEventsKey k;
-	k.eventId = call->event->EventID();
-	k.channelId = *(call->event->ChannelID().ToString());
-	map<sEventsKey, sEventsValue>::iterator hit = events.find(k);
-	if (hit == events.end())
-		return false;
-	sEventsValue v = hit->second;
+    sEventsValue v;
+    if (call->event) {
+        sEventsKey k;
+        k.eventId = call->event->EventID();
+        k.channelId = *(call->event->ChannelID().ToString());
+        map<sEventsKey, sEventsValue>::iterator hit = events.find(k);
+        if (hit == events.end())
+            return false;
+        v = hit->second;
+    }
+	if (v.seriesId > 0) {
+		call->type = tSeries;
+		map<int, cTVDBSeries*>::iterator hitSeries = series.find(v.seriesId);
+		if (hitSeries == series.end())
+			return false;
+		cTVDBSeries *s = hitSeries->second;
+		bool found = s->GetRandomBanner(&call->banner);
+		if (v.episodeId > 0) {
+			s->GetSeasonPoster(v.episodeId, &call->poster);
+		}
+		return found;
+	} else if (v.movieId > 0) {
+		call->type = tMovie;
+		map<int, cMovieDbMovie*>::iterator hitMovies = movies.find(v.movieId);
+		if (hitMovies == movies.end())
+			return false;
+		cMovieDbMovie *m = hitMovies->second;
+		return m->GetMedia(mmPoster, &call->poster);
+	} else {
+		call->type = tNone;
+	}
+	return false;			
+}
+
+bool cScrapManager::GetPosterBannerV2(ScraperGetPosterBannerV2 *call) {
+    sEventsValue v;
+    if (call->event) {
+        sEventsKey k;
+        k.eventId = call->event->EventID();
+        k.channelId = *(call->event->ChannelID().ToString());
+        map<sEventsKey, sEventsValue>::iterator hit = events.find(k);
+        if (hit == events.end())
+            return false;
+        v = hit->second;
+    } else if (call->recording) {
+        sRecordingsKey k;
+        k.recStart = call->recording->Start();
+        k.recPath = getRecPath(call->recording);
+        map<sRecordingsKey, sEventsValue>::iterator hit = recordings.find(k);
+        if (hit == recordings.end()) {
+            return false;
+        }
+        v = hit->second;
+    }
 	if (v.seriesId > 0) {
 		call->type = tSeries;
 		map<int, cTVDBSeries*>::iterator hitSeries = series.find(v.seriesId);

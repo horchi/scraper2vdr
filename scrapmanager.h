@@ -75,6 +75,7 @@ class cScrapManager  {
         bool GetSeries(cSeries *series);
         bool GetMovie(cMovie *movie);
         bool GetPosterBanner(ScraperGetPosterBanner *call);
+        bool GetPosterBannerV2(ScraperGetPosterBannerV2 *call);
         bool GetPoster(ScraperGetPoster *call);
         bool GetPosterThumb(ScraperGetPosterThumb *call);
 };
