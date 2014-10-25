@@ -77,7 +77,6 @@ cUpdate::cUpdate(cScrapManager *manager) : cThread("update thread started", true
 cUpdate::~cUpdate() {
     if (loopActive)
         Stop();
-    exitDb();
 }
 
 // global field definitions
@@ -1356,6 +1355,8 @@ void cUpdate::Action()
 
         worked = no;
     }
+
+    exitDb();             // don't call exit in dtor, outside from thread!!
     loopActive = no;
     tell(0, "Update thread ended (pid=%d)", getpid());
 }

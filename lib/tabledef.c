@@ -117,9 +117,9 @@ cDbService::FieldDef cTableEvents::fields[] =
 
    // episodes (constable)
 
-   { "episode",          ffAscii,    250, fiEpisode,          ftData },
-   { "episodepart",      ffAscii,    250, fiEpisodePart,      ftData },
-   { "episodelang",      ffAscii,      3, fiEpisodeLang,      ftData },
+//   { "episodecompname",          ffAscii,    250, fiEpisode,          ftData },
+//   { "episodecomppartname",      ffAscii,    250, fiEpisodePart,      ftData },
+//   { "episodelang",      ffAscii,      3, fiEpisodeLang,      ftData },
 
    // tv scraper
 

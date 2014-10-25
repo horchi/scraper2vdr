@@ -354,7 +354,7 @@ void cScrapManager::DumpMovies(void) {
 }
 
 void cScrapManager::DumpRecordings(void) {
-	tell(0, "%d recordings in memory:", recordings.size());
+	tell(0, "%ld recordings in memory:", recordings.size());
 	for (map<sRecordingsKey, sEventsValue>::iterator it = recordings.begin(); it != recordings.end(); it++) {
 		sRecordingsKey key = it->first;
 		sEventsValue val = it->second;
@@ -481,6 +481,7 @@ bool cScrapManager::GetMovie(cMovie *m) {
 
 bool cScrapManager::GetPosterBanner(ScraperGetPosterBanner *call) {
     sEventsValue v;
+    v.episodeId = 0;
     if (call->event) {
         sEventsKey k;
         k.eventId = call->event->EventID();
@@ -516,6 +517,7 @@ bool cScrapManager::GetPosterBanner(ScraperGetPosterBanner *call) {
 
 bool cScrapManager::GetPosterBannerV2(ScraperGetPosterBannerV2 *call) {
     sEventsValue v;
+    v.episodeId = 0;
     if (call->event) {
         sEventsKey k;
         k.eventId = call->event->EventID();

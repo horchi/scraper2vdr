@@ -6,7 +6,10 @@
  * $Id$
  */
 
+#include "lib/config.h"
+
 #include "scraper2vdr.h"
+
 const char* logPrefix = LOG_PREFIX;
 
 #if defined (APIVERSNUM) && (APIVERSNUM < 10600)
@@ -80,7 +83,7 @@ eOSState cScraper2VdrPluginMenu::ProcessKey(eKeys key) {
 //***************************************************************************
 
 cPluginScraper2vdr::cPluginScraper2vdr(void) {
-    cDbConnection::init();
+    cDbConnection::init(EPG_PLUGIN_SEM_KEY);
 }
 
 cPluginScraper2vdr::~cPluginScraper2vdr() {

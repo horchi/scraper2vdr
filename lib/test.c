@@ -21,7 +21,7 @@ const char* logPrefix = "test";
 
 void initConnection()
 {
-   cDbConnection::init();
+   cDbConnection::init(0x3db00011);
 
    cDbConnection::setEncoding("utf8");
    cDbConnection::setHost("localhost");

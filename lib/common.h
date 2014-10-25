@@ -11,6 +11,7 @@
 #include <stdint.h>      // uint_64_t
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include <string>
 
 #include <openssl/md5.h> // MD5_*
@@ -278,6 +279,148 @@ class LogDuration
       char message[1000];
       uint64_t durationStart;
       int logLevel;
+};
+
+//***************************************************************************
+// Semaphore
+//***************************************************************************
+
+#include <sys/sem.h>
+
+class Sem
+{
+   public:
+
+      Sem(key_t aKey)
+      {
+         locked = no;
+         key = aKey;
+
+         if ((id = semget(key, 1, 0666 | IPC_CREAT)) == -1)
+            tell(0, "Error: Can't get semaphore, errno (%d) '%s'", 
+                 errno, strerror(errno));
+      }
+
+      ~Sem() 
+      { 
+         if (locked)
+            v();
+      }
+
+      // ----------------------
+      // get lock
+
+      int p()
+      {
+         sembuf sops[2];
+         
+         sops[0].sem_num = 0;
+         sops[0].sem_op = 0;                        // wait for lock
+         sops[0].sem_flg = SEM_UNDO;
+         
+         sops[1].sem_num = 0;
+         sops[1].sem_op = 1;                        // increment 
+         sops[1].sem_flg = SEM_UNDO | IPC_NOWAIT;
+         
+         if (semop(id, sops, 2) == -1)
+         {
+            tell(0, "Error: Can't lock semaphore, errno (%d) '%s'", 
+                 errno, strerror(errno));
+            
+            return fail;
+         }
+
+         locked = yes;
+
+         return success;
+      }
+
+      // ----------------------
+      // increment
+
+      int inc()
+      {
+         sembuf sops[1];
+         
+         sops[0].sem_num = 0;
+         sops[0].sem_op = 1;                        // increment 
+         sops[0].sem_flg = SEM_UNDO | IPC_NOWAIT;
+         
+         if (semop(id, sops, 1) == -1)
+         {
+            if (errno != EAGAIN)
+               tell(0, "Error: Can't lock semaphore, errno was (%d) '%s'", 
+                    errno, strerror(errno));
+            
+            return fail;
+         }
+         
+         locked = yes;
+
+         return success;
+      }
+
+      // ----------------------
+      // decrement
+
+      int dec()
+      {
+         return v();
+      }
+
+      // ----------------------
+      // check
+
+      int check()
+      {
+         sembuf sops[1];
+         
+         sops[0].sem_num = 0;
+         sops[0].sem_op = 0; 
+         sops[0].sem_flg = SEM_UNDO | IPC_NOWAIT;
+         
+         if (semop(id, sops, 1) == -1)
+         {
+            if (errno != EAGAIN)
+               tell(0, "Error: Can't lock semaphore, errno was (%d) '%s'", 
+                    errno, strerror(errno));
+            
+            return fail;
+         }
+         
+         return success;
+      }
+
+      // ----------------------
+      // release lock
+
+      int v()
+      {
+         sembuf sops;
+         
+         sops.sem_num = 0;
+         sops.sem_op = -1;                          // release control
+         sops.sem_flg = SEM_UNDO | IPC_NOWAIT;
+         
+         if (semop(id, &sops, 1) == -1)
+         {
+            if (errno != EAGAIN)
+               tell(0, "Error: Can't unlock semaphore, errno (%d) '%s'",
+                    errno, strerror(errno));
+            
+            return fail;
+         }
+         
+         locked = no;
+
+         return success;
+      }
+      
+   private:
+
+      key_t key;
+      int id;
+      int locked;
 };
 
 //***************************************************************************

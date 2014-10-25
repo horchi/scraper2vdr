@@ -8,11 +8,15 @@
 #ifndef __DB_H
 #define __DB_H
 
+#include <linux/unistd.h>
+
+#include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <errno.h>
+
 #include <mysql/mysql.h>
 
 #include <list>
@@ -550,12 +554,10 @@ class cDbConnection
 
       virtual ~cDbConnection()
       {
-         if (mysql) 
-         {
-            mysql_close(mysql);
-            mysql_thread_end();
-         }
+         close();
       }
+
+      int isConnected() { return getMySql() > 0; }
 
       int attachConnection()
       { 
@@ -565,14 +567,16 @@ class cDbConnection
          {
             connectDropped = yes;
 
+            tell(0, "Calling mysql_init(%ld)", syscall(__NR_gettid));
+
             if (!(mysql = mysql_init(0)))
                return errorSql(this, "attachConnection(init)");
 
             if (!mysql_real_connect(mysql, dbHost, 
                                     dbUser, dbPass, dbName, dbPort, 0, 0)) 
             {
-               mysql_close(mysql);
-               mysql = 0;
+               close();
+
                tell(0, "Error, connecting to database at '%s' on port (%d) failed",
                     dbHost, dbPort);
 
@@ -601,19 +605,25 @@ class cDbConnection
          return success; 
       }
 
-      void detachConnection()
-      { 
-         attached--;
-
-         if (!attached)
+      void close()
+      {
+         if (mysql)
          {
+            tell(0, "Closing mysql connection and calling mysql_thread_end(%ld)", syscall(__NR_gettid));
+
             mysql_close(mysql);
             mysql_thread_end();
             mysql = 0;
          }
       }
 
-      int isConnected() { return getMySql() > 0; }
+      void detachConnection()
+      { 
+         attached--;
+
+         if (!attached)
+            close();
+      }
 
       int check()
       {
@@ -724,12 +734,7 @@ class cDbConnection
       MYSQL* getMySql()
       {
          if (connectDropped && mysql)
-         {
-            mysql_close(mysql);
-            mysql_thread_end();
-            mysql = 0;
-            attached = 0;
-         }
+            close();
 
          return mysql; 
       }
@@ -756,22 +761,59 @@ class cDbConnection
 
       int errorSql(cDbConnection* mysql, const char* prefix, MYSQL_STMT* stmt = 0, const char* stmtTxt = 0);
 
-      void showStat(const char* name = "")   { statements.showStat(name); }
+      void showStat(const char* name = "")           { statements.showStat(name); }
 
-      static int init()
+      // -----------------------------------------------------------
+      // init() and exit() must exactly called 'once' per process
+
+      static int init(key_t semKey)
       {
-         if (mysql_library_init(0, 0, 0)) 
+         if (semKey && !sem)
+            sem = new Sem(semKey);
+
+         if (!sem || sem->check() == success)
          {
-            tell(0, "Error: mysql_library_init failed");
-            return fail;  // return errorSql(0, "init(library_init)");
+            // call only once per process
+
+            if (sem)
+               tell(1, "Info: Calling mysql_library_init()");
+
+            if (mysql_library_init(0, 0, 0)) 
+            {
+               tell(0, "Error: mysql_library_init() failed");
+               return fail;
+            }
          }
+         else if (sem)
+         {
+            tell(1, "Info: Skipping calling mysql_library_init(), it's already done!");
+         }
+
+         if (sem)
+            sem->inc();  // count usage per process
 
          return success;
       }
 
       static int exit()
       {
-         mysql_library_end();
+         mysql_thread_end();
+
+         if (sem)
+            sem->dec();
+         
+         if (!sem || sem->check() == success)
+         {
+            if (sem)
+               tell(1, "Info: Released the last usage of mysql_lib, calling mysql_library_end() now");
+
+            mysql_library_end();
+         }
+         else if (sem)
+         {
+            tell(1, "Info: The mysql_lib is still in use, skipping mysql_library_end() call");
+         }
+
          free(dbHost);
          free(dbUser);
          free(dbPass);
@@ -791,6 +833,8 @@ class cDbConnection
       int attached;
       int inTact;
       int connectDropped;
+
+      static Sem* sem;
 
       static char* encoding;
 

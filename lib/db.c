@@ -512,6 +512,7 @@ int   cDbConnection::dbPort = 3306;
 char* cDbConnection::dbUser = 0;
 char* cDbConnection::dbPass = 0;
 char* cDbConnection::dbName = 0;
+Sem*  cDbConnection::sem = 0;
 
 //***************************************************************************
 // Object

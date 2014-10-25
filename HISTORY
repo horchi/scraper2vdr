@@ -33,3 +33,6 @@ Version 0.1.3
 
 Version 0.1.4
 - added ScraperGetPosterBannerV2 Service
+
+Versionn 0.1.5
+- introduced new DB API
