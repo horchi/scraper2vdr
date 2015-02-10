@@ -241,7 +241,6 @@ class cTableEvents : public cDbTable
          fiTopic,
          fiYear,
          fiRating,
-//         fiFsk,
          fiMovieid,
          fiModerator,
          fiOther,
@@ -250,10 +249,6 @@ class cTableEvents : public cDbTable
 
          fiExtEpNum,
          fiImageCount,
-
-//         fiEpisode,
-//         fiEpisodePart,
-//         fiEpisodeLang,
 
          fiScrSeriesId,
          fiScrSeriesEpisode,

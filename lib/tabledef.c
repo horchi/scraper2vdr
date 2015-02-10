@@ -105,7 +105,6 @@ cDbService::FieldDef cTableEvents::fields[] =
    { "topic",            ffAscii,    500, fiTopic,            ftData },
    { "year",             ffAscii,     10, fiYear,             ftData },
    { "rating",           ffAscii,    250, fiRating,           ftData },
-//   { "fsk",              ffAscii,      2, fiFsk,              ftData },
    { "movieid",          ffAscii,     20, fiMovieid,          ftData },
    { "moderator",        ffAscii,    250, fiModerator,        ftData },
    { "other",            ffText,    2000, fiOther,            ftData },
@@ -114,12 +113,6 @@ cDbService::FieldDef cTableEvents::fields[] =
 
    { "extepnum",         ffInt,        4, fiExtEpNum,         ftData },
    { "imagecount",       ffInt,        2, fiImageCount,       ftData },
-
-   // episodes (constable)
-
-//   { "episodecompname",          ffAscii,    250, fiEpisode,          ftData },
-//   { "episodecomppartname",      ffAscii,    250, fiEpisodePart,      ftData },
-//   { "episodelang",      ffAscii,      3, fiEpisodeLang,      ftData },
 
    // tv scraper
 
