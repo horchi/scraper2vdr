@@ -241,7 +241,7 @@ class cTableEvents : public cDbTable
          fiTopic,
          fiYear,
          fiRating,
-         fiFsk,
+//         fiFsk,
          fiMovieid,
          fiModerator,
          fiOther,

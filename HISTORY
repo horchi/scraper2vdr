@@ -36,3 +36,6 @@ Version 0.1.4
 
 Versionn 0.1.5
 - introduced new DB API
+
+Versionn 0.1.6
+- removed outdated field
