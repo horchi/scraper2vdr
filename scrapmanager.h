@@ -41,6 +41,7 @@ class cScrapManager  {
         map<sRecordingsKey, sEventsValue> recordings;
         map<sRecordingsKey, sEventsValue>::iterator recIterator;
         map<int, cTVDBSeries*> series;
+        map<int, cTVDBSeries*>::iterator seriesIterator;
         map<int, cMovieDbMovie*> movies;
     public:
         cScrapManager(void);
@@ -53,12 +54,17 @@ class cScrapManager  {
         sEventsValue GetEventInformation(int eventId, string channelId);
         bool GetNextSeries(bool isRec, int &seriesId, int &episodeId);
         bool GetNextMovie(bool isRec, int &movieId);
+        int GetSeriesFirst(cTVDBSeries* &seriesval); // get first series (also init series iterator)
+        int GetSeriesNext(cTVDBSeries* &seriesval); // get next series from iterator
         cTVDBSeries *GetSeries(int seriesId);
         cMovieDbMovie *GetMovie(int movieId);
         cTVDBSeries *AddSeries(cTableSeries* tSeries);
+        void UpdateSeries(cTVDBSeries *seriesval,cTableSeries* tSeries); // update series using values from current db row
         cMovieDbMovie *AddMovie(cTableMovies* tMovies);
         void AddSeriesEpisode(cTVDBSeries *series, cTableSeriesEpisode* tEpisodes);
-        void AddSeriesActor(cTVDBSeries *series, cTableSeriesActor* tActors);
+        void UpdateSeriesEpisode(cTVDBEpisode *episode, cTableSeriesEpisode* tEpisodes); // update episode using values from current db row
+        cTVDBActor *AddSeriesActor(cTVDBSeries *series, cTableSeriesActor* tActors);
+        void UpdateSeriesActor(cTVDBActor *actor, cTableSeriesActor* tActors); // update actor using values from current db row
         void AddMovieActor(cMovieDbMovie *movie, cTableMovieActor* tActor, string role);
         void AddMovieMedia(cMovieDbMovie *movie, cTableMovieMedia* tMovieMedia, string path);
         //Recording Handling

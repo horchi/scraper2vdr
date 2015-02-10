@@ -83,6 +83,8 @@ eOSState cScraper2VdrPluginMenu::ProcessKey(eKeys key) {
 //***************************************************************************
 
 cPluginScraper2vdr::cPluginScraper2vdr(void) {
+    update = NULL;
+    scrapManager = NULL;
     cDbConnection::init(EPG_PLUGIN_SEM_KEY);
 }
 

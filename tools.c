@@ -34,8 +34,8 @@ bool FileExists(string filename, bool isImage) {
         //a valid image should be larger then 500 bytes
         ifile.seekg (0, ifile.end);
         int length = ifile.tellg();
-        int minimumLength = isImage ? 500 : 1;
-        if (length > minimumLength)
+        int minimumLength = isImage ? 500 : 0; // allow empty "non-image" files
+        if (length >= minimumLength)
             return true;
     }
     return false;
@@ -84,6 +84,13 @@ string TwoFoldersHigher(string folder) {
     return "";
 }
 
+// get last changed timestamp of file (using st_mtime)
+long GetFileChangedTime(string filename) { 
+    struct stat st;
+    if(stat(filename.c_str() , &st) < 0)
+      return 0; // default = 0 if file not exists
+    return st.st_mtime;
+}
 
 // trim from start
 string &ltrim(string &s) {
@@ -177,3 +184,16 @@ void CreateThumbnail(string sourcePath, string destPath, int origWidth, int orig
         buffer.write(destPath.c_str());
     } catch( ... ) {}
 }
+
+// Get systemtime in ms (since unspecified starting point)
+long GetTimems(void) {
+    struct timespec CurTime;
+    if (clock_gettime(CLOCK_MONOTONIC, &CurTime) != 0)  
+        return 0;
+    return ((CurTime.tv_sec * 1000) + (CurTime.tv_nsec / 1000000.0));
+}
+
+// Get time difference in ms between now and LastTime
+int GetTimeDiffms(long LastTime) {
+    return (GetTimems() - LastTime);
+}  

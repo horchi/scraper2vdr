@@ -8,12 +8,17 @@
 #include "lib/db.h"
 #include "lib/tabledef.h"
 #include "scrapmanager.h"
+#include "filedatemanager.h"
 
 #define EPGDNAME "epgd"
+#define LogPeriode 15000 // write log entry after each 15s
 
 class cUpdate : public cThread  {
     private:
         cScrapManager *scrapManager;
+        string TempEpisodeTableName;
+        string TempEpisodeCreateStatement;
+        string TempEpisodeDeleteStatement;
         string imgPathSeries;
         string imgPathMovies;
         bool withutf8;
@@ -30,9 +35,13 @@ class cUpdate : public cThread  {
         cTableMovieActors* tMovieActors;
         cTableMovieMedia* tMovieMedia;
         cTableRecordings* tRecordings;
+        cFileDateManager fileDateManager;
         int lastScrap;
+        long MaxScrspSeries; // max scrsp of known events/recordings for series
+        long MaxScrspMovies; // max scrsp of known events/recordings for movies
         cCondVar waitCondition;
         cMutex mutex;
+        long lastWait; // when did we call waitCondition.TimedWait last time (in ms)
         bool forceUpdate;
         bool forceRecordingUpdate;
         bool forceVideoDirUpdate;
@@ -42,10 +51,19 @@ class cUpdate : public cThread  {
         int dbConnected(int force = no) { return connection && (!force || connection->check() == success); };
         int CheckConnection(int& timeout);
         bool CheckEpgdBusy(void);
+        bool CheckRunningAndWait(void); // check if we should abort execution (thread stoped), also check if we should call waitCondition.TimedWait (so other processes can use the CPU) 
         void Action(void);
+        //EVENTS
         int ReadScrapedEvents(void);
         //SERIES
         int ReadSeries(bool isRec);
+        int ReadSeriesFast(long &maxscrsp); // read all series with event or recording from sql-db
+        int ReadSeriesContentFast(int &newImages, int &newSeasonPoster); // read all episodes/actors/media from all series where series->updatecontent = true
+        int ReadEpisodesContentFast(cTVDBSeries *series); // read all episodes for current series with event or recording from sql-db
+        void ReadSeriesMediaFast(cTVDBSeries *series, int &newImages, int &newSeasonPoster); // read all images of series (also create actors if not available yet)
+        void CheckSeriesMedia(cTVDBSeries *series, int mediaType, int imgWidth, int imgHeight, string imgName, int season, bool needRefresh); // create media if not exists in series, update size, path, needRefresh of media
+        void ReadSeriesImagesFast(int &newImages, int &emptySeasonPosters); // read all images with needrefresh from sql-db
+        bool ReadSeriesImageFast(int seriesId, int season, int episodeId, int actorId, int mediaType, cTVDBMedia *media, cTVDBMedia *mediaThumb, int shrinkFactor); // read real image data from sql-db
         void ReadEpisode(int episodeId, cTVDBSeries *series, string path);
         void LoadEpisodeImage(cTVDBSeries *series, int episodeId, string path);
         void LoadSeasonPoster(cTVDBSeries *series, int season, string path);
@@ -87,11 +105,22 @@ class cUpdate : public cThread  {
       cDbStatement* selectMediaMovie;
       cDbStatement* selectRecordings;
       cDbStatement* selectCleanupRecordings;
+      cDbStatement* clearTempEpisodeTable;
+      cDbStatement* fillTempEpisodeTable;
+      cDbStatement* selectReadSeriesInit; // statement to select all series which are used from min one event
+      cDbStatement* selectReadSeriesLastScrsp; // statement to select all series which are used from min one event (filtered by > scrsp)
+      cDbStatement* selectReadEpisodes; // statement to select all episodes for one series which are used from min one event/recording
+      cDbStatement* selectSeriesMediaActors; // statement to select all media and actor information for one series (but without binary image data)
+      cDbStatement* selectSeriesImage; // statement to select one single image from series_media (with binary image data)
 
       cDbValue imageSize;
       cDbValue episodeImageSize;
       cDbValue posterSize;
       cDbValue series_id;
+      cDbValue event_scrsp;
+      cDbValue events_ScrSeriesId;
+      cDbValue episode_LastUpdate;
+      cDbValue vdr_uuid;
       cDbValue actorImageSize;
 
       cDbValue actorRole;

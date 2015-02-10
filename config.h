@@ -28,5 +28,6 @@ class cScraper2VdrConfig {
         string mysqlDBPass;
         string recScrapInfoName;
         int debug;
+	int fastmode;
 };
 #endif //__SCRAPER2VDR_CONFIG_H
