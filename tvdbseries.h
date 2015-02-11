@@ -132,7 +132,7 @@ public:
     string status;
     long lastupdate; // Time when series/episodes get updated on thetvdb-server (refresh series data and images)
     long lastepisodeupdate; // Time when newest event/recording of this series get updated on thetvdb-server (refresh episodes and episode images)   
-    long lastscraped; // Time when newest event/recoding of one of the episodes of this series get scraped from epgd (check for new episodes)
+    long lastscraped; // Time when newest event/recording of one of the episodes of this series get scraped from epgd (check for new episodes)
     bool updatecontent; // True if content should be updated/loaded (true after lastupdate changed)
     bool updateimages; // True if there are images inside this series which need to get downloaded
     void InsertEpisode(cTVDBEpisode *episode);

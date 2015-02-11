@@ -105,7 +105,7 @@ bool cFileDateManager::CheckImageNeedRefresh(string fileName, long lastUpdated) 
     stringstream fPath("");
     fPath << curPath << "/" << fileName;
     string fullFileName = fPath.str();
-    bool fExists = FileExists(fullFileName,false);
+    bool fExists = FileExists(fullFileName,true);
     long fileLastUpdated = 0;
 
     // search for existing entry
@@ -129,7 +129,7 @@ bool cFileDateManager::CheckImageNeedRefreshThumb(string fileName, string thumbf
     stringstream fPath("");
     fPath << curPath << "/" << thumbfilename;
     string fullFileName = fPath.str();
-    bool fExists = FileExists(fullFileName,false);
+    bool fExists = FileExists(fullFileName,true);
 
     return (CheckImageNeedRefresh(fileName, lastUpdated) || (!fExists)); // thumb file not exist, or real file need update
 }

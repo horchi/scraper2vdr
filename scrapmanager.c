@@ -41,6 +41,11 @@ cScrapManager::~cScrapManager(void) {
         delete m;
     }
     movies.clear();
+    for (map<int, cMovieMedia*>::iterator it = movieActorsThumbs.begin(); it != movieActorsThumbs.end(); it++) {
+        cMovieMedia *ma = (cMovieMedia*)it->second;
+        delete ma;
+    }
+    movieActorsThumbs.clear();    
 }
 
 void cScrapManager::InitIterator(bool isRec) {
@@ -166,6 +171,27 @@ int cScrapManager::GetSeriesNext(cTVDBSeries* &seriesval) {
     return 1; 
 }
 
+// get first movie (also init series iterator)
+int cScrapManager::GetMoviesFirst(cMovieDbMovie* &movieval) {
+    movieval = NULL;
+    moviesIterator = movies.begin();
+    if (moviesIterator == movies.end())
+        return 0; // no movie availabe
+    movieval = moviesIterator->second; // return current movie
+    return 1; 
+}
+
+// get next movie from iterator
+int cScrapManager::GetMoviesNext(cMovieDbMovie* &movieval) {
+    movieval=NULL;
+    if (moviesIterator != movies.end())
+        moviesIterator++;
+    if (moviesIterator == movies.end())
+        return 0; // no movie availabe
+    movieval = moviesIterator->second; // return current movie
+    return 1; 
+}
+
 cTVDBSeries *cScrapManager::GetSeries(int seriesId) {
 	map<int, cTVDBSeries*>::iterator hit = series.find(seriesId);
 	if (hit == series.end())
@@ -189,7 +215,7 @@ cTVDBSeries *cScrapManager::AddSeries(cTableSeries* tSeries) {
 }
 
 // update series using values from current db row
-void cScrapManager::UpdateSeries(cTVDBSeries *seriesval,cTableSeries* tSeries) {
+void cScrapManager::UpdateSeries(cTVDBSeries *seriesval, cTableSeries* tSeries) {
     seriesval->id = tSeries->getIntValue(cTableSeries::fiSeriesId);
     seriesval->name = tSeries->getStrValue(cTableSeries::fiSeriesName);
     seriesval->overview = tSeries->getStrValue(cTableSeries::fiSeriesOverview);
@@ -203,25 +229,31 @@ void cScrapManager::UpdateSeries(cTVDBSeries *seriesval,cTableSeries* tSeries) {
 }
 
 cMovieDbMovie *cScrapManager::AddMovie(cTableMovies* tMovies) {
-	cMovieDbMovie *m = new cMovieDbMovie();
-	m->id = tMovies->getIntValue(cTableMovies::fiMovieId);
-	m->title = tMovies->getStrValue(cTableMovies::fiTitle);
-    m->originalTitle = tMovies->getStrValue(cTableMovies::fiOriginalTitle);
-    m->tagline = tMovies->getStrValue(cTableMovies::fiTagline);
-    m->overview = tMovies->getStrValue(cTableMovies::fiOverview);
-    m->adult = tMovies->getIntValue(cTableMovies::fiIsAdult);
-    m->collectionName = tMovies->getStrValue(cTableMovies::fiCollectionName);
-    m->budget = tMovies->getIntValue(cTableMovies::fiBudget);
-    m->revenue = tMovies->getIntValue(cTableMovies::fiRevenue);
-    string genre = replaceString(tMovies->getStrValue(cTableMovies::fiGenres), "|", ",");
-    m->genres = genre;
-    m->homepage = tMovies->getStrValue(cTableMovies::fiHomepage);
-    m->releaseDate = tMovies->getStrValue(cTableMovies::fiReleaaseDate);
-    m->runtime = tMovies->getIntValue(cTableMovies::fiRuntime);
-    m->popularity = tMovies->getFloatValue(cTableMovies::fiPopularity);
-    m->voteAverage = tMovies->getFloatValue(cTableMovies::fiVoteAverage);
+    cMovieDbMovie *m = new cMovieDbMovie();
+    UpdateMovie(m,tMovies);
+    m->updateimages = true; // have to search images for new movies
     movies.insert(pair<int, cMovieDbMovie*>(tMovies->getIntValue(cTableMovies::fiMovieId), m));
     return m;
+}
+
+// update movie using values from current db row
+void cScrapManager::UpdateMovie(cMovieDbMovie *movieval, cTableMovies* tMovies) {
+    movieval->id = tMovies->getIntValue(cTableMovies::fiMovieId);
+    movieval->title = tMovies->getStrValue(cTableMovies::fiTitle);
+    movieval->originalTitle = tMovies->getStrValue(cTableMovies::fiOriginalTitle);
+    movieval->tagline = tMovies->getStrValue(cTableMovies::fiTagline);
+    movieval->overview = tMovies->getStrValue(cTableMovies::fiOverview);
+    movieval->adult = tMovies->getIntValue(cTableMovies::fiIsAdult);
+    movieval->collectionName = tMovies->getStrValue(cTableMovies::fiCollectionName);
+    movieval->budget = tMovies->getIntValue(cTableMovies::fiBudget);
+    movieval->revenue = tMovies->getIntValue(cTableMovies::fiRevenue);
+    string genre = replaceString(tMovies->getStrValue(cTableMovies::fiGenres), "|", ",");
+    movieval->genres = genre;
+    movieval->homepage = tMovies->getStrValue(cTableMovies::fiHomepage);
+    movieval->releaseDate = tMovies->getStrValue(cTableMovies::fiReleaaseDate);
+    movieval->runtime = tMovies->getIntValue(cTableMovies::fiRuntime);
+    movieval->popularity = tMovies->getFloatValue(cTableMovies::fiPopularity);
+    movieval->voteAverage = tMovies->getFloatValue(cTableMovies::fiVoteAverage);
 }
 
 void cScrapManager::AddSeriesEpisode(cTVDBSeries *series, cTableSeriesEpisode* tEpisodes) {
@@ -258,6 +290,24 @@ void cScrapManager::UpdateSeriesActor(cTVDBActor *actor, cTableSeriesActor* tAct
     actor->role =  tActors->getStrValue(cTableSeriesActor::fiActorRole);
 }
 
+cMovieActor * cScrapManager::AddMovieActor(cMovieDbMovie *movie, cTableMovieActor* tActor, string role, bool noActorThumb) {
+    cMovieActor *a = new cMovieActor();
+    UpdateMovieActor(a, tActor, role);
+    if (noActorThumb) {
+      movie->InsertActorNoThumb(a);
+    } else {
+      movie->InsertActor(a);
+    }    
+    return a;
+}
+
+// update actor using values from current db row
+void cScrapManager::UpdateMovieActor(cMovieActor *actor, cTableMovieActor* tActor, string role) {
+    actor->id = tActor->getIntValue(cTableMovieActor::fiActorId);
+    actor->name = tActor->getStrValue(cTableMovieActor::fiActorName);
+    actor->role =  role;
+}
+
 void cScrapManager::AddMovieMedia(cMovieDbMovie *movie, cTableMovieMedia* tMovieMedia, string path) {
 	cMovieMedia *m = new cMovieMedia();
 	m->mediaType = tMovieMedia->getIntValue(cTableMovieMedia::fiMediaType);
@@ -267,13 +317,50 @@ void cScrapManager::AddMovieMedia(cMovieDbMovie *movie, cTableMovieMedia* tMovie
     movie->InsertMedia(m);	
 }
 
+// try to find actor in global movie actor thumbs map
+cMovieMedia *cScrapManager::GetMovieActorThumb(int actorId) {
+    map<int, cMovieMedia*>::iterator hit = movieActorsThumbs.find(actorId);
+    if (hit == movieActorsThumbs.end())
+        return NULL;    
+    return hit->second;
+}
 
-void cScrapManager::AddMovieActor(cMovieDbMovie *movie, cTableMovieActor* tActor, string role) {
-	cMovieActor *a = new cMovieActor();
-	a->id = tActor->getIntValue(cTableMovieActor::fiActorId);
-	a->name = tActor->getStrValue(cTableMovieActor::fiActorName);
-    a->role =  role;
-    movie->InsertActor(a);
+// insert movie actor thumb
+cMovieMedia *cScrapManager::AddMovieActorThumb(int actorId, int imgWidth, int imgHeight, string path, bool needrefresh) {
+    cMovieMedia *m = new cMovieMedia();
+    m->width = imgWidth;
+    m->height = imgHeight;
+    m->path = path;
+    m->mediaType = mmActorThumb;
+    m->needrefresh = needrefresh;
+    m->mediavalid = m->mediavalid || !needrefresh; // all media which do not need a refresh should have a image file (if was valid, is stay valid)
+    movieActorsThumbs.insert(pair<int, cMovieMedia*>(actorId, m));
+    return m;
+}
+
+// get first movie actor (also init series iterator)
+int cScrapManager::GetMovieActorThumbFirst(int &actorId, cMovieMedia* &movieActorThumb) {
+    movieActorThumb = NULL;
+    actorId = 0;
+    movieActorsThumbsIterator = movieActorsThumbs.begin();
+    if (movieActorsThumbsIterator == movieActorsThumbs.end())
+        return 0; // no movie availabe
+    movieActorThumb = movieActorsThumbsIterator->second; // return current movie
+    actorId = movieActorsThumbsIterator->first; 
+    return 1; 
+}
+
+// get next movie actor from iterator
+int cScrapManager::GetMovieActorThumbNext(int &actorId, cMovieMedia* &movieActorThumb) {
+    movieActorThumb=NULL;
+    actorId = 0;
+    if (movieActorsThumbsIterator != movieActorsThumbs.end())
+        movieActorsThumbsIterator++;
+    if (movieActorsThumbsIterator == movieActorsThumbs.end())
+        return 0; // no movie availabe
+    movieActorThumb = movieActorsThumbsIterator->second; // return current movie
+    actorId = movieActorsThumbsIterator->first; 
+    return 1; 
 }
 
 bool cScrapManager::AddRecording(int recStart, string recPath, int seriesId, int episodeId, int movieId) {

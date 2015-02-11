@@ -73,6 +73,13 @@ class cUpdate : public cThread  {
         void LoadSeriesActorThumb(cTVDBSeries *series, int actorId, string path);
         //MOVIES
         int ReadMovies(bool isRec);
+        int ReadMoviesFast(long &maxscrsp); // read all movies with event or recording from sql-db
+        int ReadMoviesContentFast(void); // read all actors/media from all movies where movie->updateimages = true
+        int ReadMovieActorsFast(cMovieDbMovie *movie); // read all actor for current movie from sql-db
+        int ReadMovieMediaFast(cMovieDbMovie *movie); // read all images for current movie from sql-db
+        void CheckMovieMedia(cMovieDbMovie *movie, int mediaType, int imgWidth, int imgHeight, string imgName, bool needRefresh); // create media if not exists in movie, update size, path, needRefresh of media
+        int ReadMovieImagesFast(void); // read all images with needrefresh from sql-db
+        bool ReadMovieImageFast(int movieId, int actorId, int mediaType, cMovieMedia *media, cMovieMedia *mediaThumb, int shrinkFactor); // read real image data from sql-db
         void ReadMovieActors(cMovieDbMovie *movie);
         void LoadMovieActorThumbs(cMovieDbMovie *movie);
         void LoadMovieMedia(cMovieDbMovie *movie, string moviePath);
@@ -112,6 +119,10 @@ class cUpdate : public cThread  {
       cDbStatement* selectReadEpisodes; // statement to select all episodes for one series which are used from min one event/recording
       cDbStatement* selectSeriesMediaActors; // statement to select all media and actor information for one series (but without binary image data)
       cDbStatement* selectSeriesImage; // statement to select one single image from series_media (with binary image data)
+      cDbStatement* selectReadMoviesInit; // statement to select all movies which are used from min one event
+      cDbStatement* selectReadMoviesLastScrsp; // statement to select all movies which are used from min one event (filtered by > scrsp)
+      cDbStatement* selectMovieMediaFast; // statement to select all media information for one movie (but without binary image data)
+      cDbStatement* selectMovieImage; // statement to select one single image from movie_media (with binary image data)
 
       cDbValue imageSize;
       cDbValue episodeImageSize;
