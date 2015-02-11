@@ -37,6 +37,7 @@ cScraper2VdrPluginMenu::cScraper2VdrPluginMenu(const char* title, cUpdate *updat
     cOsdMenu::Add(new cOsdItem(tr("Scan for new recordings in video directory")));
     cOsdMenu::Add(new cOsdItem(tr("Scan for new or updated scrapinfo files")));
     cOsdMenu::Add(new cOsdItem(tr("Cleanup Recordings in Database")));
+    cOsdMenu::Add(new cOsdItem(tr("Reload all values (Series, Movies and Images)")));
     SetHelp(0, 0, 0,0);
     Display();
 }
@@ -68,6 +69,9 @@ eOSState cScraper2VdrPluginMenu::ProcessKey(eKeys key) {
             } else if (Current() == 4) {
                 Skins.Message(mtInfo, tr("Cleaning up Recordings in Database"));
                 update->TriggerCleanRecordingsDB();
+            } else if (Current() == 5) {
+                Skins.Message(mtInfo, tr("Loading Series, Movies and Images from Database"));
+                update->ForceFullUpdate();
             }
             return osEnd;
         }

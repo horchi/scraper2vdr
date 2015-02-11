@@ -33,6 +33,9 @@ public:
 //Image Functions
 void CreateThumbnail(string sourcePath, string destPath, int origWidth, int origHeight, int shrinkFactor);
 
+// create thumbnail using fix thumbnail height
+void CreateThumbnailFixHeight(string sourcePath, string destPath, int origWidth, int origHeight, int thumbHeight);
+
 // Get systemtime in ms (since unspecified starting point)
 long GetTimems(void);
 

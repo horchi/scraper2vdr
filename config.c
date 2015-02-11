@@ -14,6 +14,7 @@ cScraper2VdrConfig::cScraper2VdrConfig() {
     recScrapInfoName = "scrapinfo";
     debug = 0;
     fastmode = 1;
+    thumbHeight = 200;
 }
 
 cScraper2VdrConfig::~cScraper2VdrConfig() {
@@ -54,6 +55,7 @@ bool cScraper2VdrConfig::SetupParse(const char *Name, const char *Value) {
     else if (strcmp(Name, "mysqlDBPass") == 0)        mysqlDBPass = Value;
     else if (strcmp(Name, "debug") == 0)              debug = atoi(Value);
     else if (strcmp(Name, "fastmode") == 0)           fastmode = atoi(Value);
+    else if (strcmp(Name, "thumbHeight") == 0)        thumbHeight = atoi(Value);
     else
         return false;
     return true;

@@ -185,6 +185,32 @@ void CreateThumbnail(string sourcePath, string destPath, int origWidth, int orig
     } catch( ... ) {}
 }
 
+// create thumbnail using fix thumbnail height
+void CreateThumbnailFixHeight(string sourcePath, string destPath, int origWidth, int origHeight, int thumbHeight) {
+    if (sourcePath.size() < 5 || destPath.size() < 5 || origHeight < 1) // no empty images allowed
+        return;
+
+    int thbWidth;
+    int thbHeight;
+    
+    if (thumbHeight < origHeight) {
+        thbHeight = thumbHeight;
+        float factor = thbHeight/origHeight;
+        thbWidth = factor*origWidth;
+    } else {
+        thbHeight = origHeight;
+        thbWidth = origWidth;
+    }
+
+    InitializeMagick(NULL);
+    Image buffer;
+    try {
+        buffer.read(sourcePath.c_str());
+        buffer.sample(Geometry(thbWidth, thbHeight)); 
+        buffer.write(destPath.c_str());
+    } catch( ... ) {}
+}
+
 // Get systemtime in ms (since unspecified starting point)
 long GetTimems(void) {
     struct timespec CurTime;

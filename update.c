@@ -70,6 +70,7 @@ cUpdate::cUpdate(cScrapManager *manager) : cThread("update thread started", true
     forceVideoDirUpdate = false;
     forceScrapInfoUpdate = false;
     forceCleanupRecordingDb = false;
+    forceFullUpdate = false;
     char* lang;
     lang = setlocale(LC_CTYPE, 0);
     if (lang) {
@@ -1029,9 +1030,10 @@ int cUpdate::ReadSeriesFast(long &maxscrsp) {
         } else {
             // check if something changed for series
             isNew = false;
-            series->updateimages = ((series->lastupdate < tSeries->getIntValue(cTableSeries::fiSeriesLastUpdated)) || // series get updated on thetvdb
-                                    (series->lastepisodeupdate < episode_LastUpdate.getIntValue())); // min one used episode get updated on thetvdb         
-            series->updatecontent = (series->updateimages) || (series->lastscraped < event_scrsp.getIntValue()); // new events or recodings with this series 
+            series->updateimages = (series->lastupdate < tSeries->getIntValue(cTableSeries::fiSeriesLastUpdated)) || // series get updated on thetvdb
+                                   (series->lastepisodeupdate < episode_LastUpdate.getIntValue()) || // min one used episode get updated on thetvdb         
+                                   forceFullUpdate; // force reload everything
+            series->updatecontent = (series->updateimages) || (series->lastscraped < event_scrsp.getIntValue()) || forceFullUpdate; // new events or recodings with this series 
             if ((series->updateimages) || (series->updatecontent)) { // something to refresh for series
                 scrapManager->UpdateSeries(series,tSeries); // update series
                 series->lastepisodeupdate = episode_LastUpdate.getIntValue();
@@ -1112,7 +1114,7 @@ int cUpdate::ReadEpisodesContentFast(cTVDBSeries *series) {
             scrapManager->AddSeriesEpisode(series,tEpisodes);
             numNew++;
         } else {
-            if (episode->lastupdate < tEpisodes->getIntValue(cTableSeriesEpisode::fiEpisodeLastUpdated)) {
+            if ((episode->lastupdate < tEpisodes->getIntValue(cTableSeriesEpisode::fiEpisodeLastUpdated)) || forceFullUpdate) {
                 // updated series
                 scrapManager->UpdateSeriesEpisode(episode,tEpisodes); // update episode
                 numNew++;
@@ -1162,40 +1164,40 @@ void cUpdate::ReadSeriesMediaFast(cTVDBSeries *series, int &newImages, int &newS
         // check type of media first
         switch (mediaType) {
             case msBanner1:
-                imgNeedRefresh = fileDateManager.CheckImageNeedRefresh("banner1.jpg", series->lastupdate);
+                imgNeedRefresh = fileDateManager.CheckImageNeedRefresh("banner1.jpg", series->lastupdate) || forceFullUpdate;
                 CheckSeriesMedia(series, mediaType, imgWidth, imgHeight,"banner1.jpg", 0, imgNeedRefresh);
                 break;
             case msBanner2:
-                imgNeedRefresh = fileDateManager.CheckImageNeedRefresh("banner2.jpg", series->lastupdate);
+                imgNeedRefresh = fileDateManager.CheckImageNeedRefresh("banner2.jpg", series->lastupdate) || forceFullUpdate;
                 CheckSeriesMedia(series, mediaType, imgWidth, imgHeight,"banner2.jpg", 0, imgNeedRefresh);
                 break;
             case msBanner3:
-                imgNeedRefresh = fileDateManager.CheckImageNeedRefresh("banner3.jpg", series->lastupdate);
+                imgNeedRefresh = fileDateManager.CheckImageNeedRefresh("banner3.jpg", series->lastupdate) || forceFullUpdate;
                 CheckSeriesMedia(series, mediaType, imgWidth, imgHeight,"banner3.jpg", 0, imgNeedRefresh);
                 break;
             case msPoster1:
-                imgNeedRefresh = fileDateManager.CheckImageNeedRefreshThumb("poster1.jpg", "poster_thumb.jpg", series->lastupdate);
+                imgNeedRefresh = fileDateManager.CheckImageNeedRefreshThumb("poster1.jpg", "poster_thumb.jpg", series->lastupdate) || forceFullUpdate;
                 CheckSeriesMedia(series, mediaType, imgWidth, imgHeight, "poster1.jpg", 0, imgNeedRefresh);
                 CheckSeriesMedia(series, msPosterThumb, imgWidth/5, imgHeight/5, "poster_thumb.jpg", 0, imgNeedRefresh);
                 break;
             case msPoster2:
-                imgNeedRefresh = fileDateManager.CheckImageNeedRefresh("poster2.jpg", series->lastupdate);
+                imgNeedRefresh = fileDateManager.CheckImageNeedRefresh("poster2.jpg", series->lastupdate) || forceFullUpdate;
                 CheckSeriesMedia(series, mediaType, imgWidth, imgHeight,"poster2.jpg", 0, imgNeedRefresh);
                 break;
             case msPoster3:
-                imgNeedRefresh = fileDateManager.CheckImageNeedRefresh("poster3.jpg", series->lastupdate);
+                imgNeedRefresh = fileDateManager.CheckImageNeedRefresh("poster3.jpg", series->lastupdate) || forceFullUpdate;
                 CheckSeriesMedia(series, mediaType, imgWidth, imgHeight,"poster3.jpg", 0, imgNeedRefresh);
                 break;
             case msFanart1:
-                imgNeedRefresh = fileDateManager.CheckImageNeedRefresh("fanart1.jpg", series->lastupdate);
+                imgNeedRefresh = fileDateManager.CheckImageNeedRefresh("fanart1.jpg", series->lastupdate) || forceFullUpdate;
                 CheckSeriesMedia(series, mediaType, imgWidth, imgHeight,"fanart1.jpg", 0, imgNeedRefresh);
                 break;
             case msFanart2:
-                imgNeedRefresh = fileDateManager.CheckImageNeedRefresh("fanart2.jpg", series->lastupdate);
+                imgNeedRefresh = fileDateManager.CheckImageNeedRefresh("fanart2.jpg", series->lastupdate) || forceFullUpdate;
                 CheckSeriesMedia(series, mediaType, imgWidth, imgHeight,"fanart2.jpg", 0, imgNeedRefresh);
                 break;
             case msFanart3:
-                imgNeedRefresh = fileDateManager.CheckImageNeedRefresh("fanart3.jpg", series->lastupdate);
+                imgNeedRefresh = fileDateManager.CheckImageNeedRefresh("fanart3.jpg", series->lastupdate) || forceFullUpdate;
                 CheckSeriesMedia(series, mediaType, imgWidth, imgHeight,"fanart3.jpg", 0, imgNeedRefresh);
                 break;
             case msSeasonPoster:
@@ -1205,7 +1207,7 @@ void cUpdate::ReadSeriesMediaFast(cTVDBSeries *series, int &newImages, int &newS
                 thumbName = imageName.str();
                 imageName.str("");
                 imageName << "season_" << season << ".jpg";
-                imgNeedRefresh = fileDateManager.CheckImageNeedRefreshThumb(imageName.str(),thumbName,series->lastupdate);
+                imgNeedRefresh = fileDateManager.CheckImageNeedRefreshThumb(imageName.str(),thumbName,series->lastupdate) || forceFullUpdate;
                 CheckSeriesMedia(series, mediaType, imgWidth, imgHeight, imageName.str(), season, imgNeedRefresh);
                 CheckSeriesMedia(series, msSeasonPosterThumb, imgWidth/2, imgHeight/2, thumbName, season, imgNeedRefresh);
                 break;
@@ -1215,7 +1217,7 @@ void cUpdate::ReadSeriesMediaFast(cTVDBSeries *series, int &newImages, int &newS
                     // only continue if episode exist
                     imageName.str("");
                     imageName << "episode_" << episode->id << ".jpg";
-                    imgNeedRefresh = fileDateManager.CheckImageNeedRefresh(imageName.str(),episode->lastupdate); // use lastupdate from episode for episode images
+                    imgNeedRefresh = fileDateManager.CheckImageNeedRefresh(imageName.str(),episode->lastupdate) || forceFullUpdate; // use lastupdate from episode for episode images
                     imageName.str("");
                     imageName << seriesPath << "/" << "episode_" << episode->id << ".jpg";
                     series->SetEpisodeImage(episode->id, imgWidth, imgHeight, imageName.str(), imgNeedRefresh);
@@ -1230,7 +1232,7 @@ void cUpdate::ReadSeriesMediaFast(cTVDBSeries *series, int &newImages, int &newS
                 }
                 imageName.str("");
                 imageName << "actor_" << actor->id << ".jpg";
-                imgNeedRefresh = fileDateManager.CheckImageNeedRefresh(imageName.str(),series->lastupdate);
+                imgNeedRefresh = fileDateManager.CheckImageNeedRefresh(imageName.str(),series->lastupdate) || forceFullUpdate;
                 imageName.str("");
                 imageName << seriesPath << "/" << "actor_" << actor->id << ".jpg";
                 series->SetActorThumb(actor->id, imgWidth, imgHeight, imageName.str(), imgNeedRefresh); // update/insert actor thumb
@@ -1452,7 +1454,7 @@ bool cUpdate::ReadSeriesImageFast(int seriesId, int season, int episodeId, int a
                 imageSaved = true;
             }
             if (mediaThumb) {
-                CreateThumbnail(media->path, mediaThumb->path, media->width, media->height, shrinkFactor);
+                CreateThumbnailFixHeight(media->path, mediaThumb->path, media->width, media->height, config.thumbHeight);
                 mediaThumb->needrefresh = false;
                 mediaThumb->mediavalid = true; // we have a image file for this media
             }
@@ -1745,7 +1747,12 @@ int cUpdate::ReadMoviesFast(long &maxscrsp) {
         } else {
             // only update lastscraped of known movie
             movie->lastscraped = event_scrsp.getIntValue(); 
-            isNew = false;
+            if (forceFullUpdate) {
+                movie->updateimages = true; // force update of images
+                isNew = true;
+            } else {  
+                isNew = false;
+            }    
         }
         maxscrsp = max(maxscrsp, movie->lastscraped);
         i++;
@@ -1818,7 +1825,7 @@ int cUpdate::ReadMovieActorsFast(cMovieDbMovie *movie) {
             // new actor, add to global actor thumb map
             imageName.str("");
             imageName << imgPathMovies << "/actors/" << "actor_" << actor->id << ".jpg";
-            imgNeedRefresh = !FileExists(imageName.str(),true);
+            imgNeedRefresh = (!FileExists(imageName.str(),true)) || forceFullUpdate;
             imgWidth = thbWidth.getIntValue();
             imgHeight = thbHeight.getIntValue();
             actorThumb = scrapManager->AddMovieActorThumb(actor->id, imgWidth, imgHeight, imageName.str(), imgNeedRefresh);
@@ -1863,26 +1870,26 @@ int cUpdate::ReadMovieMediaFast(cMovieDbMovie *movie) {
                 imageName.str("");
                 imageName << moviePath << "/poster.jpg";
                 imgNeedRefresh = !(FileExists(imageName.str(),true) && FileExists(thumbName,true)); // refresh image if one file not exist
-
+                imgNeedRefresh = imgNeedRefresh || forceFullUpdate;
                 CheckMovieMedia(movie, mediaType, imgWidth, imgHeight, imageName.str(), imgNeedRefresh);
                 CheckMovieMedia(movie, mmPosterThumb, imgWidth/4, imgHeight/4, thumbName, imgNeedRefresh);
                 break;
             case mmFanart:
                 imageName.str("");
                 imageName << moviePath << "/fanart.jpg";
-                imgNeedRefresh = !FileExists(imageName.str(),true);
+                imgNeedRefresh = (!FileExists(imageName.str(),true)) || forceFullUpdate;
                 CheckMovieMedia(movie, mediaType, imgWidth, imgHeight, imageName.str(), imgNeedRefresh);
                 break;
             case mmCollectionPoster:
                 imageName.str("");
                 imageName << moviePath << "/collectionPoster.jpg";
-                imgNeedRefresh = !FileExists(imageName.str(),true);
+                imgNeedRefresh = (!FileExists(imageName.str(),true)) || forceFullUpdate;
                 CheckMovieMedia(movie, mediaType, imgWidth, imgHeight, imageName.str(), imgNeedRefresh);
                 break;
             case mmCollectionFanart:
                 imageName.str("");
                 imageName << moviePath << "/collectionFanart.jpg";
-                imgNeedRefresh = !FileExists(imageName.str(),true);
+                imgNeedRefresh = (!FileExists(imageName.str(),true)) || forceFullUpdate;
                 CheckMovieMedia(movie, mediaType, imgWidth, imgHeight, imageName.str(), imgNeedRefresh);
                 break;
             default:
@@ -1951,7 +1958,7 @@ int cUpdate::ReadMovieImagesFast(void) {
                 newActors++;
             } else {
                 tell(0,"failed to read image (movie actor id %d)",actorId);
-            }    
+            }
         }
         i++;
         if (GetTimeDiffms(lastLog)>LogPeriode) {
@@ -2034,7 +2041,7 @@ bool cUpdate::ReadMovieImageFast(int movieId, int actorId, int mediaType, cMovie
                 imageSaved = true;
             }
             if (mediaThumb) {
-                CreateThumbnail(media->path, mediaThumb->path, media->width, media->height, shrinkFactor);
+                CreateThumbnailFixHeight(media->path, mediaThumb->path, media->width, media->height, config.thumbHeight);
                 mediaThumb->needrefresh = false;
                 mediaThumb->mediavalid = true; // we have a image file for this media
             }
@@ -2497,6 +2504,7 @@ void cUpdate::Action()
     int numNewMovies = 0;
     int numNewImages = 0;
     int numNewImages2 = 0;
+    bool showlog = false;
 
     while (loopActive && Running()) 
     {
@@ -2556,37 +2564,57 @@ void cUpdate::Action()
            
            worked++;
            if (config.fastmode) {
+               if (forceFullUpdate) {
+                   // force loading of all data
+                   MaxScrspMovies = 0;
+                   MaxScrspSeries = 0;
+               }
+               
                // new mode
-               tell(0, "Loading Movies information from Database...");
+               showlog = (MaxScrspMovies == 0) || (MaxScrspSeries == 0) || numNewEvents;
+               if (showlog)
+                 tell(0, "Loading Movies information from Database...");
                now = time(0);
                numValues = ReadMoviesFast(MaxScrspMovies);
                dur = time(0) - now; 
-               tell(0, "Loaded %d new/updated Movies in %ds from Database (new max scrsp: %ld)", numValues, dur, MaxScrspMovies);
+               showlog = showlog || (numValues>0);
+               if (showlog) {
+                   tell(0, "Loaded %d new/updated Movies in %ds from Database (new max scrsp: %ld)", numValues, dur, MaxScrspMovies);
+                   tell(0, "Loading Movies content from Database...");
+               }
                
-               tell(0, "Loading Movies content from Database...");
                now = time(0);
                numValues = ReadMoviesContentFast();
                dur = time(0) - now; 
-               tell(0, "Loaded %d new/updated Image information in %ds from Database", numValues, dur);
-               
-               tell(0, "Loading Series information from Database...");
+               showlog = showlog || (numValues>0);
+               if (showlog) {
+                   tell(0, "Loaded %d new/updated Image information in %ds from Database", numValues, dur);
+                   tell(0, "Loading Series information from Database...");
+               }
+                   
                now = time(0);
                numValues = ReadSeriesFast(MaxScrspSeries);
-               dur = time(0) - now; 
-               tell(0, "Loaded %d new/updated Series in %ds from Database (new max scrsp: %ld)", numValues, dur, MaxScrspSeries);
-              
-               tell(0, "Loading Series content from Database...");
+               dur = time(0) - now;
+               showlog = showlog || (numValues>0);
+               if (showlog) {
+                   tell(0, "Loaded %d new/updated Series in %ds from Database (new max scrsp: %ld)", numValues, dur, MaxScrspSeries);
+                   tell(0, "Loading Series content from Database...");
+               }    
                now = time(0);
                numValues = ReadSeriesContentFast(numNewImages,numNewImages2);
-               dur = time(0) - now; 
-               tell(0, "Loaded %d new/updated Episodes and %d new/updated Image information (including %d possible not available season poster) in %ds from Database", numValues, numNewImages+numNewImages2, numNewImages2, dur);
-              
-               tell(0, "Loading Image content from Database...");
+               dur = time(0) - now;
+               showlog = showlog || (numValues>0) || (numNewImages-numNewImages2>0); // ignore season thumbs here
+               if (showlog) {
+                   tell(0, "Loaded %d new/updated Episodes and %d new/updated Image information (including %d possible not available season poster) in %ds from Database", numValues, numNewImages+numNewImages2, numNewImages2, dur);
+                   tell(0, "Loading Image content from Database...");
+               }    
                now = time(0);
                ReadSeriesImagesFast(numNewImages,numNewImages2);
                numNewImages = numNewImages + ReadMovieImagesFast();
                dur = time(0) - now; 
-               tell(0, "Loaded %d new/updated Images (found %d not available season posters) in %ds from Database", numNewImages, numNewImages2, dur);
+               showlog = showlog || (numNewImages>0);
+               if (showlog)
+                   tell(0, "Loaded %d new/updated Images (found %d not available season posters) in %ds from Database", numNewImages, numNewImages2, dur);
            } else {
                // old mode
                tell(0, "Loading new Movies from Database...");
@@ -2603,6 +2631,7 @@ void cUpdate::Action()
            }   
            lastScan = time(0);
            forceUpdate = false;
+           forceFullUpdate = false;
         }
         
         // Scan new recordings
@@ -2702,5 +2731,11 @@ void cUpdate::ForceScrapInfoUpdate(void) {
 void cUpdate::TriggerCleanRecordingsDB(void) {
     tell(0, "cleanup of recording DB triggered");
     forceCleanupRecordingDb = true;
+}
+
+void cUpdate::ForceFullUpdate(void) {
+    tell(0, "full update (including image data) from database forced");
+    forceUpdate = true; // this trigger the update
+    forceFullUpdate = true; // this trigger reset of old data
 }
 

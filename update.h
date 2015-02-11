@@ -47,6 +47,7 @@ class cUpdate : public cThread  {
         bool forceVideoDirUpdate;
         bool forceScrapInfoUpdate;
         bool forceCleanupRecordingDb;
+        bool forceFullUpdate; // force full update (information and images)
         int exitDb();
         int dbConnected(int force = no) { return connection && (!force || connection->check() == success); };
         int CheckConnection(int& timeout);
@@ -149,6 +150,7 @@ class cUpdate : public cThread  {
         void ForceVideoDirUpdate(void);
         void ForceScrapInfoUpdate(void);
         void TriggerCleanRecordingsDB(void);
+        void ForceFullUpdate(void);
 };
 
 //***************************************************************************

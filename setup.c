@@ -26,6 +26,7 @@ void cScraper2VdrSetup::Setup(void) {
     Add(new cMenuEditBoolItem(tr("Show Main Menu Entry"), &tmpConfig.mainMenuEntry));
     Add(new cMenuEditBoolItem(tr("Debug Mode"), &tmpConfig.debug));
     Add(new cMenuEditBoolItem(tr("Fast Mode"), &tmpConfig.fastmode));
+    Add(new cMenuEditIntItem(tr("Thumbnail height"), &tmpConfig.thumbHeight));
     Add(new cMenuEditStrItem(tr("MySQL Host"), host, sizeof(host), tr(FileNameChars)));
     Add(new cMenuEditIntItem(tr("MySQL Port"), &tmpConfig.mysqlPort, 1, 99999));
     Add(new cMenuEditStrItem(tr("MySQL Database Name"), dbname, sizeof(dbname), tr(FileNameChars)));
@@ -37,6 +38,7 @@ void cScraper2VdrSetup::Setup(void) {
     Add(new cOsdItem(tr("Scan for new recordings in video directory")));
     Add(new cOsdItem(tr("Scan for new or updated scrapinfo files")));
     Add(new cOsdItem(tr("Cleanup Recordings in Database")));
+    Add(new cOsdItem(tr("Reload all values (Series, Movies and Images)")));
 
     SetCurrent(Get(currentItem));
     Display();
@@ -51,21 +53,24 @@ eOSState cScraper2VdrSetup::ProcessKey(eKeys Key) {
         tmpConfig.mysqlDBUser = user;
         tmpConfig.mysqlDBPass = password;
         Store();
-        if (Current() == 8) {
+        if (Current() == 9) {
             Skins.Message(mtInfo, tr("Updating Scraper EPG Information from Database"));
             update->ForceUpdate();
-        } else if (Current() == 9) {
+        } else if (Current() == 10) {
             Skins.Message(mtInfo, tr("Updating Scraper Recordings Information from Database"));
             update->ForceRecordingUpdate();
-        } else if (Current() == 10) {
+        } else if (Current() == 11) {
             Skins.Message(mtInfo, tr("Scanning for new recordings in video directory"));
             update->ForceVideoDirUpdate();
-        } else if (Current() == 11 ) {
+        } else if (Current() == 12 ) {
             Skins.Message(mtInfo, tr("Scanning for new or updated scrapinfo files"));
             update->ForceScrapInfoUpdate();
-        } else if (Current() == 12) {
+        } else if (Current() == 13) {
             Skins.Message(mtInfo, tr("Cleaning up Recordings in Database"));
             update->TriggerCleanRecordingsDB();
+        } else if (Current() == 14) {
+            Skins.Message(mtInfo, tr("Loading Series, Movies and Images from Database"));
+            update->ForceFullUpdate();
         }
         return osEnd;
     }
@@ -82,6 +87,7 @@ void cScraper2VdrSetup::Store(void) {
     SetupStore("mysqlDBPass", tmpConfig.mysqlDBPass.c_str());
     SetupStore("debug", tmpConfig.debug);
     SetupStore("fastmode", tmpConfig.fastmode);
+    SetupStore("thumbHeight", tmpConfig.thumbHeight);
 
     EPG2VDRConfig.loglevel = tmpConfig.debug ? 2 : 1;
 }

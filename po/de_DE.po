@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: vdr-scraper2vdr 0.0.1\n"
 "Report-Msgid-Bugs-To: <see README>\n"
-"POT-Creation-Date: 2015-01-24 13:59+0100\n"
+"POT-Creation-Date: 2015-02-11 19:00+0100\n"
 "PO-Revision-Date: 2014-03-30 18:30+0100\n"
 "Last-Translator: 3PO\n"
 "Language-Team: German <vdr@linuxtv.org>\n"
@@ -30,6 +30,9 @@ msgstr "Nach neuen oder geänderten scrapinfo Dateien suchen"
 msgid "Cleanup Recordings in Database"
 msgstr "Aufnahmen in Datenbank bereinigen"
 
+msgid "Reload all values (Series, Movies and Images)"
+msgstr "Alle Daten (Serien, Filme und Bilder) neu laden"
+
 msgid "Updating Scraper EPG Information from Database"
 msgstr "Filme und Serien werden aus Datenbank aktualisiert"
 
@@ -45,6 +48,9 @@ msgstr "Suche nach neuen oder geänderten scrapinfo Dateien"
 msgid "Cleaning up Recordings in Database"
 msgstr "Bereinige Aufnahmen in Datenbank"
 
+msgid "Loading Series, Movies and Images from Database"
+msgstr "Filme, Serien und Bilder werden aus Datenbank neu geladen"
+
 msgid "Show Main Menu Entry"
 msgstr "Hauptmenüeintrag anzeigen"
 
@@ -53,6 +59,9 @@ msgstr "Debug Modus"
 
 msgid "Fast Mode"
 msgstr "Neuer Datenbankparser"
+
+msgid "Thumbnail height"
+msgstr "Höhe der Miniaturbilder"
 
 msgid "MySQL Host"
 msgstr "MySQL Host"
