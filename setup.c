@@ -60,23 +60,23 @@ eOSState cScraper2VdrSetup::ProcessKey(eKeys Key) {
     if (Key == kOk) {
 
        Store();
-       
-       if (Current() == 9) {
+
+       if (Current() == 13) {
           Skins.Message(mtInfo, tr("Updating Scraper EPG Information from Database"));
           update->ForceUpdate();
-       } else if (Current() == 10) {
+       } else if (Current() == 14) {
           Skins.Message(mtInfo, tr("Updating Scraper Recordings Information from Database"));
           update->ForceRecordingUpdate();
-       } else if (Current() == 11) {
+       } else if (Current() == 15) {
           Skins.Message(mtInfo, tr("Scanning for new recordings in video directory"));
           update->ForceVideoDirUpdate();
-       } else if (Current() == 12 ) {
+       } else if (Current() == 16 ) {
           Skins.Message(mtInfo, tr("Scanning for new or updated scrapinfo files"));
           update->ForceScrapInfoUpdate();
-       } else if (Current() == 13) {
+       } else if (Current() == 17) {
           Skins.Message(mtInfo, tr("Cleaning up Recordings in Database"));
           update->TriggerCleanRecordingsDB();
-       } else if (Current() == 14) {
+       } else if (Current() == 18) {
           Skins.Message(mtInfo, tr("Loading Series, Movies and Images from Database"));
           update->ForceFullUpdate();
        }
