@@ -114,10 +114,10 @@ bool cPluginScraper2vdr::ProcessArgs(int argc, char *argv[]) {
     while ((c = getopt_long(argc, argv, "i:m:", long_options, NULL)) != -1) {
         switch (c) {
             case 'i':
-                config.SetImageDir(optarg);
+                scraper2VdrConfig.SetImageDir(optarg);
                 break;
             case 'm':
-                config.SetMode(optarg);
+                scraper2VdrConfig.SetMode(optarg);
                 break;
             default:
                 return false;
@@ -127,8 +127,8 @@ bool cPluginScraper2vdr::ProcessArgs(int argc, char *argv[]) {
 }
 
 bool cPluginScraper2vdr::Initialize(void) {
-    config.SetUuid(this);
-    config.SetDefaultImageDir();
+    scraper2VdrConfig.SetUuid(this);
+    scraper2VdrConfig.SetDefaultImageDir();
     scrapManager = new cScrapManager();
     update = new cUpdate(scrapManager);
     return true;
@@ -171,7 +171,7 @@ cMenuSetupPage *cPluginScraper2vdr::SetupMenu(void) {
 }
 
 bool cPluginScraper2vdr::SetupParse(const char *Name, const char *Value) {
-    return config.SetupParse(Name, Value);
+    return scraper2VdrConfig.SetupParse(Name, Value);
 }
 
 bool cPluginScraper2vdr::Service(const char *Id, void *Data) {

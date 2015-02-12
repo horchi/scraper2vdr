@@ -21,11 +21,6 @@ static const char *DESCRIPTION    = "'scraper2vdr' plugin";
 static const char *MAINMENUENTRY  = "Scraper2Vdr";
 
 //***************************************************************************
-// Globals
-//***************************************************************************
-cScraper2VdrConfig config;
-
-//***************************************************************************
 // cPluginScraper2vdr
 //***************************************************************************
 
@@ -47,7 +42,7 @@ public:
     virtual void MainThreadHook(void);
     virtual cString Active(void);
     virtual time_t WakeupTime(void);
-    virtual const char *MainMenuEntry(void) { return (config.mainMenuEntry)?MAINMENUENTRY:NULL; }
+    virtual const char *MainMenuEntry(void) { return scraper2VdrConfig.mainMenuEntry ? MAINMENUENTRY : NULL; }
     virtual cOsdObject *MainMenuAction(void);
     virtual cMenuSetupPage *SetupMenu(void);
     virtual bool SetupParse(const char *Name, const char *Value);

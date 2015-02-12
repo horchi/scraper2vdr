@@ -14,10 +14,6 @@ class cScraper2VdrSetup : public cMenuSetupPage
     private:
         cUpdate *update;
         cScraper2VdrConfig tmpConfig;
-        char host[256];
-        char dbname[256];
-        char user[256];
-        char password[256];
         void Setup(void);
     protected:
         virtual eOSState ProcessKey(eKeys Key);

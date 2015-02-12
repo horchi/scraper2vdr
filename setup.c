@@ -5,12 +5,6 @@
 cScraper2VdrSetup::cScraper2VdrSetup(cUpdate* update) {
     this->update = update;
     tmpConfig = scraper2VdrConfig;
-
-    strn0cpy(host, tmpConfig.dbHost, sizeof(host));
-    strn0cpy(dbname, tmpConfig.dbName, sizeof(dbname));
-    strn0cpy(user, tmpConfig.dbUser, sizeof(user));
-    strn0cpy(password, tmpConfig.dbPass, sizeof(password));
-
     Setup();
 }
 
@@ -62,13 +56,9 @@ void cScraper2VdrSetup::Setup(void) {
 }
 
 eOSState cScraper2VdrSetup::ProcessKey(eKeys Key) {
-    // bool hadSubMenu = HasSubMenu();   
     eOSState state = cMenuSetupPage::ProcessKey(Key);
     if (Key == kOk) {
-       strn0cpy(tmpConfig.dbHost, host, sizeof(host));
-       strn0cpy(tmpConfig.dbName, dbname, sizeof(dbname));
-       strn0cpy(tmpConfig.dbUser, user, sizeof(user));
-       strn0cpy(tmpConfig.dbPass, password, sizeof(password));
+
        Store();
        
        if (Current() == 9) {
@@ -90,13 +80,17 @@ eOSState cScraper2VdrSetup::ProcessKey(eKeys Key) {
           Skins.Message(mtInfo, tr("Loading Series, Movies and Images from Database"));
           update->ForceFullUpdate();
        }
+
        return osEnd;
     }
+
     return state;
 }
 
 void cScraper2VdrSetup::Store(void) {
+
     scraper2VdrConfig = tmpConfig;
+
     SetupStore("mainMenuEntry", tmpConfig.mainMenuEntry);
     SetupStore("DbHost", tmpConfig.dbHost);
     SetupStore("DbPort", tmpConfig.dbPort);
