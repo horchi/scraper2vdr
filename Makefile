@@ -23,6 +23,8 @@ LOCDIR = $(call PKGCFG,locdir)
 PLGCFG = $(call PKGCFG,plgcfg)
 CONFDEST = $(call PKGCFG,configdir)/plugins/$(PLUGIN)
 
+VDR_USER ?= vdr
+
 #
 TMPDIR ?= /tmp
 
