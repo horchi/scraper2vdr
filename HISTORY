@@ -40,8 +40,16 @@ Version 0.1.5
 Version 0.1.6
 - removed outdated field
 
-2015-01-06
+2015-01-10
 - first test version for new DB parser. Currently only series are supported, download of movie data is disabled
 - new DB parser should be much faster (only 1/3 of SQL commands)
 - with the new DB parser it's now possible to use epgd/scraper2vdr over slow tcp connections (like slow WLAN 802.11b),
 because there is much less traffic (binary image data get only copied if image should get updated/loaded)
+
+2015-01-11
+- first test version for new DB parser with full series and movie support
+- thumbnail size is now configurable in setup
+should be set to height which is used by skin to optimze performance of skin (no scaling of thumbs neccessarry)
+- full update of series, movies and image files can be triggered from menu/setup
+this will load existing images also (thumbs get created with new size)
+- prevent logging of unneccessarry messages (e.g. found nothing to update)

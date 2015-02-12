@@ -28,6 +28,7 @@ class cScraper2VdrConfig {
         string mysqlDBPass;
         string recScrapInfoName;
         int debug;
-	int fastmode;
+        int fastmode; // new db parser enabled
+        int thumbHeight; // height of thumbnails (for Posters)
 };
 #endif //__SCRAPER2VDR_CONFIG_H
