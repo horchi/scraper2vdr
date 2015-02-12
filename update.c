@@ -2577,10 +2577,11 @@ void cUpdate::Action()
            else 
            {
               lastScan = time(0);
-              forceUpdate = false;
               init = false;
-              if (!scraper2VdrConfig.fastmode)
-                continue;
+              if (!scraper2VdrConfig.fastmode) {
+                  forceUpdate = false;
+                  continue;
+              }   
            }
            
            worked++;
@@ -2592,7 +2593,7 @@ void cUpdate::Action()
                }
                
                // new mode
-               showlog = (MaxScrspMovies == 0) || (MaxScrspSeries == 0) || numNewEvents;
+               showlog = (MaxScrspMovies == 0) || (MaxScrspSeries == 0) || numNewEvents || forceUpdate || (scraper2VdrConfig.loglevel>1); // force log if: first run, found new events, forced update or loglevel > 1
                if (showlog)
                  tell(0, "Loading Movies information from Database...");
                now = time(0);
