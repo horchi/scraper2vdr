@@ -5,57 +5,22 @@
  *
  */
 
-#include <string.h>
-
-#include "common.h"
 #include "config.h"
 
-cEPG2VDRConfig EPG2VDRConfig;
+//***************************************************************************
+// Statics
+//***************************************************************************
 
-cEPG2VDRConfig::cEPG2VDRConfig(void) 
+int cEpgConfig::logstdout = no;
+int cEpgConfig::loglevel = 1;
+
+//***************************************************************************
+// Common EPG Service Configuration
+//***************************************************************************
+
+cEpgConfig::cEpgConfig() 
 {
-   mainmenuVisible = yes;
-   mainmenuFullupdate = 0;
-
-   useproxy = no;
-   sstrcpy(httpproxy, "127.0.0.1:8000", sizeof(httpproxy));
-   sstrcpy(username, "", sizeof(username));
-   sstrcpy(password, "", sizeof(password));
-
-   checkInitial = yes;
-   updatetime = 6;        // hours
-   days = 8;
-   upddays = 2;
-   storeXmlToFs = no;
-   blacklist = no;
-   masterMode = 0;
-
-   getepgimages = yes;
-   maximagesperevent = 1;
-   epgImageSize = 2;
-
-   seriesEnabled = yes;
-   sstrcpy(seriesUrl, "eplists.constabel.net", sizeof(seriesUrl));
-   seriesPort = 2006;
-   storeSeriesToFs = no;
-
-   // for VDR_PLUGIN
-
-   activeOnEpgd = no;
-   scheduleBoot = no;
-
-   // for epgd
-
-   sstrcpy(cachePath, "/var/cache/epgd", sizeof(cachePath));
-   sstrcpy(httpPath, "/var/epgd/www", sizeof(httpPath));
-   sstrcpy(pluginPath, PLGDIR, sizeof(pluginPath));
-   sstrcpy(epgView, "eventsview.sql", sizeof(epgView));
-   sstrcpy(theTvDBView, "thetvdbview.sql", sizeof(epgView));
-   updateThreshold = 200;
-   maintanance = no;
-   httpPort = 9999;
-
-   // 
+   // database connection
 
    sstrcpy(dbHost, "localhost", sizeof(dbHost));
    dbPort = 3306;
@@ -63,11 +28,9 @@ cEPG2VDRConfig::cEPG2VDRConfig(void)
    sstrcpy(dbUser, "epg2vdr", sizeof(dbUser));
    sstrcpy(dbPass, "epg", sizeof(dbPass));
 
-   logstdout = no;
-   loglevel = 1;
+   sstrcpy(netDevice, "", sizeof(netDevice));
 
    uuid[0] = 0;
 
-   scrapEpg = yes;
-   scrapRecordings = yes;
+   getepgimages = yes;
 } 

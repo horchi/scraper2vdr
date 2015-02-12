@@ -184,43 +184,43 @@ cTVDBSeries *cScrapManager::AddSeries(cTableSeries* tSeries) {
     cTVDBSeries *s = new cTVDBSeries();
     UpdateSeries(s,tSeries);
     s->updateimages = true; // have to search images for new series
-    series.insert(pair<int, cTVDBSeries*>(tSeries->getIntValue(cTableSeries::fiSeriesId), s));
+    series.insert(pair<int, cTVDBSeries*>(tSeries->getIntValue("SERIESID"), s));
     return s;
 }
 
 // update series using values from current db row
 void cScrapManager::UpdateSeries(cTVDBSeries *seriesval,cTableSeries* tSeries) {
-    seriesval->id = tSeries->getIntValue(cTableSeries::fiSeriesId);
-    seriesval->name = tSeries->getStrValue(cTableSeries::fiSeriesName);
-    seriesval->overview = tSeries->getStrValue(cTableSeries::fiSeriesOverview);
-    seriesval->firstAired = tSeries->getStrValue(cTableSeries::fiSeriesFirstAired);
-    seriesval->network = tSeries->getStrValue(cTableSeries::fiSeriesNetwork);
-    string genre = replaceString(tSeries->getStrValue(cTableSeries::fiSeriesGenre), "|", ", ");
+    seriesval->id = tSeries->getIntValue("SERIESID");
+    seriesval->name = tSeries->getStrValue("SERIESNAME");
+    seriesval->overview = tSeries->getStrValue("SERIESOVERVIEW");
+    seriesval->firstAired = tSeries->getStrValue("SERIESFIRSTAIRED");
+    seriesval->network = tSeries->getStrValue("SERIESNETWORK");
+    string genre = replaceString(tSeries->getStrValue("SERIESGENRE"), "|", ", ");
     seriesval->genre = genre;
-    seriesval->rating = tSeries->getFloatValue(cTableSeries::fiSeriesRating);
-    seriesval->status = tSeries->getStrValue(cTableSeries::fiSeriesStatus);
-    seriesval->lastupdate = tSeries->getIntValue(cTableSeries::fiSeriesLastUpdated); // save when series was last updated on server
+    seriesval->rating = tSeries->getFloatValue("SERIESRATING");
+    seriesval->status = tSeries->getStrValue("SERIESSTATUS");
+    seriesval->lastupdate = tSeries->getIntValue("SERIESLASTUPDATED"); // save when series was last updated on server
 }
 
 cMovieDbMovie *cScrapManager::AddMovie(cTableMovies* tMovies) {
 	cMovieDbMovie *m = new cMovieDbMovie();
-	m->id = tMovies->getIntValue(cTableMovies::fiMovieId);
-	m->title = tMovies->getStrValue(cTableMovies::fiTitle);
-    m->originalTitle = tMovies->getStrValue(cTableMovies::fiOriginalTitle);
-    m->tagline = tMovies->getStrValue(cTableMovies::fiTagline);
-    m->overview = tMovies->getStrValue(cTableMovies::fiOverview);
-    m->adult = tMovies->getIntValue(cTableMovies::fiIsAdult);
-    m->collectionName = tMovies->getStrValue(cTableMovies::fiCollectionName);
-    m->budget = tMovies->getIntValue(cTableMovies::fiBudget);
-    m->revenue = tMovies->getIntValue(cTableMovies::fiRevenue);
-    string genre = replaceString(tMovies->getStrValue(cTableMovies::fiGenres), "|", ",");
+	m->id = tMovies->getIntValue("MOVIEID");
+	m->title = tMovies->getStrValue("TITLE");
+    m->originalTitle = tMovies->getStrValue("ORIGINALTITLE");
+    m->tagline = tMovies->getStrValue("TAGLINE");
+    m->overview = tMovies->getStrValue("OVERVIEW");
+    m->adult = tMovies->getIntValue("ISADULT");
+    m->collectionName = tMovies->getStrValue("COLLECTIONNAME");
+    m->budget = tMovies->getIntValue("BUDGET");
+    m->revenue = tMovies->getIntValue("REVENUE");
+    string genre = replaceString(tMovies->getStrValue("GENRES"), "|", ",");
     m->genres = genre;
-    m->homepage = tMovies->getStrValue(cTableMovies::fiHomepage);
-    m->releaseDate = tMovies->getStrValue(cTableMovies::fiReleaaseDate);
-    m->runtime = tMovies->getIntValue(cTableMovies::fiRuntime);
-    m->popularity = tMovies->getFloatValue(cTableMovies::fiPopularity);
-    m->voteAverage = tMovies->getFloatValue(cTableMovies::fiVoteAverage);
-    movies.insert(pair<int, cMovieDbMovie*>(tMovies->getIntValue(cTableMovies::fiMovieId), m));
+    m->homepage = tMovies->getStrValue("HOMEPAGE");
+    m->releaseDate = tMovies->getStrValue("RELEAASEDATE");
+    m->runtime = tMovies->getIntValue("RUNTIME");
+    m->popularity = tMovies->getFloatValue("POPULARITY");
+    m->voteAverage = tMovies->getFloatValue("VOTEAVERAGE");
+    movies.insert(pair<int, cMovieDbMovie*>(tMovies->getIntValue("MOVIEID"), m));
     return m;
 }
 
@@ -232,16 +232,16 @@ void cScrapManager::AddSeriesEpisode(cTVDBSeries *series, cTableSeriesEpisode* t
 
 // update episode using values from current db row
 void cScrapManager::UpdateSeriesEpisode(cTVDBEpisode *episode, cTableSeriesEpisode* tEpisodes) {
-    episode->id = tEpisodes->getIntValue(cTableSeriesEpisode::fiEpisodeId);
-    episode->name = tEpisodes->getStrValue(cTableSeriesEpisode::fiEpisodeName);
-    episode->number =  tEpisodes->getIntValue(cTableSeriesEpisode::fiEpisodeNumber);
-    episode->season = tEpisodes->getIntValue(cTableSeriesEpisode::fiSeasonNumber);
-    episode->overview = tEpisodes->getStrValue(cTableSeriesEpisode::fiEpisodeOverview);
-    episode->firstAired = tEpisodes->getStrValue(cTableSeriesEpisode::fiEpisodeFirstAired);
-    string guestStars = replaceString(tEpisodes->getStrValue(cTableSeriesEpisode::fiEpisodeGuestStars), "|", ", ");
+    episode->id = tEpisodes->getIntValue("EPISODEID");
+    episode->name = tEpisodes->getStrValue("EPISODENAME");
+    episode->number =  tEpisodes->getIntValue("EPISODENUMBER");
+    episode->season = tEpisodes->getIntValue("SEASONNUMBER");
+    episode->overview = tEpisodes->getStrValue("EPISODEOVERVIEW");
+    episode->firstAired = tEpisodes->getStrValue("EPISODEFIRSTAIRED");
+    string guestStars = replaceString(tEpisodes->getStrValue("EPISODEGUESTSTARS"), "|", ", ");
     episode->guestStars = guestStars;
-    episode->rating = tEpisodes->getFloatValue(cTableSeriesEpisode::fiEpisodeRating);
-    episode->lastupdate = tEpisodes->getIntValue(cTableSeriesEpisode::fiEpisodeLastUpdated); 
+    episode->rating = tEpisodes->getFloatValue("EPISODERATING");
+    episode->lastupdate = tEpisodes->getIntValue("EPISODELASTUPDATED"); 
 }
 
 cTVDBActor *cScrapManager::AddSeriesActor(cTVDBSeries *series, cTableSeriesActor* tActors) {
@@ -253,16 +253,16 @@ cTVDBActor *cScrapManager::AddSeriesActor(cTVDBSeries *series, cTableSeriesActor
 
 // update actor using values from current db row
 void cScrapManager::UpdateSeriesActor(cTVDBActor *actor, cTableSeriesActor* tActors) {
-    actor->id = tActors->getIntValue(cTableSeriesActor::fiActorId);
-    actor->name = tActors->getStrValue(cTableSeriesActor::fiActorName);
-    actor->role =  tActors->getStrValue(cTableSeriesActor::fiActorRole);
+    actor->id = tActors->getIntValue("ACTORID");
+    actor->name = tActors->getStrValue("ACTORNAME");
+    actor->role =  tActors->getStrValue("ACTORROLE");
 }
 
 void cScrapManager::AddMovieMedia(cMovieDbMovie *movie, cTableMovieMedia* tMovieMedia, string path) {
 	cMovieMedia *m = new cMovieMedia();
-	m->mediaType = tMovieMedia->getIntValue(cTableMovieMedia::fiMediaType);
-	m->width = tMovieMedia->getIntValue(cTableMovieMedia::fiMediaWidth);
-	m->height = tMovieMedia->getIntValue(cTableMovieMedia::fiMediaHeight);
+	m->mediaType = tMovieMedia->getIntValue("MEDIATYPE");
+	m->width = tMovieMedia->getIntValue("MEDIAWIDTH");
+	m->height = tMovieMedia->getIntValue("MEDIAHEIGHT");
     m->path = path;
     movie->InsertMedia(m);	
 }
@@ -270,8 +270,8 @@ void cScrapManager::AddMovieMedia(cMovieDbMovie *movie, cTableMovieMedia* tMovie
 
 void cScrapManager::AddMovieActor(cMovieDbMovie *movie, cTableMovieActor* tActor, string role) {
 	cMovieActor *a = new cMovieActor();
-	a->id = tActor->getIntValue(cTableMovieActor::fiActorId);
-	a->name = tActor->getStrValue(cTableMovieActor::fiActorName);
+	a->id = tActor->getIntValue("ACTORID");
+	a->name = tActor->getStrValue("ACTORNAME");
     a->role =  role;
     movie->InsertActor(a);
 }

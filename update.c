@@ -148,37 +148,37 @@ int cUpdate::initDb() {
     // prepare statements
 
     // 
-    series_id.setField(tSeriesMedia->getField(cTableSeriesMedia::fiSeriesId));
-    event_scrsp.setField(tEvents->getField(cTableEvents::fiScrSp));
-    events_ScrSeriesId.setField(tEvents->getField(cTableEvents::fiScrSeriesId));
-    episode_LastUpdate.setField(tEpisodes->getField(cTableSeriesEpisode::fiEpisodeLastUpdated));
+    series_id.setField(tSeriesMedia->getField("SERIESID"));
+    event_scrsp.setField(tEvents->getField("SCRSP"));
+    events_ScrSeriesId.setField(tEvents->getField("SCRSERIESID"));
+    episode_LastUpdate.setField(tEpisodes->getField("EPISODELASTUPDATED"));
     vdr_uuid.setField(&uuIDDef);
     imageSize.setField(&imageSizeDef);
     episodeImageSize.setField(&imageSizeDef);
     posterSize.setField(&imageSizeDef);
     actorImageSize.setField(&imageSizeDef);
-    actorRole.setField(tMovieActors->getField(cTableMovieActors::fiRole));
-    actorMovie.setField(tMovieActors->getField(cTableMovieActors::fiMovieId));
-    thbWidth.setField(tMovieMedia->getField(cTableMovieMedia::fiMediaWidth));
-    thbHeight.setField(tMovieMedia->getField(cTableMovieMedia::fiMediaHeight));
+    actorRole.setField(tMovieActors->getField("ROLE"));
+    actorMovie.setField(tMovieActors->getField("MOVIEID"));
+    thbWidth.setField(tMovieMedia->getField("MEDIAWIDTH"));
+    thbHeight.setField(tMovieMedia->getField("MEDIAHEIGHT"));
 
     selectReadScrapedEventsInit = new cDbStatement(tEvents);
     selectReadScrapedEventsInit->build("select ");
-    selectReadScrapedEventsInit->bind(cTableEvents::fiEventId, cDBS::bndOut);
-    selectReadScrapedEventsInit->bind(cTableEvents::fiChannelId, cDBS::bndOut, ", ");
-    selectReadScrapedEventsInit->bind(cTableEvents::fiMasterId, cDBS::bndOut, ", ");
-    selectReadScrapedEventsInit->bind(cTableEvents::fiScrSeriesId, cDBS::bndOut, ", ");
-    selectReadScrapedEventsInit->bind(cTableEvents::fiScrSeriesEpisode, cDBS::bndOut, ", ");
-    selectReadScrapedEventsInit->bind(cTableEvents::fiScrMovieId, cDBS::bndOut, ", ");
-    selectReadScrapedEventsInit->bind(cTableEvents::fiScrSp, cDBS::bndOut, ", ");
+    selectReadScrapedEventsInit->bind("EVENTID", cDBS::bndOut);
+    selectReadScrapedEventsInit->bind("CHANNELID", cDBS::bndOut, ", ");
+    selectReadScrapedEventsInit->bind("MASTERID", cDBS::bndOut, ", ");
+    selectReadScrapedEventsInit->bind("SCRSERIESID", cDBS::bndOut, ", ");
+    selectReadScrapedEventsInit->bind("SCRSERIESEPISODE", cDBS::bndOut, ", ");
+    selectReadScrapedEventsInit->bind("SCRMOVIEID", cDBS::bndOut, ", ");
+    selectReadScrapedEventsInit->bind("SCRSP", cDBS::bndOut, ", ");
     selectReadScrapedEventsInit->build(" from %s where ", tEvents->TableName());
     selectReadScrapedEventsInit->build(" ((%s is not null and %s > 0) ", 
-                                   tEvents->getField(cTableEvents::fiScrSeriesId)->name, 
-                                   tEvents->getField(cTableEvents::fiScrSeriesId)->name);
+                                   tEvents->getField("SCRSERIESID")->name, 
+                                   tEvents->getField("SCRSERIESID")->name);
     selectReadScrapedEventsInit->build(" or (%s is not null and %s > 0)) ", 
-                                   tEvents->getField(cTableEvents::fiScrMovieId)->name, 
-                                   tEvents->getField(cTableEvents::fiScrMovieId)->name);
-    selectReadScrapedEventsInit->build(" order by %s", tEvents->getField(cTableEvents::fiInsSp)->name);
+                                   tEvents->getField("SCRMOVIEID")->name, 
+                                   tEvents->getField("SCRMOVIEID")->name);
+    selectReadScrapedEventsInit->build(" order by %s", tEvents->getField("INSSP")->name);
     
     status += selectReadScrapedEventsInit->prepare();
 
@@ -186,22 +186,22 @@ int cUpdate::initDb() {
 
     selectReadScrapedEvents = new cDbStatement(tEvents);
     selectReadScrapedEvents->build("select ");
-    selectReadScrapedEvents->bind(cTableEvents::fiEventId, cDBS::bndOut);
-    selectReadScrapedEvents->bind(cTableEvents::fiChannelId, cDBS::bndOut, ", ");
-    selectReadScrapedEvents->bind(cTableEvents::fiMasterId, cDBS::bndOut, ", ");
-    selectReadScrapedEvents->bind(cTableEvents::fiScrSeriesId, cDBS::bndOut, ", ");
-    selectReadScrapedEvents->bind(cTableEvents::fiScrSeriesEpisode, cDBS::bndOut, ", ");
-    selectReadScrapedEvents->bind(cTableEvents::fiScrMovieId, cDBS::bndOut, ", ");
-    selectReadScrapedEvents->bind(cTableEvents::fiScrSp, cDBS::bndOut, ", ");
+    selectReadScrapedEvents->bind("EVENTID", cDBS::bndOut);
+    selectReadScrapedEvents->bind("CHANNELID", cDBS::bndOut, ", ");
+    selectReadScrapedEvents->bind("MASTERID", cDBS::bndOut, ", ");
+    selectReadScrapedEvents->bind("SCRSERIESID", cDBS::bndOut, ", ");
+    selectReadScrapedEvents->bind("SCRSERIESEPISODE", cDBS::bndOut, ", ");
+    selectReadScrapedEvents->bind("SCRMOVIEID", cDBS::bndOut, ", ");
+    selectReadScrapedEvents->bind("SCRSP", cDBS::bndOut, ", ");
     selectReadScrapedEvents->build(" from %s where ", tEvents->TableName());
     selectReadScrapedEvents->build(" ((%s is not null and %s > 0) ", 
-                                   tEvents->getField(cTableEvents::fiScrSeriesId)->name, 
-                                   tEvents->getField(cTableEvents::fiScrSeriesId)->name);
+                                   tEvents->getField("SCRSERIESID")->name, 
+                                   tEvents->getField("SCRSERIESID")->name);
     selectReadScrapedEvents->build(" or (%s is not null and %s > 0)) ", 
-                                   tEvents->getField(cTableEvents::fiScrMovieId)->name, 
-                                   tEvents->getField(cTableEvents::fiScrMovieId)->name);
-    selectReadScrapedEvents->bindCmp(0, cTableEvents::fiScrSp, 0, ">", " and ");
-    selectReadScrapedEvents->build(" order by %s", tEvents->getField(cTableEvents::fiInsSp)->name);
+                                   tEvents->getField("SCRMOVIEID")->name, 
+                                   tEvents->getField("SCRMOVIEID")->name);
+    selectReadScrapedEvents->bindCmp(0, "SCRSP", 0, ">", " and ");
+    selectReadScrapedEvents->build(" order by %s", tEvents->getField("INSSP")->name);
    
     status += selectReadScrapedEvents->prepare();
     
@@ -209,46 +209,46 @@ int cUpdate::initDb() {
 
     selectImg = new cDbStatement(tSeriesMedia);
     selectImg->build("select ");
-    selectImg->bind(cTableSeriesMedia::fiMediaWidth, cDBS::bndOut);
-    selectImg->bind(cTableSeriesMedia::fiMediaHeight, cDBS::bndOut, ", ");
-    selectImg->bind(cTableSeriesMedia::fiMediaContent, cDBS::bndOut, ", ");
+    selectImg->bind("MEDIAWIDTH", cDBS::bndOut);
+    selectImg->bind("MEDIAHEIGHT", cDBS::bndOut, ", ");
+    selectImg->bind("MEDIACONTENT", cDBS::bndOut, ", ");
     selectImg->build(", length(");
     selectImg->bind(&imageSize, cDBS::bndOut);
     selectImg->build(")");
     selectImg->build(" from %s where ", tSeriesMedia->TableName());
-    selectImg->bind(cTableSeriesMedia::fiSeriesId, cDBS::bndIn | cDBS::bndSet);
-    selectImg->bind(cTableSeriesMedia::fiMediaType, cDBS::bndIn | cDBS::bndSet, " and ");
+    selectImg->bind("SERIESID", cDBS::bndIn | cDBS::bndSet);
+    selectImg->bind("MEDIATYPE", cDBS::bndIn | cDBS::bndSet, " and ");
     status += selectImg->prepare();
 
     // select episode image
 
     selectEpisodeImg = new cDbStatement(tSeriesMedia);
     selectEpisodeImg->build("select ");
-    selectEpisodeImg->bind(cTableSeriesMedia::fiMediaWidth, cDBS::bndOut);
-    selectEpisodeImg->bind(cTableSeriesMedia::fiMediaHeight, cDBS::bndOut, ", ");
-    selectEpisodeImg->bind(cTableSeriesMedia::fiMediaContent, cDBS::bndOut, ", ");
+    selectEpisodeImg->bind("MEDIAWIDTH", cDBS::bndOut);
+    selectEpisodeImg->bind("MEDIAHEIGHT", cDBS::bndOut, ", ");
+    selectEpisodeImg->bind("MEDIACONTENT", cDBS::bndOut, ", ");
     selectEpisodeImg->build(", length(");
     selectEpisodeImg->bind(&episodeImageSize, cDBS::bndOut);
     selectEpisodeImg->build(")");
     selectEpisodeImg->build(" from %s where ", tSeriesMedia->TableName());
-    selectEpisodeImg->bind(cTableSeriesMedia::fiSeriesId, cDBS::bndIn | cDBS::bndSet);
-    selectEpisodeImg->bind(cTableSeriesMedia::fiEpisodeId, cDBS::bndIn | cDBS::bndSet, " and ");
+    selectEpisodeImg->bind("SERIESID", cDBS::bndIn | cDBS::bndSet);
+    selectEpisodeImg->bind("EPISODEID", cDBS::bndIn | cDBS::bndSet, " and ");
     status += selectEpisodeImg->prepare();
 
     // select poster image
 
     selectSeasonPoster = new cDbStatement(tSeriesMedia);
     selectSeasonPoster->build("select ");
-    selectSeasonPoster->bind(cTableSeriesMedia::fiMediaWidth, cDBS::bndOut);
-    selectSeasonPoster->bind(cTableSeriesMedia::fiMediaHeight, cDBS::bndOut, ", ");
-    selectSeasonPoster->bind(cTableSeriesMedia::fiMediaContent, cDBS::bndOut, ", ");
+    selectSeasonPoster->bind("MEDIAWIDTH", cDBS::bndOut);
+    selectSeasonPoster->bind("MEDIAHEIGHT", cDBS::bndOut, ", ");
+    selectSeasonPoster->bind("MEDIACONTENT", cDBS::bndOut, ", ");
     selectSeasonPoster->build(", length(");
     selectSeasonPoster->bind(&posterSize, cDBS::bndOut);
     selectSeasonPoster->build(")");
     selectSeasonPoster->build(" from %s where ", tSeriesMedia->TableName());
-    selectSeasonPoster->bind(cTableSeriesMedia::fiSeriesId, cDBS::bndIn | cDBS::bndSet);
-    selectSeasonPoster->bind(cTableSeriesMedia::fiSeasonNumber, cDBS::bndIn | cDBS::bndSet, " and ");
-    selectSeasonPoster->bind(cTableSeriesMedia::fiMediaType, cDBS::bndIn | cDBS::bndSet, " and ");
+    selectSeasonPoster->bind("SERIESID", cDBS::bndIn | cDBS::bndSet);
+    selectSeasonPoster->bind("SEASONNUMBER", cDBS::bndIn | cDBS::bndSet, " and ");
+    selectSeasonPoster->bind("MEDIATYPE", cDBS::bndIn | cDBS::bndSet, " and ");
     status += selectSeasonPoster->prepare();
 
     // select actor
@@ -256,46 +256,46 @@ int cUpdate::initDb() {
     selectActors = new cDbStatement(tSeriesActors);
     selectActors->build("select ");
     selectActors->setBindPrefix("series_actor.");
-    selectActors->bind(cTableSeriesActor::fiActorId, cDBS::bndOut);
-    selectActors->bind(cTableSeriesActor::fiActorName, cDBS::bndOut, ", ");
-    selectActors->bind(cTableSeriesActor::fiActorRole, cDBS::bndOut, ", ");
+    selectActors->bind("ACTORID", cDBS::bndOut);
+    selectActors->bind("ACTORNAME", cDBS::bndOut, ", ");
+    selectActors->bind("ACTORROLE", cDBS::bndOut, ", ");
     selectActors->clrBindPrefix();
     selectActors->build(" from %s, %s where ", tSeriesActors->TableName(), tSeriesMedia->TableName());
     selectActors->build(" %s.%s  = %s.%s ", tSeriesActors->TableName(),
-                                            tSeriesActors->getField(cTableSeriesActor::fiActorId)->name,
+                                            tSeriesActors->getField("ACTORID")->name,
                                             tSeriesMedia->TableName(),
-                                            tSeriesMedia->getField(cTableSeriesMedia::fiActorId)->name);
+                                            tSeriesMedia->getField("ACTORID")->name);
     selectActors->setBindPrefix("series_media.");
     selectActors->bind(&series_id, cDBS::bndIn | cDBS::bndSet, " and ");
-    selectActors->build(" order by %s, %s asc", tSeriesActors->getField(cTableSeriesActor::fiSortOrder)->name, 
-                                                tSeriesActors->getField(cTableSeriesActor::fiActorRole)->name);    
+    selectActors->build(" order by %s, %s asc", tSeriesActors->getField("SORTORDER")->name, 
+                                                tSeriesActors->getField("ACTORROLE")->name);    
     status += selectActors->prepare();
 
     // select actor thumbs
 
     selectActorThumbs = new cDbStatement(tSeriesMedia);
     selectActorThumbs->build("select ");
-    selectActorThumbs->bind(cTableSeriesMedia::fiMediaWidth, cDBS::bndOut);
-    selectActorThumbs->bind(cTableSeriesMedia::fiMediaHeight, cDBS::bndOut, ", ");
-    selectActorThumbs->bind(cTableSeriesMedia::fiMediaContent, cDBS::bndOut, ", ");
+    selectActorThumbs->bind("MEDIAWIDTH", cDBS::bndOut);
+    selectActorThumbs->bind("MEDIAHEIGHT", cDBS::bndOut, ", ");
+    selectActorThumbs->bind("MEDIACONTENT", cDBS::bndOut, ", ");
     selectActorThumbs->build(", length(");
     selectActorThumbs->bind(&actorImageSize, cDBS::bndOut);
     selectActorThumbs->build(")");
     selectActorThumbs->build(" from %s where ", tSeriesMedia->TableName());
-    selectActorThumbs->bind(cTableSeriesMedia::fiActorId, cDBS::bndIn | cDBS::bndSet);
+    selectActorThumbs->bind("ACTORID", cDBS::bndIn | cDBS::bndSet);
     status += selectActorThumbs->prepare();
     
     // 
 
     selectSeriesMedia = new cDbStatement(tSeriesMedia);
     selectSeriesMedia->build("select ");
-    selectSeriesMedia->bind(cTableSeriesMedia::fiMediaWidth, cDBS::bndOut);
-    selectSeriesMedia->bind(cTableSeriesMedia::fiMediaHeight, cDBS::bndOut, ", ");
-    selectSeriesMedia->bind(cTableSeriesMedia::fiMediaType, cDBS::bndOut, ", ");
+    selectSeriesMedia->bind("MEDIAWIDTH", cDBS::bndOut);
+    selectSeriesMedia->bind("MEDIAHEIGHT", cDBS::bndOut, ", ");
+    selectSeriesMedia->bind("MEDIATYPE", cDBS::bndOut, ", ");
     selectSeriesMedia->build(" from %s where ", tSeriesMedia->TableName());
-    selectSeriesMedia->bind(cTableSeriesMedia::fiSeriesId, cDBS::bndIn | cDBS::bndSet);
+    selectSeriesMedia->bind("SERIESID", cDBS::bndIn | cDBS::bndSet);
     selectSeriesMedia->build(" and %s in (%d, %d, %d, %d, %d, %d, %d, %d, %d)",
-                             tSeriesMedia->getField(cTableSeriesMedia::fiMediaType)->name,
+                             tSeriesMedia->getField("MEDIATYPE")->name,
                              msPoster1, msPoster2, msPoster3,
                              msFanart1, msFanart2, msFanart3,
                              msBanner1, msBanner2, msBanner3);
@@ -306,8 +306,8 @@ int cUpdate::initDb() {
     selectMovieActors = new cDbStatement(tMovieActor);
     selectMovieActors->build("select ");
     selectMovieActors->setBindPrefix("act.");
-    selectMovieActors->bind(cTableMovieActor::fiActorId, cDBS::bndOut);
-    selectMovieActors->bind(cTableMovieActor::fiActorName, cDBS::bndOut, ", ");
+    selectMovieActors->bind("ACTORID", cDBS::bndOut);
+    selectMovieActors->bind("ACTORNAME", cDBS::bndOut, ", ");
     selectMovieActors->setBindPrefix("role.");
     selectMovieActors->bind(&actorRole, cDBS::bndOut, ", ");
     selectMovieActors->setBindPrefix("thumb.");
@@ -317,11 +317,11 @@ int cUpdate::initDb() {
     selectMovieActors->build(" from %s act, %s role, %s thumb where ", 
                         tMovieActor->TableName(), tMovieActors->TableName(), tMovieMedia->TableName());
     selectMovieActors->build("act.%s = role.%s ",
-                        tMovieActor->getField(cTableMovieActor::fiActorId)->name, 
-                        tMovieActors->getField(cTableMovieActors::fiActorId)->name);
+                        tMovieActor->getField("ACTORID")->name, 
+                        tMovieActors->getField("ACTORID")->name);
     selectMovieActors->build(" and role.%s = thumb.%s ",
-                        tMovieActors->getField(cTableMovieActors::fiActorId)->name, 
-                        tMovieMedia->getField(cTableMovieMedia::fiActorId)->name);
+                        tMovieActors->getField("ACTORID")->name, 
+                        tMovieMedia->getField("ACTORID")->name);
     selectMovieActors->setBindPrefix("role.");
     selectMovieActors->bind(&actorMovie, cDBS::bndIn | cDBS::bndSet, " and ");
     status += selectMovieActors->prepare();
@@ -330,25 +330,25 @@ int cUpdate::initDb() {
 
     selectMovieActorThumbs = new cDbStatement(tMovieMedia);
     selectMovieActorThumbs->build("select ");
-    selectMovieActorThumbs->bind(cTableMovieMedia::fiMediaContent, cDBS::bndOut);
+    selectMovieActorThumbs->bind("MEDIACONTENT", cDBS::bndOut);
     selectMovieActorThumbs->build(", length(");
     selectMovieActorThumbs->bind(&imageSize, cDBS::bndOut);
     selectMovieActorThumbs->build(")");
     selectMovieActorThumbs->build(" from %s where ", tMovieMedia->TableName());
-    selectMovieActorThumbs->bind(cTableMovieMedia::fiActorId, cDBS::bndIn | cDBS::bndSet);
+    selectMovieActorThumbs->bind("ACTORID", cDBS::bndIn | cDBS::bndSet);
     status += selectMovieActorThumbs->prepare();
 
     //
 
     selectMovieMedia = new cDbStatement(tMovieMedia);
     selectMovieMedia->build("select ");
-    selectMovieMedia->bind(cTableMovieMedia::fiMediaWidth, cDBS::bndOut);
-    selectMovieMedia->bind(cTableMovieMedia::fiMediaHeight, cDBS::bndOut, ", ");
-    selectMovieMedia->bind(cTableMovieMedia::fiMediaType, cDBS::bndOut, ", ");
+    selectMovieMedia->bind("MEDIAWIDTH", cDBS::bndOut);
+    selectMovieMedia->bind("MEDIAHEIGHT", cDBS::bndOut, ", ");
+    selectMovieMedia->bind("MEDIATYPE", cDBS::bndOut, ", ");
     selectMovieMedia->build(" from %s where ", tMovieMedia->TableName());
-    selectMovieMedia->bind(cTableMovieMedia::fiMovieId, cDBS::bndIn | cDBS::bndSet);
+    selectMovieMedia->bind("MOVIEID", cDBS::bndIn | cDBS::bndSet);
     selectMovieMedia->build(" and %s in (%d, %d, %d, %d)",
-                        tMovieMedia->getField(cTableMovieMedia::fiMediaType)->name,
+                        tMovieMedia->getField("MEDIATYPE")->name,
                         mmPoster,
                         mmFanart,
                         mmCollectionPoster,
@@ -359,37 +359,37 @@ int cUpdate::initDb() {
 
     selectMediaMovie = new cDbStatement(tMovieMedia);
     selectMediaMovie->build("select ");
-    selectMediaMovie->bind(cTableMovieMedia::fiMediaContent, cDBS::bndOut);
+    selectMediaMovie->bind("MEDIACONTENT", cDBS::bndOut);
     selectMediaMovie->build(", length(");
     selectMediaMovie->bind(&imageSize, cDBS::bndOut);
     selectMediaMovie->build(")");
     selectMediaMovie->build(" from %s where ", tMovieMedia->TableName());
-    selectMediaMovie->bind(cTableMovieMedia::fiMovieId, cDBS::bndIn | cDBS::bndSet);
-    selectMediaMovie->bind(cTableMovieMedia::fiMediaType, cDBS::bndIn | cDBS::bndSet, " and ");
+    selectMediaMovie->bind("MOVIEID", cDBS::bndIn | cDBS::bndSet);
+    selectMediaMovie->bind("MEDIATYPE", cDBS::bndIn | cDBS::bndSet, " and ");
     status += selectMediaMovie->prepare();
 
     // 
 
     selectRecordings = new cDbStatement(tRecordings);
     selectRecordings->build("select ");
-    selectRecordings->bind(cTableRecordings::fiRecPath, cDBS::bndOut);
-    selectRecordings->bind(cTableRecordings::fiRecStart, cDBS::bndOut, ", ");
-    selectRecordings->bind(cTableRecordings::fiMovieId, cDBS::bndOut, ", ");
-    selectRecordings->bind(cTableRecordings::fiSeriesId, cDBS::bndOut, ", ");
-    selectRecordings->bind(cTableRecordings::fiEpisodeId, cDBS::bndOut, ", ");
+    selectRecordings->bind("RECPATH", cDBS::bndOut);
+    selectRecordings->bind("RECSTART", cDBS::bndOut, ", ");
+    selectRecordings->bind("MOVIEID", cDBS::bndOut, ", ");
+    selectRecordings->bind("SERIESID", cDBS::bndOut, ", ");
+    selectRecordings->bind("EPISODEID", cDBS::bndOut, ", ");
     selectRecordings->build(" from %s where ", tRecordings->TableName());
-    selectRecordings->bind(cTableRecordings::fiUuid, cDBS::bndIn | cDBS::bndSet);
-    selectRecordings->build(" and %s = 0", tRecordings->getField(cTableRecordings::fiScrapNew)->name);
+    selectRecordings->bind("UUID", cDBS::bndIn | cDBS::bndSet);
+    selectRecordings->build(" and %s = 0", tRecordings->getField("SCRAPNEW")->name);
     status += selectRecordings->prepare();
     
     // 
 
     selectCleanupRecordings = new cDbStatement(tRecordings);
     selectCleanupRecordings->build("select ");
-    selectCleanupRecordings->bind(cTableRecordings::fiRecPath, cDBS::bndOut);
-    selectCleanupRecordings->bind(cTableRecordings::fiRecStart, cDBS::bndOut, ", ");
+    selectCleanupRecordings->bind("RECPATH", cDBS::bndOut);
+    selectCleanupRecordings->bind("RECSTART", cDBS::bndOut, ", ");
     selectCleanupRecordings->build(" from %s where ", tRecordings->TableName());
-    selectCleanupRecordings->bind(cTableRecordings::fiUuid, cDBS::bndIn | cDBS::bndSet);
+    selectCleanupRecordings->bind("UUID", cDBS::bndIn | cDBS::bndSet);
     status += selectCleanupRecordings->prepare();
 
     // clear temp episode cache table
@@ -409,19 +409,19 @@ int cUpdate::initDb() {
     fillTempEpisodeTable = new cDbStatement(connection);
     fillTempEpisodeTable->build("insert into %s select distinct A.%s as %s from ",
                                 TempEpisodeTableName.c_str(),
-                                tEvents->getField(cTableEvents::fiScrSeriesEpisode)->name,
-                                tEpisodes->getField(cTableSeriesEpisode::fiEpisodeId)->name);
+                                tEvents->getField("SCRSERIESEPISODE")->name,
+                                tEpisodes->getField("EPISODEID")->name);
     fillTempEpisodeTable->build("(select %s from %s where (%s > 0) and (",
-                                tEvents->getField(cTableEvents::fiScrSeriesEpisode)->name,
+                                tEvents->getField("SCRSERIESEPISODE")->name,
                                 tEvents->TableName(),
-                                tEvents->getField(cTableEvents::fiScrSeriesEpisode)->name);
+                                tEvents->getField("SCRSERIESEPISODE")->name);
     fillTempEpisodeTable->bind(&events_ScrSeriesId, cDBS::bndIn | cDBS::bndSet);
     fillTempEpisodeTable->build(") union all select %s as %s from %s ",
-                                tRecordings->getField(cTableRecordings::fiEpisodeId)->name,
-                                tEvents->getField(cTableEvents::fiScrSeriesEpisode)->name,
+                                tRecordings->getField("EPISODEID")->name,
+                                tEvents->getField("SCRSERIESEPISODE")->name,
                                 tRecordings->TableName());
     fillTempEpisodeTable->build("where (episode_id > 0) and (",
-                                tRecordings->getField(cTableRecordings::fiEpisodeId)->name);
+                                tRecordings->getField("EPISODEID")->name);
     fillTempEpisodeTable->bind(&series_id, cDBS::bndIn | cDBS::bndSet);
     fillTempEpisodeTable->build(") and (");
     fillTempEpisodeTable->bind(&vdr_uuid, cDBS::bndIn | cDBS::bndSet);
@@ -445,63 +445,63 @@ int cUpdate::initDb() {
 
     selectReadSeriesInit = new cDbStatement(tSeries);
     selectReadSeriesInit->build("select ");
-    selectReadSeriesInit->bind(cTableSeries::fiSeriesId, cDBS::bndOut, "A.");
-    selectReadSeriesInit->bind(cTableSeries::fiSeriesName, cDBS::bndOut, ", A.");
-    selectReadSeriesInit->bind(cTableSeries::fiSeriesLastScraped, cDBS::bndOut, ", A.");
-    selectReadSeriesInit->bind(cTableSeries::fiSeriesLastUpdated, cDBS::bndOut, ", A.");
-    selectReadSeriesInit->bind(cTableSeries::fiSeriesOverview, cDBS::bndOut, ", A.");
-    selectReadSeriesInit->bind(cTableSeries::fiSeriesFirstAired, cDBS::bndOut, ", A.");
-    selectReadSeriesInit->bind(cTableSeries::fiSeriesNetwork, cDBS::bndOut, ", A.");
-    selectReadSeriesInit->bind(cTableSeries::fiSeriesIMDBId, cDBS::bndOut, ", A.");
-    selectReadSeriesInit->bind(cTableSeries::fiSeriesGenre, cDBS::bndOut, ", A.");
-    selectReadSeriesInit->bind(cTableSeries::fiSeriesRating, cDBS::bndOut, ", A.");
-    selectReadSeriesInit->bind(cTableSeries::fiSeriesStatus, cDBS::bndOut, ", A.");
+    selectReadSeriesInit->bind("SERIESID", cDBS::bndOut, "A.");
+    selectReadSeriesInit->bind("SERIESNAME", cDBS::bndOut, ", A.");
+    selectReadSeriesInit->bind("SERIESLASTSCRAPED", cDBS::bndOut, ", A.");
+    selectReadSeriesInit->bind("SERIESLASTUPDATED", cDBS::bndOut, ", A.");
+    selectReadSeriesInit->bind("SERIESOVERVIEW", cDBS::bndOut, ", A.");
+    selectReadSeriesInit->bind("SERIESFIRSTAIRED", cDBS::bndOut, ", A.");
+    selectReadSeriesInit->bind("SERIESNETWORK", cDBS::bndOut, ", A.");
+    selectReadSeriesInit->bind("SERIESIMDBID", cDBS::bndOut, ", A.");
+    selectReadSeriesInit->bind("SERIESGENRE", cDBS::bndOut, ", A.");
+    selectReadSeriesInit->bind("SERIESRATING", cDBS::bndOut, ", A.");
+    selectReadSeriesInit->bind("SERIESSTATUS", cDBS::bndOut, ", A.");
     selectReadSeriesInit->bind(&episode_LastUpdate, cDBS::bndOut, ", B."); // max last update time of all episodes of current series with event/recording
     selectReadSeriesInit->bind(&event_scrsp, cDBS::bndOut, ", B."); // max last scrsp time of all events/recordings of current series 
     selectReadSeriesInit->build(" from %s A ",
                                 tSeries->TableName());
     selectReadSeriesInit->build("right join (select C.%s, C.%s, max(D.%s) as %s, max(C.%s) as %s from ",
-                                tSeries->getField(cTableSeries::fiSeriesId)->name,
-                                tEpisodes->getField(cTableSeriesEpisode::fiEpisodeId)->name,
-                                tEpisodes->getField(cTableSeriesEpisode::fiEpisodeLastUpdated)->name,
-                                tEpisodes->getField(cTableSeriesEpisode::fiEpisodeLastUpdated)->name,
-                                tEvents->getField(cTableEvents::fiScrSp)->name,
-                                tEvents->getField(cTableEvents::fiScrSp)->name);
+                                tSeries->getField("SERIESID")->name,
+                                tEpisodes->getField("EPISODEID")->name,
+                                tEpisodes->getField("EPISODELASTUPDATED")->name,
+                                tEpisodes->getField("EPISODELASTUPDATED")->name,
+                                tEvents->getField("SCRSP")->name,
+                                tEvents->getField("SCRSP")->name);
     selectReadSeriesInit->build("(select E.%s,E.%s, max(E.%s) as %s from ",
-                                tSeries->getField(cTableSeries::fiSeriesId)->name,
-                                tEpisodes->getField(cTableSeriesEpisode::fiEpisodeId)->name,
-                                tEvents->getField(cTableEvents::fiScrSp)->name,
-                                tEvents->getField(cTableEvents::fiScrSp)->name);    
+                                tSeries->getField("SERIESID")->name,
+                                tEpisodes->getField("EPISODEID")->name,
+                                tEvents->getField("SCRSP")->name,
+                                tEvents->getField("SCRSP")->name);    
     selectReadSeriesInit->build("(select %s as %s, %s as %s, %s from %s where (%s>0)",
-                                tEvents->getField(cTableEvents::fiScrSeriesId)->name,
-                                tSeries->getField(cTableSeries::fiSeriesId)->name,
-                                tEvents->getField(cTableEvents::fiScrSeriesEpisode)->name,
-                                tEpisodes->getField(cTableSeriesEpisode::fiEpisodeId)->name,
-                                tEvents->getField(cTableEvents::fiScrSp)->name,
+                                tEvents->getField("SCRSERIESID")->name,
+                                tSeries->getField("SERIESID")->name,
+                                tEvents->getField("SCRSERIESEPISODE")->name,
+                                tEpisodes->getField("EPISODEID")->name,
+                                tEvents->getField("SCRSP")->name,
                                 tEvents->TableName(),
-                                tEvents->getField(cTableEvents::fiScrSeriesId)->name);
+                                tEvents->getField("SCRSERIESID")->name);
     selectReadSeriesInit->build(" union all ");
     selectReadSeriesInit->build("select %s, %s, %s from %s where (",
-                                tRecordings->getField(cTableRecordings::fiSeriesId)->name,
-                                tRecordings->getField(cTableRecordings::fiEpisodeId)->name,
-                                tEvents->getField(cTableEvents::fiScrSp)->name,
+                                tRecordings->getField("SERIESID")->name,
+                                tRecordings->getField("EPISODEID")->name,
+                                tEvents->getField("SCRSP")->name,
                                 tRecordings->TableName());
     selectReadSeriesInit->bind(&vdr_uuid, cDBS::bndIn | cDBS::bndSet);
     selectReadSeriesInit->build(") and (%s > 0)",
-                                tRecordings->getField(cTableRecordings::fiSeriesId)->name);
+                                tRecordings->getField("SERIESID")->name);
     selectReadSeriesInit->build(") E group by %s,%s) C ",
-                                tSeries->getField(cTableSeries::fiSeriesId)->name,
-                                tEpisodes->getField(cTableSeriesEpisode::fiEpisodeId)->name);
+                                tSeries->getField("SERIESID")->name,
+                                tEpisodes->getField("EPISODEID")->name);
     selectReadSeriesInit->build("left join %s D on (C.%s = D.%s and C.%s>0) ",
                                 tEpisodes->TableName(),
-                                tEpisodes->getField(cTableSeriesEpisode::fiEpisodeId)->name,
-                                tEpisodes->getField(cTableSeriesEpisode::fiEpisodeId)->name,
-                                tEpisodes->getField(cTableSeriesEpisode::fiEpisodeId)->name);
+                                tEpisodes->getField("EPISODEID")->name,
+                                tEpisodes->getField("EPISODEID")->name,
+                                tEpisodes->getField("EPISODEID")->name);
     selectReadSeriesInit->build("group by C.%s) B on (A.%s = B.%s) order by A.%s",
-                                tSeries->getField(cTableSeries::fiSeriesId)->name,
-                                tSeries->getField(cTableSeries::fiSeriesId)->name,
-                                tSeries->getField(cTableSeries::fiSeriesId)->name,
-                                tSeries->getField(cTableSeries::fiSeriesId)->name);
+                                tSeries->getField("SERIESID")->name,
+                                tSeries->getField("SERIESID")->name,
+                                tSeries->getField("SERIESID")->name,
+                                tSeries->getField("SERIESID")->name);
     status += selectReadSeriesInit->prepare();
     
 
@@ -522,65 +522,65 @@ int cUpdate::initDb() {
 
     selectReadSeriesLastScrsp = new cDbStatement(tSeries);
     selectReadSeriesLastScrsp->build("select ");
-    selectReadSeriesLastScrsp->bind(cTableSeries::fiSeriesId, cDBS::bndOut, "A.");
-    selectReadSeriesLastScrsp->bind(cTableSeries::fiSeriesName, cDBS::bndOut, ", A.");
-    selectReadSeriesLastScrsp->bind(cTableSeries::fiSeriesLastScraped, cDBS::bndOut, ", A.");
-    selectReadSeriesLastScrsp->bind(cTableSeries::fiSeriesLastUpdated, cDBS::bndOut, ", A.");
-    selectReadSeriesLastScrsp->bind(cTableSeries::fiSeriesOverview, cDBS::bndOut, ", A.");
-    selectReadSeriesLastScrsp->bind(cTableSeries::fiSeriesFirstAired, cDBS::bndOut, ", A.");
-    selectReadSeriesLastScrsp->bind(cTableSeries::fiSeriesNetwork, cDBS::bndOut, ", A.");
-    selectReadSeriesLastScrsp->bind(cTableSeries::fiSeriesIMDBId, cDBS::bndOut, ", A.");
-    selectReadSeriesLastScrsp->bind(cTableSeries::fiSeriesGenre, cDBS::bndOut, ", A.");
-    selectReadSeriesLastScrsp->bind(cTableSeries::fiSeriesRating, cDBS::bndOut, ", A.");
-    selectReadSeriesLastScrsp->bind(cTableSeries::fiSeriesStatus, cDBS::bndOut, ", A.");
+    selectReadSeriesLastScrsp->bind("SERIESID", cDBS::bndOut, "A.");
+    selectReadSeriesLastScrsp->bind("SERIESNAME", cDBS::bndOut, ", A.");
+    selectReadSeriesLastScrsp->bind("SERIESLASTSCRAPED", cDBS::bndOut, ", A.");
+    selectReadSeriesLastScrsp->bind("SERIESLASTUPDATED", cDBS::bndOut, ", A.");
+    selectReadSeriesLastScrsp->bind("SERIESOVERVIEW", cDBS::bndOut, ", A.");
+    selectReadSeriesLastScrsp->bind("SERIESFIRSTAIRED", cDBS::bndOut, ", A.");
+    selectReadSeriesLastScrsp->bind("SERIESNETWORK", cDBS::bndOut, ", A.");
+    selectReadSeriesLastScrsp->bind("SERIESIMDBID", cDBS::bndOut, ", A.");
+    selectReadSeriesLastScrsp->bind("SERIESGENRE", cDBS::bndOut, ", A.");
+    selectReadSeriesLastScrsp->bind("SERIESRATING", cDBS::bndOut, ", A.");
+    selectReadSeriesLastScrsp->bind("SERIESSTATUS", cDBS::bndOut, ", A.");
     selectReadSeriesLastScrsp->bind(&episode_LastUpdate, cDBS::bndOut, ", B."); // max last update time of all episodes of current series with event/recording
     selectReadSeriesLastScrsp->bind(&event_scrsp, cDBS::bndOut, ", B."); // max last scrsp time of all events/recordings of current series 
     selectReadSeriesLastScrsp->build(" from %s A ",
                                      tSeries->TableName());
     selectReadSeriesLastScrsp->build("right join (select C.%s, C.%s, max(D.%s) as %s, max(C.%s) as %s from ",
-                                     tSeries->getField(cTableSeries::fiSeriesId)->name,
-                                     tEpisodes->getField(cTableSeriesEpisode::fiEpisodeId)->name,
-                                     tEpisodes->getField(cTableSeriesEpisode::fiEpisodeLastUpdated)->name,
-                                     tEpisodes->getField(cTableSeriesEpisode::fiEpisodeLastUpdated)->name,
-                                     tEvents->getField(cTableEvents::fiScrSp)->name,
-                                     tEvents->getField(cTableEvents::fiScrSp)->name);
+                                     tSeries->getField("SERIESID")->name,
+                                     tEpisodes->getField("EPISODEID")->name,
+                                     tEpisodes->getField("EPISODELASTUPDATED")->name,
+                                     tEpisodes->getField("EPISODELASTUPDATED")->name,
+                                     tEvents->getField("SCRSP")->name,
+                                     tEvents->getField("SCRSP")->name);
     selectReadSeriesLastScrsp->build("(select E.%s,E.%s, max(E.%s) as %s from ",
-                                     tSeries->getField(cTableSeries::fiSeriesId)->name,
-                                     tEpisodes->getField(cTableSeriesEpisode::fiEpisodeId)->name,
-                                     tEvents->getField(cTableEvents::fiScrSp)->name,
-                                     tEvents->getField(cTableEvents::fiScrSp)->name);
+                                     tSeries->getField("SERIESID")->name,
+                                     tEpisodes->getField("EPISODEID")->name,
+                                     tEvents->getField("SCRSP")->name,
+                                     tEvents->getField("SCRSP")->name);
     selectReadSeriesLastScrsp->build("(select %s as %s, %s as %s, %s from %s where (%s>0) and (",
-                                     tEvents->getField(cTableEvents::fiScrSeriesId)->name,
-                                     tSeries->getField(cTableSeries::fiSeriesId)->name,
-                                     tEvents->getField(cTableEvents::fiScrSeriesEpisode)->name,
-                                     tEpisodes->getField(cTableSeriesEpisode::fiEpisodeId)->name,
-                                     tEvents->getField(cTableEvents::fiScrSp)->name,
+                                     tEvents->getField("SCRSERIESID")->name,
+                                     tSeries->getField("SERIESID")->name,
+                                     tEvents->getField("SCRSERIESEPISODE")->name,
+                                     tEpisodes->getField("EPISODEID")->name,
+                                     tEvents->getField("SCRSP")->name,
                                      tEvents->TableName(),
-                                     tEvents->getField(cTableEvents::fiScrSeriesId)->name);
+                                     tEvents->getField("SCRSERIESID")->name);
     selectReadSeriesLastScrsp->bindCmp(0, &event_scrsp, ">");
     selectReadSeriesLastScrsp->build(") union all ");
     selectReadSeriesLastScrsp->build("select %s, %s, %s from %s where (",
-                                     tRecordings->getField(cTableRecordings::fiSeriesId)->name,
-                                     tRecordings->getField(cTableRecordings::fiEpisodeId)->name,
-                                     tEvents->getField(cTableEvents::fiScrSp)->name,
+                                     tRecordings->getField("SERIESID")->name,
+                                     tRecordings->getField("EPISODEID")->name,
+                                     tEvents->getField("SCRSP")->name,
                                      tRecordings->TableName());
     selectReadSeriesLastScrsp->bind(&vdr_uuid, cDBS::bndIn | cDBS::bndSet);
     selectReadSeriesLastScrsp->build(") and (%s > 0) and (",
-                                     tRecordings->getField(cTableRecordings::fiSeriesId)->name);
+                                     tRecordings->getField("SERIESID")->name);
     selectReadSeriesLastScrsp->bindCmp(0, &event_scrsp, ">");
     selectReadSeriesLastScrsp->build(")) E group by %s,%s) C ",
-                                     tSeries->getField(cTableSeries::fiSeriesId)->name,
-                                     tEpisodes->getField(cTableSeriesEpisode::fiEpisodeId)->name);
+                                     tSeries->getField("SERIESID")->name,
+                                     tEpisodes->getField("EPISODEID")->name);
     selectReadSeriesLastScrsp->build("left join %s D on (C.%s = D.%s and C.%s>0) ",
                                      tEpisodes->TableName(),
-                                     tEpisodes->getField(cTableSeriesEpisode::fiEpisodeId)->name,
-                                     tEpisodes->getField(cTableSeriesEpisode::fiEpisodeId)->name,
-                                     tEpisodes->getField(cTableSeriesEpisode::fiEpisodeId)->name);
+                                     tEpisodes->getField("EPISODEID")->name,
+                                     tEpisodes->getField("EPISODEID")->name,
+                                     tEpisodes->getField("EPISODEID")->name);
     selectReadSeriesLastScrsp->build("group by C.%s) B on (A.%s = B.%s) order by A.%s",
-                                     tSeries->getField(cTableSeries::fiSeriesId)->name,
-                                     tSeries->getField(cTableSeries::fiSeriesId)->name,
-                                     tSeries->getField(cTableSeries::fiSeriesId)->name,
-                                     tSeries->getField(cTableSeries::fiSeriesId)->name);
+                                     tSeries->getField("SERIESID")->name,
+                                     tSeries->getField("SERIESID")->name,
+                                     tSeries->getField("SERIESID")->name,
+                                     tSeries->getField("SERIESID")->name);
     status += selectReadSeriesLastScrsp->prepare();
     
     // get all used episodes (with events/recordings) of one series
@@ -590,23 +590,23 @@ int cUpdate::initDb() {
     
     selectReadEpisodes = new cDbStatement(tEpisodes);
     selectReadEpisodes->build("select ");
-    selectReadEpisodes->bind(cTableSeriesEpisode::fiEpisodeId, cDBS::bndOut, "A.");
-    selectReadEpisodes->bind(cTableSeriesEpisode::fiEpisodeNumber, cDBS::bndOut, ", A.");
-    selectReadEpisodes->bind(cTableSeriesEpisode::fiSeasonNumber, cDBS::bndOut, ", A.");
-    selectReadEpisodes->bind(cTableSeriesEpisode::fiEpisodeName, cDBS::bndOut, ", A.");
-    selectReadEpisodes->bind(cTableSeriesEpisode::fiEpisodeOverview, cDBS::bndOut, ", A.");
-    selectReadEpisodes->bind(cTableSeriesEpisode::fiEpisodeFirstAired, cDBS::bndOut, ", A.");
-    selectReadEpisodes->bind(cTableSeriesEpisode::fiEpisodeGuestStars, cDBS::bndOut, ", A.");
-    selectReadEpisodes->bind(cTableSeriesEpisode::fiEpisodeRating, cDBS::bndOut, ", A.");
-    selectReadEpisodes->bind(cTableSeriesEpisode::fiEpisodeLastUpdated, cDBS::bndOut, ", A.");
-    selectReadEpisodes->bind(cTableSeriesEpisode::fiSeriesId, cDBS::bndOut, ", A.");
+    selectReadEpisodes->bind("EPISODEID", cDBS::bndOut, "A.");
+    selectReadEpisodes->bind("EPISODENUMBER", cDBS::bndOut, ", A.");
+    selectReadEpisodes->bind("SEASONNUMBER", cDBS::bndOut, ", A.");
+    selectReadEpisodes->bind("EPISODENAME", cDBS::bndOut, ", A.");
+    selectReadEpisodes->bind("EPISODEOVERVIEW", cDBS::bndOut, ", A.");
+    selectReadEpisodes->bind("EPISODEFIRSTAIRED", cDBS::bndOut, ", A.");
+    selectReadEpisodes->bind("EPISODEGUESTSTARS", cDBS::bndOut, ", A.");
+    selectReadEpisodes->bind("EPISODERATING", cDBS::bndOut, ", A.");
+    selectReadEpisodes->bind("EPISODELASTUPDATED", cDBS::bndOut, ", A.");
+    selectReadEpisodes->bind("SERIESID", cDBS::bndOut, ", A.");
     selectReadEpisodes->build(" from %s A right join %s B ",
                               tEpisodes->TableName(),
                               TempEpisodeTableName.c_str());
     selectReadEpisodes->build("on (B.%s = A.%s) where A.%s is not null",
-                              tEpisodes->getField(cTableSeriesEpisode::fiEpisodeId)->name,
-                              tEpisodes->getField(cTableSeriesEpisode::fiEpisodeId)->name,
-                              tEpisodes->getField(cTableSeriesEpisode::fiEpisodeId)->name);
+                              tEpisodes->getField("EPISODEID")->name,
+                              tEpisodes->getField("EPISODEID")->name,
+                              tEpisodes->getField("EPISODEID")->name);
     status += selectReadEpisodes->prepare();
     
     // get all media data and actor informations of one series (including only episode images for episodes with events/recordings )
@@ -623,60 +623,60 @@ int cUpdate::initDb() {
     
     selectSeriesMediaActors = new cDbStatement(tSeriesMedia);
     selectSeriesMediaActors->build("select ");
-    selectSeriesMediaActors->bind(cTableSeriesMedia::fiSeriesId, cDBS::bndOut, "A.");
-    selectSeriesMediaActors->bind(cTableSeriesMedia::fiEpisodeId, cDBS::bndOut, ", A.");
-    selectSeriesMediaActors->bind(cTableSeriesMedia::fiSeasonNumber, cDBS::bndOut, ", A.");
-    selectSeriesMediaActors->bind(cTableSeriesMedia::fiActorId, cDBS::bndOut, ", A.");
-    selectSeriesMediaActors->bind(cTableSeriesMedia::fiMediaType, cDBS::bndOut, ", A.");
-    selectSeriesMediaActors->bind(cTableSeriesMedia::fiMediaWidth, cDBS::bndOut, ", A.");
-    selectSeriesMediaActors->bind(cTableSeriesMedia::fiMediaHeight, cDBS::bndOut, ", A.");
-    selectSeriesMediaActors->bind(tSeriesActors,cTableSeriesActor::fiActorId, cDBS::bndOut, ", C.");
-    selectSeriesMediaActors->bind(tSeriesActors,cTableSeriesActor::fiActorName, cDBS::bndOut, ", C.");
-    selectSeriesMediaActors->bind(tSeriesActors,cTableSeriesActor::fiActorRole, cDBS::bndOut, ", C.");
-    selectSeriesMediaActors->bind(tSeriesActors,cTableSeriesActor::fiSortOrder, cDBS::bndOut, ", C.");
+    selectSeriesMediaActors->bind("SERIESID", cDBS::bndOut, "A.");
+    selectSeriesMediaActors->bind("EPISODEID", cDBS::bndOut, ", A.");
+    selectSeriesMediaActors->bind("SEASONNUMBER", cDBS::bndOut, ", A.");
+    selectSeriesMediaActors->bind("ACTORID", cDBS::bndOut, ", A.");
+    selectSeriesMediaActors->bind("MEDIATYPE", cDBS::bndOut, ", A.");
+    selectSeriesMediaActors->bind("MEDIAWIDTH", cDBS::bndOut, ", A.");
+    selectSeriesMediaActors->bind("MEDIAHEIGHT", cDBS::bndOut, ", A.");
+    selectSeriesMediaActors->bind(tSeriesActors,"ACTORID", cDBS::bndOut, ", C.");
+    selectSeriesMediaActors->bind(tSeriesActors,"ACTORNAME", cDBS::bndOut, ", C.");
+    selectSeriesMediaActors->bind(tSeriesActors,"ACTORROLE", cDBS::bndOut, ", C.");
+    selectSeriesMediaActors->bind(tSeriesActors,"SORTORDER", cDBS::bndOut, ", C.");
     selectSeriesMediaActors->build(" from %s A left join %s B on (B.%s = A.%s) ",
                                    tSeriesMedia->TableName(),
                                    TempEpisodeTableName.c_str(),
-                                   tEpisodes->getField(cTableSeriesEpisode::fiEpisodeId)->name,
-                                   tSeriesMedia->getField(cTableSeriesMedia::fiEpisodeId)->name);
+                                   tEpisodes->getField("EPISODEID")->name,
+                                   tSeriesMedia->getField("EPISODEID")->name);
     selectSeriesMediaActors->build("left join (select D.%s,D.%s,D.%s,D.%s from %s D ",
-                                   tSeriesActors->getField(cTableSeriesActor::fiActorId)->name,                                    
-                                   tSeriesActors->getField(cTableSeriesActor::fiActorName)->name,                                    
-                                   tSeriesActors->getField(cTableSeriesActor::fiActorRole)->name,                                    
-                                   tSeriesActors->getField(cTableSeriesActor::fiSortOrder)->name,                                    
+                                   tSeriesActors->getField("ACTORID")->name,                                    
+                                   tSeriesActors->getField("ACTORNAME")->name,                                    
+                                   tSeriesActors->getField("ACTORROLE")->name,                                    
+                                   tSeriesActors->getField("SORTORDER")->name,                                    
                                    tSeriesActors->TableName());
     selectSeriesMediaActors->build("right join (select %s from %s where (",
-                                   tSeriesMedia->getField(cTableSeriesMedia::fiActorId)->name,
+                                   tSeriesMedia->getField("ACTORID")->name,
                                    tSeriesMedia->TableName());
     selectSeriesMediaActors->bind(&series_id, cDBS::bndIn | cDBS::bndSet);
     selectSeriesMediaActors->build(") and (%s>0)) E on (D.%s = E.%s)) C on (A.%s=C.%s) where (",
-                                   tSeriesMedia->getField(cTableSeriesMedia::fiActorId)->name,
-                                   tSeriesActors->getField(cTableSeriesActor::fiActorId)->name,
-                                   tSeriesMedia->getField(cTableSeriesMedia::fiActorId)->name,
-                                   tSeriesMedia->getField(cTableSeriesMedia::fiActorId)->name,
-                                   tSeriesMedia->getField(cTableSeriesMedia::fiActorId)->name);
+                                   tSeriesMedia->getField("ACTORID")->name,
+                                   tSeriesActors->getField("ACTORID")->name,
+                                   tSeriesMedia->getField("ACTORID")->name,
+                                   tSeriesMedia->getField("ACTORID")->name,
+                                   tSeriesMedia->getField("ACTORID")->name);
     selectSeriesMediaActors->bind(&series_id, cDBS::bndIn | cDBS::bndSet);
     selectSeriesMediaActors->build(") and ((B.%s is not null) or (A.%s = 0))  order by %s,%s",
-                                   tEpisodes->getField(cTableSeriesEpisode::fiEpisodeId)->name,
-                                   tSeriesMedia->getField(cTableSeriesMedia::fiEpisodeId)->name,
-                                   tSeriesMedia->getField(cTableSeriesMedia::fiSeasonNumber)->name,
-                                   tSeriesActors->getField(cTableSeriesActor::fiSortOrder)->name);
+                                   tEpisodes->getField("EPISODEID")->name,
+                                   tSeriesMedia->getField("EPISODEID")->name,
+                                   tSeriesMedia->getField("SEASONNUMBER")->name,
+                                   tSeriesActors->getField("SORTORDER")->name);
     status += selectSeriesMediaActors->prepare();
     
     selectSeriesImage = new cDbStatement(tSeriesMedia);
     selectSeriesImage->build("select ");
-    selectSeriesImage->bind(cTableSeriesMedia::fiMediaWidth, cDBS::bndOut);
-    selectSeriesImage->bind(cTableSeriesMedia::fiMediaHeight, cDBS::bndOut, ", ");
-    selectSeriesImage->bind(cTableSeriesMedia::fiMediaContent, cDBS::bndOut, ", ");
+    selectSeriesImage->bind("MEDIAWIDTH", cDBS::bndOut);
+    selectSeriesImage->bind("MEDIAHEIGHT", cDBS::bndOut, ", ");
+    selectSeriesImage->bind("MEDIACONTENT", cDBS::bndOut, ", ");
     selectSeriesImage->build(", length(");
     selectSeriesImage->bind(&imageSize, cDBS::bndOut);
     selectSeriesImage->build(")");
     selectSeriesImage->build(" from %s where ", tSeriesMedia->TableName());
-    selectSeriesImage->bind(cTableSeriesMedia::fiSeriesId, cDBS::bndIn | cDBS::bndSet);
-    selectSeriesImage->bind(cTableSeriesMedia::fiSeasonNumber, cDBS::bndIn | cDBS::bndSet, " and ");
-    selectSeriesImage->bind(cTableSeriesMedia::fiEpisodeId, cDBS::bndIn | cDBS::bndSet, " and ");
-    selectSeriesImage->bind(cTableSeriesMedia::fiActorId, cDBS::bndIn | cDBS::bndSet, " and ");
-    selectSeriesImage->bind(cTableSeriesMedia::fiMediaType, cDBS::bndIn | cDBS::bndSet, " and ");
+    selectSeriesImage->bind("SERIESID", cDBS::bndIn | cDBS::bndSet);
+    selectSeriesImage->bind("SEASONNUMBER", cDBS::bndIn | cDBS::bndSet, " and ");
+    selectSeriesImage->bind("EPISODEID", cDBS::bndIn | cDBS::bndSet, " and ");
+    selectSeriesImage->bind("ACTORID", cDBS::bndIn | cDBS::bndSet, " and ");
+    selectSeriesImage->bind("MEDIATYPE", cDBS::bndIn | cDBS::bndSet, " and ");
     status += selectSeriesImage->prepare();
     
 /*  select A.movie_id, A.movie_title, A.movie_original_title, A.movie_tagline, A.movie_overview, A.movie_adult, A.movie_collection_name, A.movie_budget,
@@ -766,10 +766,10 @@ int cUpdate::CheckConnection(int& timeout) {
 bool cUpdate::CheckEpgdBusy(void) {
     int busy = false;
     vdrDb->clear();
-    vdrDb->setValue(cTableVdrs::fiUuid, EPGDNAME);
+    vdrDb->setValue("UUID", EPGDNAME);
 
     if (vdrDb->find()) {
-        Es::State epgdState = cEpgdState::toState(vdrDb->getStrValue(cTableVdrs::fiState));
+        Es::State epgdState = cEpgdState::toState(vdrDb->getStrValue("STATE"));
         // ignore esBusyImages until we don't write this table
         if (epgdState >= cEpgdState::esBusy && epgdState < cEpgdState::esBusyImages)
             busy = true;
@@ -790,17 +790,17 @@ int cUpdate::ReadScrapedEvents(void) {
     cDbStatement* select = lastScrap > 0 ? selectReadScrapedEvents : selectReadScrapedEventsInit;
 
     tEvents->clear();
-    tEvents->setValue(cTableEvents::fiScrSp, lastScrap);
+    tEvents->setValue("SCRSP", lastScrap);
     
     lastWait = GetTimems(); // init time for CheckRunningAndWait
     for (int res = select->find(); res; res = select->fetch() && CheckRunningAndWait()) {
-        eventId = tEvents->getIntValue(cTableEvents::fiMasterId);
-        channelId = tEvents->getStrValue(cTableEvents::fiChannelId);
-        seriesId = tEvents->getIntValue(cTableEvents::fiScrSeriesId);
-        episodeId = tEvents->getIntValue(cTableEvents::fiScrSeriesEpisode);
-        movieId = tEvents->getIntValue(cTableEvents::fiScrMovieId);
+        eventId = tEvents->getIntValue("MASTERID");
+        channelId = tEvents->getStrValue("CHANNELID");
+        seriesId = tEvents->getIntValue("SCRSERIESID");
+        episodeId = tEvents->getIntValue("SCRSERIESEPISODE");
+        movieId = tEvents->getIntValue("SCRMOVIEID");
         scrapManager->AddEvent(eventId, channelId, seriesId, episodeId, movieId);
-        lastScrap = max(lastScrap, (int)tEvents->getIntValue(cTableEvents::fiScrSp));
+        lastScrap = max(lastScrap, (int)tEvents->getIntValue("SCRSP"));
         numNew++;
     }
 
@@ -831,7 +831,7 @@ int cUpdate::ReadSeries(bool isRec) {
         cTVDBSeries *series = scrapManager->GetSeries(seriesId);
         if (!series) {
             tSeries->clear();
-            tSeries->setValue(cTableSeries::fiSeriesId, seriesId);
+            tSeries->setValue("SERIESID", seriesId);
             int res = tSeries->find();
             if (res) {
                 series = scrapManager->AddSeries(tSeries);
@@ -881,7 +881,7 @@ int cUpdate::ReadSeriesFast(long &maxscrsp) {
     lastWait = GetTimems(); // init time for CheckRunningAndWait
     long lastLog = GetTimems(); // init time for logging
     for (int res = select->find(); res; res = select->fetch() && CheckRunningAndWait()) {
-        series = scrapManager->GetSeries(tSeries->getIntValue(cTableSeries::fiSeriesId));
+        series = scrapManager->GetSeries(tSeries->getIntValue("SERIESID"));
         if (!series)
         {
             // add new series with information of current row
@@ -892,7 +892,7 @@ int cUpdate::ReadSeriesFast(long &maxscrsp) {
         } else {
             // check if something changed for series
             isNew = false;
-            series->updateimages = ((series->lastupdate < tSeries->getIntValue(cTableSeries::fiSeriesLastUpdated)) || // series get updated on thetvdb
+            series->updateimages = ((series->lastupdate < tSeries->getIntValue("SERIESLASTUPDATED")) || // series get updated on thetvdb
                                     (series->lastepisodeupdate < episode_LastUpdate.getIntValue())); // min one used episode get updated on thetvdb         
             series->updatecontent = (series->updateimages) || (series->lastscraped < event_scrsp.getIntValue()); // new events or recodings with this series 
             if ((series->updateimages) || (series->updatecontent)) // something to refresh for series
@@ -974,7 +974,7 @@ int cUpdate::ReadEpisodesContentFast(cTVDBSeries *series) {
     fillTempEpisodeTable->find(); // fill temp table using current series id
     for (int res = selectReadEpisodes->find(); res; res = selectReadEpisodes->fetch() && CheckRunningAndWait()) {
         // search for episode (I could call AddEpisode, because this will overwrite existing values, but then I could not count new episodes)
-        episode = series->GetEpisode(tEpisodes->getIntValue(cTableSeriesEpisode::fiEpisodeId));
+        episode = series->GetEpisode(tEpisodes->getIntValue("EPISODEID"));
         if (!episode)
         {
             scrapManager->AddSeriesEpisode(series,tEpisodes);
@@ -982,7 +982,7 @@ int cUpdate::ReadEpisodesContentFast(cTVDBSeries *series) {
         }
         else
         {
-            if (episode->lastupdate < tEpisodes->getIntValue(cTableSeriesEpisode::fiEpisodeLastUpdated))
+            if (episode->lastupdate < tEpisodes->getIntValue("EPISODELASTUPDATED"))
             {
                 // updated series
                 scrapManager->UpdateSeriesEpisode(episode,tEpisodes); // update episode
@@ -1026,9 +1026,9 @@ void cUpdate::ReadSeriesMediaFast(cTVDBSeries *series, int &newImages, int &newS
         }        
         isFirst = false;
         
-        mediaType = tSeriesMedia->getIntValue(cTableSeriesMedia::fiMediaType);
-        imgWidth = tSeriesMedia->getIntValue(cTableSeriesMedia::fiMediaWidth);
-        imgHeight = tSeriesMedia->getIntValue(cTableSeriesMedia::fiMediaHeight);
+        mediaType = tSeriesMedia->getIntValue("MEDIATYPE");
+        imgWidth = tSeriesMedia->getIntValue("MEDIAWIDTH");
+        imgHeight = tSeriesMedia->getIntValue("MEDIAHEIGHT");
         imgNeedRefresh = false;
         // check type of media first
         switch (mediaType) {
@@ -1070,7 +1070,7 @@ void cUpdate::ReadSeriesMediaFast(cTVDBSeries *series, int &newImages, int &newS
                 CheckSeriesMedia(series, mediaType, imgWidth, imgHeight,"fanart3.jpg", 0, imgNeedRefresh);
                 break;
             case msSeasonPoster:
-                season = tSeriesMedia->getIntValue(cTableSeriesMedia::fiSeasonNumber);
+                season = tSeriesMedia->getIntValue("SEASONNUMBER");
                 imageName.str("");
                 imageName << "season_" << season << "_thumb.jpg";
                 thumbName = imageName.str();
@@ -1081,7 +1081,7 @@ void cUpdate::ReadSeriesMediaFast(cTVDBSeries *series, int &newImages, int &newS
                 CheckSeriesMedia(series, msSeasonPosterThumb, imgWidth/2, imgHeight/2, thumbName, season, imgNeedRefresh);
                 break;
             case msEpisodePic:
-                episode = series->GetEpisode(tSeriesMedia->getIntValue(cTableSeriesMedia::fiEpisodeId));
+                episode = series->GetEpisode(tSeriesMedia->getIntValue("EPISODEID"));
                 if (episode) {
                     // only continue if episode exist
                     imageName.str("");
@@ -1093,7 +1093,7 @@ void cUpdate::ReadSeriesMediaFast(cTVDBSeries *series, int &newImages, int &newS
                 }    
                 break;
             case msActorThumb:
-                actor = series->GetActor(tSeriesMedia->getIntValue(cTableSeriesMedia::fiActorId));
+                actor = series->GetActor(tSeriesMedia->getIntValue("ACTORID"));
                 if (!actor) {    
                     actor = scrapManager->AddSeriesActor(series,tSeriesActors); // can use all columns of tSeriesActors (get filled from select too)
                 } else {    
@@ -1301,20 +1301,20 @@ void cUpdate::ReadSeriesImagesFast(int &newImages, int &emptySeasonPosters) {
 bool cUpdate::ReadSeriesImageFast(int seriesId, int season, int episodeId, int actorId, int mediaType, cTVDBMedia *media, cTVDBMedia *mediaThumb, int shrinkFactor) {
     bool imageSaved = false;
     tSeriesMedia->clear();
-    tSeriesMedia->setValue(cTableSeriesMedia::fiSeriesId, seriesId);
-    tSeriesMedia->setValue(cTableSeriesMedia::fiSeasonNumber, season);
-    tSeriesMedia->setValue(cTableSeriesMedia::fiEpisodeId, episodeId);
-    tSeriesMedia->setValue(cTableSeriesMedia::fiActorId, actorId);
-    tSeriesMedia->setValue(cTableSeriesMedia::fiMediaType, mediaType);
+    tSeriesMedia->setValue("SERIESID", seriesId);
+    tSeriesMedia->setValue("SEASONNUMBER", season);
+    tSeriesMedia->setValue("EPISODEID", episodeId);
+    tSeriesMedia->setValue("ACTORID", actorId);
+    tSeriesMedia->setValue("MEDIATYPE", mediaType);
     //tell(0,"serie: %d / season: %d / episode: %d / actor: %d / media: %d / pfad: %s",seriesId,season,episodeId,actorId,mediaType,media->path.c_str());
     int res = selectSeriesImage->find();
     if (res) {
-        media->width = tSeriesMedia->getIntValue(cTableSeriesMedia::fiMediaWidth);
-        media->height = tSeriesMedia->getIntValue(cTableSeriesMedia::fiMediaHeight);
+        media->width = tSeriesMedia->getIntValue("MEDIAWIDTH");
+        media->height = tSeriesMedia->getIntValue("MEDIAHEIGHT");
         int size = imageSize.getIntValue();
         if (size > 0) {
             if (FILE* fh = fopen(media->path.c_str(), "w")) {
-                fwrite(tSeriesMedia->getStrValue(cTableSeriesMedia::fiMediaContent), 1, size, fh);
+                fwrite(tSeriesMedia->getStrValue("MEDIACONTENT"), 1, size, fh);
                 fclose(fh);
                 media->needrefresh = false; // reset update flag
                 media->mediavalid = true; // we have a image file for this media
@@ -1335,12 +1335,12 @@ bool cUpdate::ReadSeriesImageFast(int seriesId, int season, int episodeId, int a
 
 void cUpdate::ReadEpisode(int episodeId, cTVDBSeries *series, string path) {
     tEpisodes->clear();
-    tEpisodes->setValue(cTableSeriesEpisode::fiEpisodeId, episodeId);
+    tEpisodes->setValue("EPISODEID", episodeId);
     int res = tEpisodes->find();
     if (res) {
         scrapManager->AddSeriesEpisode(series, tEpisodes);
         LoadEpisodeImage(series, episodeId, path);
-        int season = tEpisodes->getIntValue(cTableSeriesEpisode::fiSeasonNumber);
+        int season = tEpisodes->getIntValue("SEASONNUMBER");
         if (season > 0)
             LoadSeasonPoster(series, season, path);
     }
@@ -1357,8 +1357,8 @@ void cUpdate::LoadEpisodeImage(cTVDBSeries *series, int episodeId, string path) 
             return;
 
     tSeriesMedia->clear();
-    tSeriesMedia->setValue(cTableSeriesMedia::fiSeriesId, series->id);
-    tSeriesMedia->setValue(cTableSeriesMedia::fiEpisodeId, episodeId);
+    tSeriesMedia->setValue("SERIESID", series->id);
+    tSeriesMedia->setValue("EPISODEID", episodeId);
 
     int res = selectEpisodeImg->find();
 
@@ -1366,12 +1366,12 @@ void cUpdate::LoadEpisodeImage(cTVDBSeries *series, int episodeId, string path) 
         if (!imgExists) {
             int size = episodeImageSize.getIntValue();
             if (FILE* fh = fopen(imgPath.c_str(), "w")) {
-                fwrite(tSeriesMedia->getStrValue(cTableSeriesMedia::fiMediaContent), 1, size, fh);
+                fwrite(tSeriesMedia->getStrValue("MEDIACONTENT"), 1, size, fh);
                 fclose(fh);
             }
         }
-        int imgWidth = tSeriesMedia->getIntValue(cTableSeriesMedia::fiMediaWidth);
-        int imgHeight = tSeriesMedia->getIntValue(cTableSeriesMedia::fiMediaHeight);
+        int imgWidth = tSeriesMedia->getIntValue("MEDIAWIDTH");
+        int imgHeight = tSeriesMedia->getIntValue("MEDIAHEIGHT");
         series->InsertEpisodeImage(episodeId, imgWidth, imgHeight, imgPath);
     }
 
@@ -1391,9 +1391,9 @@ void cUpdate::LoadSeasonPoster(cTVDBSeries *series, int season, string path) {
             return;
 
     tSeriesMedia->clear();
-    tSeriesMedia->setValue(cTableSeriesMedia::fiSeriesId, series->id);
-    tSeriesMedia->setValue(cTableSeriesMedia::fiSeasonNumber, season);
-    tSeriesMedia->setValue(cTableSeriesMedia::fiMediaType, msSeasonPoster);
+    tSeriesMedia->setValue("SERIESID", series->id);
+    tSeriesMedia->setValue("SEASONNUMBER", season);
+    tSeriesMedia->setValue("MEDIATYPE", msSeasonPoster);
 
     int res = selectSeasonPoster->find();
 
@@ -1401,12 +1401,12 @@ void cUpdate::LoadSeasonPoster(cTVDBSeries *series, int season, string path) {
         if (!imgExists) {
             int size = posterSize.getIntValue();
             if (FILE* fh = fopen(imgPath.c_str(), "w")) {
-                fwrite(tSeriesMedia->getStrValue(cTableSeriesMedia::fiMediaContent), 1, size, fh);
+                fwrite(tSeriesMedia->getStrValue("MEDIACONTENT"), 1, size, fh);
                 fclose(fh);
             }
         }
-        int imgWidth = tSeriesMedia->getIntValue(cTableSeriesMedia::fiMediaWidth);
-        int imgHeight = tSeriesMedia->getIntValue(cTableSeriesMedia::fiMediaHeight);
+        int imgWidth = tSeriesMedia->getIntValue("MEDIAWIDTH");
+        int imgHeight = tSeriesMedia->getIntValue("MEDIAHEIGHT");
         if (!FileExists(thumbPath)) {
             CreateThumbnail(imgPath, thumbPath, imgWidth, imgHeight, 2);
         }
@@ -1423,7 +1423,7 @@ void cUpdate::ReadSeriesActors(cTVDBSeries *series, string path) {
 
     for (int res = selectActors->find(); res; res = selectActors->fetch()) {
         scrapManager->AddSeriesActor(series, tSeriesActors);
-        LoadSeriesActorThumb(series, tSeriesActors->getIntValue(cTableSeriesActor::fiActorId), path);
+        LoadSeriesActorThumb(series, tSeriesActors->getIntValue("ACTORID"), path);
     }
     selectActors->freeResult();
 }
@@ -1438,7 +1438,7 @@ void cUpdate::LoadSeriesActorThumb(cTVDBSeries *series, int actorId, string path
             return;
 
     tSeriesMedia->clear();
-    tSeriesMedia->setValue(cTableSeriesMedia::fiActorId, actorId);
+    tSeriesMedia->setValue("ACTORID", actorId);
 
     int res = selectActorThumbs->find();
 
@@ -1446,12 +1446,12 @@ void cUpdate::LoadSeriesActorThumb(cTVDBSeries *series, int actorId, string path
         if (!imgExists) {
             int size = actorImageSize.getIntValue();
             if (FILE* fh = fopen(imgPath.c_str(), "w")) {
-                fwrite(tSeriesMedia->getStrValue(cTableSeriesMedia::fiMediaContent), 1, size, fh);
+                fwrite(tSeriesMedia->getStrValue("MEDIACONTENT"), 1, size, fh);
                 fclose(fh);
             }
         }
-        int tmbWidth = tSeriesMedia->getIntValue(cTableSeriesMedia::fiMediaWidth);
-        int tmbHeight = tSeriesMedia->getIntValue(cTableSeriesMedia::fiMediaHeight);
+        int tmbWidth = tSeriesMedia->getIntValue("MEDIAWIDTH");
+        int tmbHeight = tSeriesMedia->getIntValue("MEDIAHEIGHT");
         series->SetActorThumb(actorId, tmbWidth, tmbHeight, imgPath);
     }
 
@@ -1460,12 +1460,12 @@ void cUpdate::LoadSeriesActorThumb(cTVDBSeries *series, int actorId, string path
 
 void cUpdate::LoadSeriesMedia(cTVDBSeries *series, string path) {  
    tSeriesMedia->clear();  
-   tSeriesMedia->setValue(cTableSeriesMedia::fiSeriesId, series->id);
+   tSeriesMedia->setValue("SERIESID", series->id);
    
    for (int res = selectSeriesMedia->find(); res; res = selectSeriesMedia->fetch()) {
-      int mediaType = tSeriesMedia->getIntValue(cTableSeriesMedia::fiMediaType);
-      int mediaWidth = tSeriesMedia->getIntValue(cTableSeriesMedia::fiMediaWidth);
-      int mediaHeight = tSeriesMedia->getIntValue(cTableSeriesMedia::fiMediaHeight);
+      int mediaType = tSeriesMedia->getIntValue("MEDIATYPE");
+      int mediaWidth = tSeriesMedia->getIntValue("MEDIAWIDTH");
+      int mediaHeight = tSeriesMedia->getIntValue("MEDIAHEIGHT");
       string mediaPath = LoadMediaSeries(series->id, mediaType, path, mediaWidth, mediaHeight);
       series->InsertMedia(mediaType, mediaWidth, mediaHeight, mediaPath);
       if (mediaType == msPoster1) {
@@ -1528,13 +1528,13 @@ string cUpdate::LoadMediaSeries(int seriesId, int mediaType, string path, int wi
         return "";
 
     tSeriesMedia->clear();
-    tSeriesMedia->setValue(cTableSeriesMedia::fiSeriesId, seriesId);
-    tSeriesMedia->setValue(cTableSeriesMedia::fiMediaType, mediaType);
+    tSeriesMedia->setValue("SERIESID", seriesId);
+    tSeriesMedia->setValue("MEDIATYPE", mediaType);
     int res = selectImg->find();
     if (res) {
         int size = imageSize.getIntValue();
         if (FILE* fh = fopen(imgPath.c_str(), "w")) {
-            fwrite(tSeriesMedia->getStrValue(cTableSeriesMedia::fiMediaContent), 1, size, fh);
+            fwrite(tSeriesMedia->getStrValue("MEDIACONTENT"), 1, size, fh);
             fclose(fh);
         }
         if (createThumb && !FileExists(thumbPath)) {
@@ -1566,7 +1566,7 @@ int cUpdate::ReadMovies(bool isRec) {
         if (movie)
             continue;
         tMovies->clear();
-        tMovies->setValue(cTableMovies::fiMovieId, movieId);
+        tMovies->setValue("MOVIEID", movieId);
         int res = tMovies->find();
         if (!res)
             continue;
@@ -1591,7 +1591,7 @@ void cUpdate::ReadMovieActors(cMovieDbMovie *movie) {
         scrapManager->AddMovieActor(movie, tMovieActor, actorRole.getStrValue());
         int tmbWidth = thbWidth.getIntValue();
         int tmbHeight = thbHeight.getIntValue();
-        movie->SetActorThumbSize(tMovieActor->getIntValue(cTableMovieActor::fiActorId), tmbWidth, tmbHeight);
+        movie->SetActorThumbSize(tMovieActor->getIntValue("ACTORID"), tmbWidth, tmbHeight);
     }
 
     selectMovieActors->freeResult();
@@ -1612,12 +1612,12 @@ void cUpdate::LoadMovieActorThumbs(cMovieDbMovie *movie) {
         string thumbName = tName.str();
         string thumbFullPath = movieActorsPath + "/" + thumbName; 
         if (!FileExists(thumbFullPath)) {
-            tMovieMedia->setValue(cTableMovieMedia::fiActorId, actorId);
+            tMovieMedia->setValue("ACTORID", actorId);
             int res = selectMovieActorThumbs->find();
             if (res) {
                 int size = imageSize.getIntValue();
                 if (FILE* fh = fopen(thumbFullPath.c_str(), "w")) {
-                    fwrite(tMovieMedia->getStrValue(cTableMovieMedia::fiMediaContent), 1, size, fh);
+                    fwrite(tMovieMedia->getStrValue("MEDIACONTENT"), 1, size, fh);
                     fclose(fh);
                 }
                 movie->SetActorPath(actorId, thumbFullPath);
@@ -1632,12 +1632,12 @@ void cUpdate::LoadMovieActorThumbs(cMovieDbMovie *movie) {
 
 void cUpdate::LoadMovieMedia(cMovieDbMovie *movie, string moviePath) {
     tMovieMedia->clear();
-    tMovieMedia->setValue(cTableMovieMedia::fiMovieId, movie->id);
+    tMovieMedia->setValue("MOVIEID", movie->id);
 
     for (int res = selectMovieMedia->find(); res; res = selectMovieMedia->fetch()) {
-        int mediaType = tMovieMedia->getIntValue(cTableMovieMedia::fiMediaType);
-        int mediaWidth = tMovieMedia->getIntValue(cTableMovieMedia::fiMediaWidth);
-        int mediaHeight = tMovieMedia->getIntValue(cTableMovieMedia::fiMediaHeight);
+        int mediaType = tMovieMedia->getIntValue("MEDIATYPE");
+        int mediaWidth = tMovieMedia->getIntValue("MEDIAWIDTH");
+        int mediaHeight = tMovieMedia->getIntValue("MEDIAHEIGHT");
         string imgPath = LoadMediaMovie(movie->id, mediaType, moviePath, mediaWidth, mediaHeight);
         if (imgPath.size() > 0)
             scrapManager->AddMovieMedia(movie, tMovieMedia, imgPath);
@@ -1690,14 +1690,14 @@ string cUpdate::LoadMediaMovie(int movieId, int mediaType, string path, int widt
         return imgPath;
 
     tMovieMedia->clear();
-    tMovieMedia->setValue(cTableMovieMedia::fiMovieId, movieId);
-    tMovieMedia->setValue(cTableMovieMedia::fiMediaType, mediaType);
+    tMovieMedia->setValue("MOVIEID", movieId);
+    tMovieMedia->setValue("MEDIATYPE", mediaType);
 
     int res = selectMediaMovie->find();
     if (res) {
         int size = imageSize.getIntValue();
         if (FILE* fh = fopen(imgPath.c_str(), "w")) {
-            fwrite(tMovieMedia->getStrValue(cTableMovieMedia::fiMediaContent), 1, size, fh);
+            fwrite(tMovieMedia->getStrValue("MEDIACONTENT"), 1, size, fh);
             fclose(fh);
         }
         if (createThumb && !FileExists(thumbPath)) {
@@ -1715,14 +1715,14 @@ string cUpdate::LoadMediaMovie(int movieId, int mediaType, string path, int widt
 
 int cUpdate::ReadRecordings(void) {
     tRecordings->clear();
-    tRecordings->setValue(cTableRecordings::fiUuid, config.uuid.c_str());
+    tRecordings->setValue("UUID", config.uuid.c_str());
     int numRecs = 0;
     for (int res = selectRecordings->find(); res; res = selectRecordings->fetch()) {
-        int recStart = tRecordings->getIntValue(cTableRecordings::fiRecStart);
-        string recPath = tRecordings->getStrValue(cTableRecordings::fiRecPath);
-        int movieId = tRecordings->getIntValue(cTableRecordings::fiMovieId);
-        int seriesId = tRecordings->getIntValue(cTableRecordings::fiSeriesId);
-        int episodeId = tRecordings->getIntValue(cTableRecordings::fiEpisodeId);
+        int recStart = tRecordings->getIntValue("RECSTART");
+        string recPath = tRecordings->getStrValue("RECPATH");
+        int movieId = tRecordings->getIntValue("MOVIEID");
+        int seriesId = tRecordings->getIntValue("SERIESID");
+        int episodeId = tRecordings->getIntValue("EPISODEID");
         bool isNew = scrapManager->AddRecording(recStart, recPath, seriesId, episodeId, movieId);
         if (isNew)
             numRecs++;
@@ -1764,19 +1764,19 @@ int cUpdate::ScanVideoDir(void) {
                 }
             }
             tRecordings->clear();
-            tRecordings->setValue(cTableRecordings::fiUuid, config.uuid.c_str());
-            tRecordings->setValue(cTableRecordings::fiRecPath, recPath.c_str());
-            tRecordings->setValue(cTableRecordings::fiRecStart, recStart);
+            tRecordings->setValue("UUID", config.uuid.c_str());
+            tRecordings->setValue("RECPATH", recPath.c_str());
+            tRecordings->setValue("RECSTART", recStart);
             
-            tRecordings->setValue(cTableRecordings::fiEventId, eventId);
-            tRecordings->setValue(cTableRecordings::fiChannelId, channelId.c_str());
-            tRecordings->setValue(cTableRecordings::fiScrapInfoMovieId, scrapInfoMovieID);
-            tRecordings->setValue(cTableRecordings::fiScrapInfoSeriesId, scrapInfoSeriesID);
-            tRecordings->setValue(cTableRecordings::fiScrapInfoEpisodeId, scrapInfoEpisodeID);
-            tRecordings->setValue(cTableRecordings::fiScrapNew, 1);
-            tRecordings->setValue(cTableRecordings::fiRecTitle, title.c_str());
-            tRecordings->setValue(cTableRecordings::fiRecSubTitle, subTitle.c_str());
-            tRecordings->setValue(cTableRecordings::fiRecDuration, rec->LengthInSeconds()/60);
+            tRecordings->setValue("EVENTID", eventId);
+            tRecordings->setValue("CHANNELID", channelId.c_str());
+            tRecordings->setValue("SCRAPINFOMOVIEID", scrapInfoMovieID);
+            tRecordings->setValue("SCRAPINFOSERIESID", scrapInfoSeriesID);
+            tRecordings->setValue("SCRAPINFOEPISODEID", scrapInfoEpisodeID);
+            tRecordings->setValue("SCRAPNEW", 1);
+            tRecordings->setValue("RECTITLE", title.c_str());
+            tRecordings->setValue("RECSUBTITLE", subTitle.c_str());
+            tRecordings->setValue("RECDURATION", rec->LengthInSeconds()/60);
             tRecordings->store();
         }
     }
@@ -1794,10 +1794,10 @@ int cUpdate::ScanVideoDirScrapInfo(void) {
         int scrapInfoEpisodeID = 0;
         ReadScrapInfo(rec->FileName(), scrapInfoMovieID, scrapInfoSeriesID, scrapInfoEpisodeID);
         if (ScrapInfoChanged(scrapInfoMovieID, scrapInfoSeriesID, scrapInfoEpisodeID)) {
-            tRecordings->setValue(cTableRecordings::fiScrapNew, 1);
-            tRecordings->setValue(cTableRecordings::fiScrapInfoMovieId, scrapInfoMovieID);
-            tRecordings->setValue(cTableRecordings::fiScrapInfoSeriesId, scrapInfoSeriesID);
-            tRecordings->setValue(cTableRecordings::fiScrapInfoEpisodeId, scrapInfoEpisodeID);
+            tRecordings->setValue("SCRAPNEW", 1);
+            tRecordings->setValue("SCRAPINFOMOVIEID", scrapInfoMovieID);
+            tRecordings->setValue("SCRAPINFOSERIESID", scrapInfoSeriesID);
+            tRecordings->setValue("SCRAPINFOEPISODEID", scrapInfoEpisodeID);
             tRecordings->update();
             numUpdated++;
         }
@@ -1807,9 +1807,9 @@ int cUpdate::ScanVideoDirScrapInfo(void) {
 
 bool cUpdate::LoadRecording(int recStart, string recPath) {
     tRecordings->clear();
-    tRecordings->setValue(cTableRecordings::fiUuid, config.uuid.c_str());
-    tRecordings->setValue(cTableRecordings::fiRecStart, recStart);
-    tRecordings->setValue(cTableRecordings::fiRecPath, recPath.c_str());
+    tRecordings->setValue("UUID", config.uuid.c_str());
+    tRecordings->setValue("RECSTART", recStart);
+    tRecordings->setValue("RECPATH", recPath.c_str());
     int found = tRecordings->find();
     if (found == yes) {
         return true;
@@ -1818,9 +1818,9 @@ bool cUpdate::LoadRecording(int recStart, string recPath) {
 }
 
 bool cUpdate::ScrapInfoChanged(int scrapInfoMovieID, int scrapInfoSeriesID, int scrapInfoEpisodeID) {
-    int movieIdCurrent = tRecordings->getIntValue(cTableRecordings::fiScrapInfoMovieId);
-    int seriesIdCurrent = tRecordings->getIntValue(cTableRecordings::fiScrapInfoSeriesId);
-    int episodeIdCurrent = tRecordings->getIntValue(cTableRecordings::fiScrapInfoEpisodeId);
+    int movieIdCurrent = tRecordings->getIntValue("SCRAPINFOMOVIEID");
+    int seriesIdCurrent = tRecordings->getIntValue("SCRAPINFOSERIESID");
+    int episodeIdCurrent = tRecordings->getIntValue("SCRAPINFOEPISODEID");
     if ((movieIdCurrent != scrapInfoMovieID) ||
         (seriesIdCurrent != scrapInfoSeriesID) ||
         (episodeIdCurrent != scrapInfoEpisodeID))
@@ -1976,12 +1976,12 @@ int cUpdate::CleanupRecordings(void) {
     // delete all not anymore existing recordings in database
 
     tRecordings->clear();
-    tRecordings->setValue(cTableRecordings::fiUuid, config.uuid.c_str());
+    tRecordings->setValue("UUID", config.uuid.c_str());
     int numRecsDeleted = 0;
 
     for (int res = selectCleanupRecordings->find(); res; res = selectCleanupRecordings->fetch()) {
-        int recStart = tRecordings->getIntValue(cTableRecordings::fiRecStart);
-        string recPath = tRecordings->getStrValue(cTableRecordings::fiRecPath);
+        int recStart = tRecordings->getIntValue("RECSTART");
+        string recPath = tRecordings->getStrValue("RECPATH");
         if (!Recordings.GetByName(recPath.c_str())) {
             char escapedPath[recPath.size()+1];
             mysql_real_escape_string(connection->getMySql(), escapedPath, recPath.c_str(), recPath.size());            

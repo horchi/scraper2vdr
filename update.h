@@ -6,7 +6,7 @@
 #include <vdr/thread.h>
 #include "lib/common.h"
 #include "lib/db.h"
-#include "lib/tabledef.h"
+
 #include "scrapmanager.h"
 #include "filedatemanager.h"
 
@@ -24,17 +24,17 @@ class cUpdate : public cThread  {
         bool withutf8;
         bool loopActive;
         cDbConnection* connection;
-        cTableVdrs* vdrDb;
-        cTableEvents* tEvents;
-        cTableSeries* tSeries;
-        cTableSeriesEpisode* tEpisodes;
-        cTableSeriesMedia* tSeriesMedia;
-        cTableSeriesActor* tSeriesActors;
-        cTableMovies* tMovies;
-        cTableMovieActor* tMovieActor;
-        cTableMovieActors* tMovieActors;
-        cTableMovieMedia* tMovieMedia;
-        cTableRecordings* tRecordings;
+        cDbTable* vdrDb;
+        cDbTable* tEvents;
+        cDbTable* tSeries;
+        cDbTable* tEpisodes;
+        cDbTable* tSeriesMedia;
+        cDbTable* tSeriesActors;
+        cDbTable* tMovies;
+        cDbTable* tMovieActor;
+        cDbTable* tMovieActors;
+        cDbTable* tMovieMedia;
+        cDbTable* tRecordings;
         cFileDateManager fileDateManager;
         int lastScrap;
         long MaxScrspSeries; // max scrsp of known events/recordings for series

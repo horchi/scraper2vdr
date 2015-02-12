@@ -6,12 +6,11 @@
  */
 
 #include <stdio.h>
-
 #include <errmsg.h>
 
-#include "db.h"
+#include <map>
 
-// #define DEB_HANDLER
+#include "db.h"
 
 //***************************************************************************
 // DB Statement
@@ -33,6 +32,7 @@ cDbStatement::cDbStatement(cDbTable* aTable)
    metaResult = 0;
    bindPrefix = 0;
    firstExec = yes;
+   buildErrors = 0;
 
    callsPeriod = 0;
    callsTotal = 0;
@@ -42,11 +42,11 @@ cDbStatement::cDbStatement(cDbTable* aTable)
       connection->statements.append(this);
 }
 
-cDbStatement::cDbStatement(cDbConnection* aConnection, const char* stmt)
+cDbStatement::cDbStatement(cDbConnection* aConnection, const char* sText)
 {
    table = 0;
    connection = aConnection;
-   stmtTxt = stmt;
+   stmtTxt = sText;
    stmt = 0;
    inCount = 0;
    outCount = 0;
@@ -60,6 +60,7 @@ cDbStatement::cDbStatement(cDbConnection* aConnection, const char* stmt)
    callsPeriod = 0;
    callsTotal = 0;
    duration = 0;
+   buildErrors = 0;
 
    if (connection)
       connection->statements.append(this);
@@ -149,6 +150,27 @@ int cDbStatement::execute(int noResult)
    return success;
 }
 
+//***************************************************************************
+// 
+//***************************************************************************
+
+int cDbStatement::getLastInsertId()
+{
+   MYSQL_RES* result = 0;
+   int insertId = na;
+
+   if ((result = mysql_store_result(connection->getMySql())) == 0 &&
+       mysql_field_count(connection->getMySql()) == 0 &&
+       mysql_insert_id(connection->getMySql()) != 0)
+   {
+      insertId = mysql_insert_id(connection->getMySql());
+   }
+
+   mysql_free_result(result);
+
+   return insertId;
+}
+
 int cDbStatement::getResultCount()
 {
    mysql_stmt_store_result(stmt);
@@ -204,20 +226,34 @@ int cDbStatement::build(const char* format, ...)
    return success;
 }
 
-int cDbStatement::bind(int field, int mode, const char* delim)
+int cDbStatement::bind(const char* fname, int mode, const char* delim)
 {
-   return bind(table->getRow()->getValue(field), mode, delim);
+   return bind(table->getValue(fname), mode, delim);
 }
 
-int cDbStatement::bind(cDbTable* aTable, int field, int mode, const char* delim)
+int cDbStatement::bind(cDbFieldDef* field, int mode, const char* delim)
 {
-   return bind(aTable->getRow()->getValue(field), mode, delim);
+   return bind(table->getValue(field), mode, delim);
+}
+
+int cDbStatement::bind(cDbTable* aTable, cDbFieldDef* field, int mode, const char* delim)
+{
+   return bind(aTable->getValue(field), mode, delim);
+}
+
+int cDbStatement::bind(cDbTable* aTable, const char* fname, int mode, const char* delim)
+{
+   return bind(aTable->getValue(fname), mode, delim);
 }
 
 int cDbStatement::bind(cDbValue* value, int mode, const char* delim)
 {
    if (!value || !value->getField())
+   {
+      tell(0, "Error: Missing %s value", !value ? "bind" : "field of bind");
+      buildErrors++;
       return fail;
+   }
 
    if (delim)
       stmtTxt += delim;
@@ -228,15 +264,35 @@ int cDbStatement::bind(cDbValue* value, int mode, const char* delim)
    if (mode & bndIn)
    {
       if (mode & bndSet)
-         stmtTxt += value->getName() + string(" =");
+         stmtTxt += value->getDbName() + string(" =");
       
       stmtTxt += " ?";
       appendBinding(value, bndIn);
    }
    else if (mode & bndOut)
    {
-      stmtTxt += value->getName();
+      stmtTxt += value->getDbName();
       appendBinding(value, bndOut);
+   }
+
+   return success;
+}
+
+int cDbStatement::bindAllOut(const char* delim)
+{
+   int n = 0;
+   std::map<std::string, cDbFieldDef*>::iterator f;
+   cDbTableDef* tableDef = table->getTableDef();
+
+   if (delim)
+      stmtTxt += delim;
+
+   for (f = tableDef->dfields.begin(); f != tableDef->dfields.end(); f++)
+   {
+      if (f->second->getType() & ftCalc || f->second->getType() & ftMeta)
+         continue;
+      
+      bind(f->second, bndOut, n++ ? ", " : "");
    }
 
    return success;
@@ -248,23 +304,51 @@ int cDbStatement::bindCmp(const char* ctable, cDbValue* value,
    if (ctable)
       build("%s.", ctable);
 
-   build("%s%s%s %s ?", delim ? delim : "", bindPrefix ? bindPrefix : "", value->getName(), comp);
+   build("%s%s%s %s ?", delim ? delim : "", bindPrefix ? bindPrefix : "", value->getDbName(), comp);
 
    appendBinding(value, bndIn);
 
    return success;
 }
 
-int cDbStatement::bindCmp(const char* ctable, int field, cDbValue* value, 
+int cDbStatement::bindCmp(const char* ctable, cDbFieldDef* field, cDbValue* value, 
                           const char* comp, const char* delim)
 {
    cDbValue* vf = table->getRow()->getValue(field);
    cDbValue* vv = value ? value : vf;
 
+   if (!vf | !vv)
+   {
+      buildErrors++;
+      return fail;
+   }
+
    if (ctable)
       build("%s.", ctable);
 
-   build("%s%s%s %s ?", delim ? delim : "", bindPrefix ? bindPrefix : "", vf->getName(), comp);
+   build("%s%s%s %s ?", delim ? delim : "", bindPrefix ? bindPrefix : "", vf->getDbName(), comp);
+
+   appendBinding(vv, bndIn);
+
+   return success;
+}
+
+int cDbStatement::bindCmp(const char* ctable, const char* fname, cDbValue* value, 
+                          const char* comp, const char* delim)
+{
+   cDbValue* vf = table->getRow()->getValue(fname);
+   cDbValue* vv = value ? value : vf;
+
+   if (!vf | !vv)
+   {
+      buildErrors++;
+      return fail;
+   }
+
+   if (ctable)
+      build("%s.", ctable);
+
+   build("%s%s%s %s ?", delim ? delim : "", bindPrefix ? bindPrefix : "", vf->getDbName(), comp);
 
    appendBinding(vv, bndIn);
 
@@ -332,27 +416,29 @@ int cDbStatement::appendBinding(cDbValue* value, BindType bt)
 
    newBinding = &((*bindings)[count-1]);
 
-   if (value->getField()->format == ffAscii || value->getField()->format == ffText)
+   memset(newBinding, 0, sizeof(MYSQL_BIND));
+
+   if (value->getField()->getFormat() == ffAscii || value->getField()->getFormat() == ffText || value->getField()->getFormat() == ffMText)
    {
       newBinding->buffer_type = MYSQL_TYPE_STRING;
       newBinding->buffer = value->getStrValueRef();
-      newBinding->buffer_length = value->getField()->size;
+      newBinding->buffer_length = value->getField()->getSize();
       newBinding->length = value->getStrValueSizeRef();
       
       newBinding->is_null = value->getNullRef();
       newBinding->error = 0;            // #TODO
    }
-   else if (value->getField()->format == ffMlob)
+   else if (value->getField()->getFormat() == ffMlob)
    {
       newBinding->buffer_type = MYSQL_TYPE_BLOB;
       newBinding->buffer = value->getStrValueRef();
-      newBinding->buffer_length = value->getField()->size;
+      newBinding->buffer_length = value->getField()->getSize();
       newBinding->length = value->getStrValueSizeRef();
       
       newBinding->is_null = value->getNullRef();
       newBinding->error = 0;            // #TODO
    }
-   else if (value->getField()->format == ffFloat)
+   else if (value->getField()->getFormat() == ffFloat)
    {
       newBinding->buffer_type = MYSQL_TYPE_FLOAT;
       newBinding->buffer = value->getFloatValueRef();
@@ -361,7 +447,7 @@ int cDbStatement::appendBinding(cDbValue* value, BindType bt)
       newBinding->is_null =  value->getNullRef();
       newBinding->error = 0;             // #TODO
    }
-   else if (value->getField()->format == ffDateTime)
+   else if (value->getField()->getFormat() == ffDateTime)
    {
       newBinding->buffer_type = MYSQL_TYPE_DATETIME;
       newBinding->buffer = value->getTimeValueRef();
@@ -374,7 +460,7 @@ int cDbStatement::appendBinding(cDbValue* value, BindType bt)
    {
       newBinding->buffer_type = MYSQL_TYPE_LONG;
       newBinding->buffer = value->getIntValueRef();
-      newBinding->is_unsigned = (value->getField()->format == ffUInt);
+      newBinding->is_unsigned = (value->getField()->getFormat() == ffUInt);
 
       newBinding->length = 0;
       newBinding->is_null =  value->getNullRef();
@@ -393,6 +479,9 @@ int cDbStatement::prepare()
    if (!stmtTxt.length() || !connection->getMySql())
       return fail;
    
+   if (buildErrors)
+      return fail;
+
    stmt = mysql_stmt_init(connection->getMySql());
    
    // prepare statement
@@ -435,77 +524,10 @@ void cDbStatement::showStat()
 }
 
 //***************************************************************************
-// cDbService
-//***************************************************************************
-
-const char* cDbService::formats[] =
-{
-   "INT",
-   "INT",
-   "VARCHAR",
-   "TEXT",
-   "MEDIUMBLOB",
-   "FLOAT",
-   "DATETIME",
-
-   0
-};
-
-const char* cDbService::toString(FieldFormat t)
-{
-   return formats[t];
-}
-
-const char* cDbService::dictFormats[] =
-{
-   "int",
-   "uint",
-   "ascii",
-   "text",
-   "mlob",
-   "float",
-   "datetime",
-
-   0
-};
-
-cDbService::FieldFormat cDbService::toDictFormat(const char* format)
-{
-   for (int i = 0; i < ffCount; i++)
-      if (strcasecmp(dictFormats[i], format) == 0)
-         return (FieldFormat)i;
-
-   return ffUnknown;
-}
-
-const char* cDbService::types[] =
-{
-   "data",
-   "primary",
-   "meta",
-   "calc",
-   "autoinc",
-
-   0
-};
-
-cDbService::FieldType cDbService::toType(const char* type)
-{
-   // #TODO  !!!
-
-   for (int i = 0; i < 3; i++)
-      if (strcasecmp(types[i], type) == 0)
-         return (FieldType)i;
-
-   return ftUnknown;
-}
-
-//***************************************************************************
 // Class cDbTable
 //***************************************************************************
 
-char* cDbTable::confPath = 0;
-
+char* cDbConnection::confPath = 0;
 char* cDbConnection::encoding = 0;
 char* cDbConnection::dbHost = strdup("localhost");
 int   cDbConnection::dbPort = 3306;
@@ -518,17 +540,24 @@ Sem*  cDbConnection::sem = 0;
 // Object
 //***************************************************************************
 
-cDbTable::cDbTable(cDbConnection* aConnection, FieldDef* f, IndexDef* i)
+cDbTable::cDbTable(cDbConnection* aConnection, const char* name)
 {
    connection = aConnection;
-   row = new cDbRow(f);
    holdInMemory = no;
+   attached = no;
 
+   row = 0;
    stmtSelect = 0;
    stmtInsert = 0;
    stmtUpdate = 0;
+   lastInsertId = na;
 
-   indices = i;
+   tableDef = dbDict.getTable(name);
+   
+   if (tableDef)
+      row = new cDbRow(tableDef);
+   else
+      tell(0, "Fatal: Table '%s' missing in dictionary '%s'!", name, dbDict.getPath());
 }
 
 cDbTable::~cDbTable()
@@ -542,9 +571,12 @@ cDbTable::~cDbTable()
 // Open / Close
 //***************************************************************************
 
-int cDbTable::open()
+int cDbTable::open(int allowAlter)
 {
-   if (connection->attachConnection() != success)
+   if (!tableDef || !row)
+      return abrt;
+
+   if (attach() != success)
    {
       tell(0, "Could not access database '%s:%d' (tried to open %s)", 
            connection->getHost(), connection->getPort(), TableName());
@@ -552,7 +584,7 @@ int cDbTable::open()
       return fail;
    }
    
-   return init();
+   return init(allowAlter);
 }
 
 int cDbTable::close()
@@ -561,7 +593,40 @@ int cDbTable::close()
    if (stmtInsert) { delete stmtInsert; stmtInsert = 0; }
    if (stmtUpdate) { delete stmtUpdate; stmtUpdate = 0; }
 
-   connection->detachConnection();
+   detach();
+
+   return success;
+}
+
+//***************************************************************************
+// Attach / Detach
+//***************************************************************************
+
+int cDbTable::attach()
+{
+   if (isAttached())
+      return success;
+
+   if (connection->attachConnection() != success)
+   {
+      tell(0, "Could not access database '%s:%d'",
+           connection->getHost(), connection->getPort());
+
+      return fail;
+   }
+
+   attached = yes;
+
+   return success;
+}
+
+int cDbTable::detach()
+{
+   if (isAttached())
+   {
+      connection->detachConnection();
+      attached = no;
+   }
 
    return success;
 }
@@ -570,13 +635,19 @@ int cDbTable::close()
 // Init
 //***************************************************************************
 
-int cDbTable::init()
+int cDbTable::init(int allowAlter)
 {
    string str;
+   std::map<std::string, cDbFieldDef*>::iterator f;
+   int n = 0;
 
-   if (!isConnected()) return fail;
+   if (!isConnected()) 
+      return fail;
 
    // check/create table ...
+
+   if (exist() && allowAlter)
+      validateStructure();
 
    if (createTable() != success)
       return fail;
@@ -594,23 +665,27 @@ int cDbTable::init()
    stmtSelect = new cDbStatement(this);
    
    stmtSelect->build("select ");
-   
-   for (int i = 0, n = 0; row->getField(i)->name; i++)
+
+   n = 0;
+
+   for (f = tableDef->dfields.begin(); f != tableDef->dfields.end(); f++)
    {
-      if (row->getField(i)->type & ftCalc)
+      if (f->second->getType() & ftCalc)
          continue;
       
-      stmtSelect->bind(i, bndOut, n++ ? ", " : "");
+      stmtSelect->bind(f->second, bndOut, n++ ? ", " : "");
    }
-   
+
    stmtSelect->build(" from %s where ", TableName());
-   
-   for (int i = 0, n = 0; row->getField(i)->name; i++)
+
+   n = 0;
+
+   for (f = tableDef->dfields.begin(); f != tableDef->dfields.end(); f++)
    {
-      if (!(row->getField(i)->type & ftPrimary))
+      if (!(f->second->getType() & ftPrimary))
          continue;
       
-      stmtSelect->bind(i, bndIn | bndSet, n++ ? " and " : "");
+      stmtSelect->bind(f->second, bndIn | bndSet, n++ ? " and " : "");
    }
    
    stmtSelect->build(";");
@@ -625,14 +700,16 @@ int cDbTable::init()
 
    stmtInsert->build("insert into %s set ", TableName());
 
-   for (int i = 0, n = 0; row->getField(i)->name; i++)
+   n = 0;
+
+   for (f = tableDef->dfields.begin(); f != tableDef->dfields.end(); f++)
    {
       // don't insert autoinc and calculated fields
 
-      if (row->getField(i)->type & ftCalc || row->getField(i)->type & ftAutoinc)
+      if (f->second->getType() & ftCalc || f->second->getType() & ftAutoinc)
          continue;
 
-      stmtInsert->bind(i, bndIn | bndSet, n++ ? ", " : "");
+      stmtInsert->bind(f->second, bndIn | bndSet, n++ ? ", " : "");
    }
 
    stmtInsert->build(";");
@@ -647,29 +724,33 @@ int cDbTable::init()
 
    stmtUpdate->build("update %s set ", TableName());
          
-   for (int i = 0, n = 0; row->getField(i)->name; i++)
+   n = 0;
+
+   for (f = tableDef->dfields.begin(); f != tableDef->dfields.end(); f++)
    {
       // don't update PKey, autoinc and calculated fields
 
-      if (row->getField(i)->type & ftPrimary || 
-          row->getField(i)->type & ftCalc || 
-          row->getField(i)->type & ftAutoinc)
+      if (f->second->getType() & ftPrimary || 
+          f->second->getType() & ftCalc || 
+          f->second->getType() & ftAutoinc)
          continue;
       
-      if (strcmp(row->getField(i)->name, "inssp") == 0)  // don't update the insert stamp
+      if (strcasecmp(f->second->getName(), "inssp") == 0)  // don't update the insert stamp
          continue;
       
-      stmtUpdate->bind(i, bndIn | bndSet, n++ ? ", " : "");
+      stmtUpdate->bind(f->second, bndIn | bndSet, n++ ? ", " : "");
    }
 
    stmtUpdate->build(" where ");
 
-   for (int i = 0, n = 0; row->getField(i)->name; i++)
+   n = 0;
+
+   for (f = tableDef->dfields.begin(); f != tableDef->dfields.end(); f++)
    {
-      if (!(row->getField(i)->type & ftPrimary))
+      if (!(f->second->getType() & ftPrimary))
          continue;
 
-      stmtUpdate->bind(i, bndIn | bndSet, n++ ? " and " : "");
+      stmtUpdate->bind(f->second, bndIn | bndSet, n++ ? " and " : "");
    }
 
    stmtUpdate->build(";");
@@ -686,7 +767,7 @@ int cDbTable::init()
 
 int cDbTable::exist(const char* name)
 {
-   if (!name)
+   if (isEmpty(name))
       name = TableName();
 
    MYSQL_RES* result = mysql_list_tables(connection->getMySql(), name);
@@ -694,6 +775,148 @@ int cDbTable::exist(const char* name)
    mysql_free_result(result);
 
    return tabRow ? yes : no;
+}
+
+//***************************************************************************
+// Validate Structure
+//***************************************************************************
+
+struct FieldInfo
+{
+   string columnFormat;
+};
+
+int cDbTable::validateStructure()
+{
+   map<string, FieldInfo, _casecmp_> fields;
+   MYSQL_RES* result;
+   MYSQL_ROW row;
+   std::map<std::string, cDbFieldDef*>::iterator f;
+
+   const char* select = "select column_name, column_type, data_type, is_nullable, "
+      " character_maximum_length, column_default, numeric_precision "
+      " from information_schema.columns "
+      " where table_name = '%s' and table_schema= '%s'";
+
+   if (attach() != success)
+      return fail;
+   
+   // ------------------------
+   // execute query
+   
+   if (connection->query(select, TableName(), connection->getName()) != success)
+   {
+      connection->errorSql(getConnection(), "validateStructure()", 0);
+      return fail;
+   }
+
+   // ------------------------
+   // process the result
+   
+   if (!(result = mysql_store_result(connection->getMySql())))
+   {
+      connection->errorSql(getConnection(), "validateStructure()");
+      return fail;
+   }
+
+   while ((row = mysql_fetch_row(result)))
+      fields[row[0]].columnFormat = row[1];
+   
+   mysql_free_result(result);
+
+   // ------------------------
+   // validate 
+
+   for (int i = 0; i < fieldCount(); i++)
+   {
+      char colType[100];
+
+      if (getField(i)->getType() & ftCalc)
+         continue;
+
+      tell(4, "Check field '%s'", getField(i)->getName());
+
+      if (fields.find(getField(i)->getDbName()) == fields.end())
+         alterAddField(getField(i));
+      
+      else
+      {
+         getField(i)->toColumnFormat(colType);
+
+         if (strcasecmp(fields[getField(i)->getDbName()].columnFormat.c_str(), colType) != 0)
+            alterModifyField(getField(i));
+      }
+   }
+
+   return success;
+}
+
+//***************************************************************************
+// Alter 'Modify Field'
+//***************************************************************************
+
+int cDbTable::alterModifyField(cDbFieldDef* def)
+{
+   char* statement;
+   char colType[100];
+
+   tell(0, "  Info: Definition of field '%s.%s' modified, try to alter table", 
+        TableName(), def->getName());
+
+   // alter table events modify column guest varchar(50)
+
+   asprintf(&statement, "alter table %s modify column %s %s", 
+            TableName(), def->getDbName(), def->toColumnFormat(colType));
+
+   tell(1, "%s", statement);
+
+   if (connection->query(statement))
+      return connection->errorSql(getConnection(), "alterAddField()", 
+                                  0, statement);
+
+   free(statement);
+
+   return done;
+}
+
+//***************************************************************************
+// Alter 'Add Field'
+//***************************************************************************
+
+int cDbTable::alterAddField(cDbFieldDef* def)
+{
+   string statement;
+   char colType[100];
+
+   tell(0, "Info: Missing field '%s.%s', try to alter table", 
+        TableName(), def->getName());
+
+   // alter table channelmap add column ord int(11) [after source]
+
+   statement = string("alter table ") + TableName() + string(" add column ")
+      + def->getDbName() + string(" ") + def->toColumnFormat(colType);
+
+   if (def->getFormat() != ffMlob)
+   {
+      if (def->getType() & ftAutoinc)
+         statement += " not null auto_increment";
+      else if (def->getType() & ftDef0)
+         statement += " default '0'";
+   }
+   
+   if (!isEmpty(def->getDescription()))
+      statement += string(" comment '") + def->getDescription() + string("'");
+   
+   if (def->getIndex() > 0)
+      statement += string(" after ") + getField(def->getIndex()-1)->getDbName();
+
+   tell(1, "%s", statement.c_str());
+
+   if (connection->query(statement.c_str()))
+      return connection->errorSql(getConnection(), "alterAddField()", 
+                                  0, statement.c_str());
+
+   return done;
 }
 
 //***************************************************************************
@@ -705,16 +928,11 @@ int cDbTable::createTable()
    string statement;
    string aKey;
 
-   if (!isConnected())
-   {
-      if (connection->attachConnection() != success)
-      {
-         tell(0, "Could not access database '%s:%d' (tried to create %s)", 
-              connection->getHost(), connection->getPort(), TableName());
-         
-         return fail;
-      }
-   }
+   if (!tableDef || !row)
+      return abrt;
+
+   if (attach() != success)
+      return fail;
 
    // table exists -> nothing to do
 
@@ -727,46 +945,37 @@ int cDbTable::createTable()
 
    statement = string("create table ") + TableName() + string("(");
 
-   for (int i = 0; getField(i)->name; i++)
+   for (int i = 0; i < fieldCount(); i++)
    {
-      int size = getField(i)->size;
-      char num[10];
+      char colType[100];
 
-      if (getField(i)->type & ftCalc)
+      if (getField(i)->getType() & ftCalc)
          continue;
 
       if (i) statement += string(", ");
-      statement += string(getField(i)->name) + " " + string(toString(getField(i)->format));
 
-      if (getField(i)->format != ffMlob)
+      statement += string(getField(i)->getDbName()) + " " + string(getField(i)->toColumnFormat(colType));
+
+      if (getField(i)->getFormat() != ffMlob)
       {
-         if (!size) size = getField(i)->format == ffAscii || getField(i)->format == ffText ? 100 : 11;
-
-         if (getField(i)->format != ffFloat)
-            sprintf(num, "%d", size);
-         else
-            sprintf(num, "%d,%d", size/10, size%10);
-
-         statement += "(" + string(num) + ")";
-
-         if (getField(i)->format == ffUInt)
-            statement += " unsigned";
-
-         if (getField(i)->type & ftAutoinc)
+         if (getField(i)->getType() & ftAutoinc)
             statement += " not null auto_increment";
-         else if (getField(i)->type & ftDef0)
+         else if (getField(i)->getType() & ftDef0)
             statement += " default '0'";
       }
+
+      if (!isEmpty(getField(i)->getDescription()))
+         statement += string(" comment '") + getField(i)->getDescription() + string("'");
    }
 
    aKey = "";
 
-   for (int i = 0, n = 0; getField(i)->name; i++)
+   for (int i = 0, n = 0; i < fieldCount(); i++)
    {
-      if (getField(i)->type & ftPrimary)
+      if (getField(i)->getType() & ftPrimary)
       {
          if (n++) aKey += string(", ");
-         aKey += string(getField(i)->name) + " DESC";
+         aKey += string(getField(i)->getDbName()) + " DESC";
       }
    }
 
@@ -779,12 +988,12 @@ int cDbTable::createTable()
 
    aKey = "";
 
-   for (int i = 0, n = 0; getField(i)->name; i++)
+   for (int i = 0, n = 0; i < fieldCount(); i++)
    {
-      if (getField(i)->type & ftAutoinc && !(getField(i)->type & ftPrimary))
+      if (getField(i)->getType() & ftAutoinc && !(getField(i)->getType() & ftPrimary))
       {
          if (n++) aKey += string(", ");
-         aKey += string(getField(i)->name) + " DESC";
+         aKey += string(getField(i)->getDbName()) + " DESC";
       }
    }
 
@@ -819,28 +1028,22 @@ int cDbTable::createIndices()
 
    // check/create indexes
 
-   if (!indices)
-      return done;
-
-   for (int i = 0; getIndex(i)->name; i++)
+   for (int i = 0; i < tableDef->indexCount(); i++)
    {
-      IndexDef* index = getIndex(i);
+      cDbIndexDef* index = tableDef->getIndex(i);
       int fCount;
       string idxName;
-      int expectCount = 0;
 
-      for (; index->fields[expectCount] != na; expectCount++) ;
-
-      if (!expectCount)
+      if (!index->fieldCount())
          continue;
          
       // check
 
-      idxName = "idx" + string(index->name);
+      idxName = "idx" + string(index->getName());
 
       checkIndex(idxName.c_str(), fCount);
 
-      if (fCount != expectCount)
+      if (fCount != index->fieldCount())
       {
          // create index
             
@@ -849,14 +1052,14 @@ int cDbTable::createIndices()
             
          int n = 0;
             
-         for (int f = 0; index->fields[f] != na; f++)
+         for (int f = 0; f < index->fieldCount(); f++)
          {              
-            FieldDef* fld = getField(index->fields[f]);
+            cDbFieldDef* fld = index->getField(f);
                
-            if (fld && !(fld->type & ftCalc))
+            if (fld && !(fld->getType() & ftCalc))
             {
                if (n++) statement += string(", ");
-               statement += fld->name;
+               statement += fld->getDbName();
             }
          }
             
@@ -939,12 +1142,16 @@ int cDbTable::checkIndex(const char* idxName, int& fieldCount)
 
 void cDbTable::copyValues(cDbRow* r)
 {
-   for (int i = 0; i < fieldCount(); i++)
+   std::map<std::string, cDbFieldDef*>::iterator f;
+
+   for (f = tableDef->dfields.begin(); f != tableDef->dfields.end(); f++)
    {
-      if (getField(i)->format == ffAscii || getField(i)->format == ffText)
-         row->setValue(i, r->getStrValue(i));
+      cDbFieldDef* fld = f->second;
+
+      if (fld->getFormat() == ffAscii || fld->getFormat() == ffText || fld->getFormat() == ffMText)
+         row->setValue(fld, r->getStrValue(fld));
       else
-         row->setValue(i, r->getIntValue(i));
+         row->setValue(fld, r->getIntValue(fld));
    }
 }
 
@@ -967,8 +1174,29 @@ int cDbConnection::errorSql(cDbConnection* connection, const char* prefix, MYSQL
    if (error == CR_SERVER_LOST ||
        error == CR_SERVER_GONE_ERROR ||
        error == CR_INVALID_CONN_HANDLE ||
-       error == CR_SERVER_LOST_EXTENDED)
+       error == CR_COMMANDS_OUT_OF_SYNC ||
+       error == CR_SERVER_LOST_EXTENDED ||
+       error == CR_STMT_CLOSED ||
+       error == CR_CONN_UNKNOW_PROTOCOL ||
+       error == CR_UNSUPPORTED_PARAM_TYPE ||
+       error == CR_NO_PREPARE_STMT ||
+       error == CR_SERVER_HANDSHAKE_ERR ||
+       error == CR_WRONG_HOST_INFO ||
+       error == CR_OUT_OF_MEMORY ||
+       error == CR_IPSOCK_ERROR ||
+       error == CR_SOCKET_CREATE_ERROR ||
+       error == CR_CONNECTION_ERROR ||
+       error == CR_TCP_CONNECTION ||
+       error == CR_PARAMS_NOT_BOUND ||
+       error == CR_CONN_HOST_ERROR ||
+       error == CR_SSL_CONNECTION_ERROR
+       
+       // to be continued - not all errors should result in a reconnect ...
+
+      )
+   {
       connectDropped = yes;
+   }
 
    if (error)
       asprintf(&conErr, "%s (%d) ", mysql_error(connection->mysql), error);
@@ -994,17 +1222,24 @@ int cDbConnection::errorSql(cDbConnection* connection, const char* prefix, MYSQL
 // Delete Where
 //***************************************************************************
 
-int cDbTable::deleteWhere(const char* where)
+int cDbTable::deleteWhere(const char* where, ...)
 {
-   string tmp;
+   string stmt;
+   char* tmp;
+   va_list more;
+
+   va_start(more, where);
+   vasprintf(&tmp, where, more);
 
    if (!connection || !connection->getMySql())
       return fail;
 
-   tmp = "delete from " + string(TableName()) + " where " + string(where);
+   stmt = "delete from " + string(TableName()) + " where " + string(tmp);
    
-   if (connection->query(tmp.c_str()))
-      return connection->errorSql(connection, "deleteWhere()", 0, tmp.c_str());
+   free(tmp);
+
+   if (connection->query(stmt.c_str()))
+      return connection->errorSql(connection, "deleteWhere()", 0, stmt.c_str());
 
    return success;
 }
@@ -1093,27 +1328,27 @@ int cDbTable::store()
 
 int cDbTable::insert()
 {
+   std::map<std::string, cDbFieldDef*>::iterator f;
+   lastInsertId = na;
+
    if (!stmtInsert)
    {
       tell(0, "Fatal missing insert statement\n");
       return fail;
    }
 
-   for (int i = 0; getField(i)->name; i++)
+   for (f = tableDef->dfields.begin(); f != tableDef->dfields.end(); f++)
    {
-      if (strcmp(getField(i)->name, "updsp") == 0 || strcmp(getField(i)->name, "inssp") == 0)
-         setValue(getField(i)->index, time(0));
+      cDbFieldDef* fld = f->second;
+
+      if (strcasecmp(fld->getName(), "updsp") == 0 || strcasecmp(fld->getName(), "inssp") == 0)
+         setValue(fld, time(0));
    }
-
-#ifdef DEB_HANDLER
-
-   if (strcmp(TableName(), "events") == 0)
-      tell(1, "inserting vdr event %d for '%s', starttime = %ld, updflg = '%s'", 
-           getIntValue(0), getStrValue(1), getIntValue(15), getStrValue(6));
-#endif
 
    if (stmtInsert->execute())
       return fail;
+
+   lastInsertId = stmtInsert->getLastInsertId();
 
    return stmtInsert->getAffected() == 1 ? success : fail;
 }
@@ -1124,26 +1359,24 @@ int cDbTable::insert()
 
 int cDbTable::update()
 {
+   std::map<std::string, cDbFieldDef*>::iterator f;
+
    if (!stmtUpdate)
    {
       tell(0, "Fatal missing update statement\n");
       return fail;
    }
 
-   for (int i = 0; getField(i)->name; i++)
+   for (f = tableDef->dfields.begin(); f != tableDef->dfields.end(); f++)
    {
-      if (strcmp(getField(i)->name, "updsp") == 0)
+      cDbFieldDef* fld = f->second;
+
+      if (strcasecmp(fld->getName(), "updsp") == 0)
       {
-         setValue(getField(i)->index, time(0));
+         setValue(fld, time(0));
          break;
       }
    }
-
-#ifdef DEB_HANDLER
-   if (strcmp(TableName(), "events") == 0)
-      tell(1, "updating vdr event %d for '%s', starttime = %ld, updflg = '%s'", 
-           getIntValue(0), getStrValue(1), getIntValue(15), getStrValue(6));
-#endif
 
    if (stmtUpdate->execute())
       return fail;

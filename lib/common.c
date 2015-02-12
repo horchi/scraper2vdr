@@ -8,6 +8,10 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 
+#include <sys/ioctl.h>
+#include <net/if.h>
+#include <arpa/inet.h>
+
 #ifdef USEUUID
 # include <uuid/uuid.h>
 #endif
@@ -17,7 +21,6 @@
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
-#include <zlib.h>
 #include <errno.h>
 
 #ifdef USELIBARCHIVE
@@ -41,7 +44,7 @@ const char* getLogPrefix()
 
 void tell(int eloquence, const char* format, ...)
 {
-   if (EPG2VDRConfig.loglevel < eloquence)
+   if (cEpgConfig::loglevel < eloquence)
       return ;
 
    const int sizeBuffer = 100000;
@@ -57,7 +60,7 @@ void tell(int eloquence, const char* format, ...)
 
    vsnprintf(t+strlen(t), sizeBuffer-strlen(t), format, ap);
    
-   if (EPG2VDRConfig.logstdout)
+   if (cEpgConfig::logstdout)
    {
       char buf[50+TB];
       timeval tp;
@@ -371,6 +374,124 @@ std::string l2pTime(time_t t)
    return std::string(txt);
 }
 
+std::string l2pDate(time_t t)
+{
+   char txt[30];
+   tm* tmp = localtime(&t);
+   
+   strftime(txt, sizeof(txt), "%d.%m.%Y", tmp);
+   
+   return std::string(txt);
+}
+
+//***************************************************************************
+// Time of
+//***************************************************************************
+
+time_t timeOf(time_t t)
+{
+   struct tm tm;
+
+   localtime_r(&t, &tm);
+
+   tm.tm_year = 0;
+   tm.tm_mon = 0;
+   tm.tm_mday = 0;
+   tm.tm_wday = 0;
+   tm.tm_yday = 0;
+   tm.tm_isdst = -1;  // force DST auto detect
+
+   return mktime(&tm);
+}
+
+//***************************************************************************
+// Weekday Of
+//***************************************************************************
+
+int weekdayOf(time_t t)
+{
+  struct tm tm_r;
+  int weekday = localtime_r(&t, &tm_r)->tm_wday;
+
+  return weekday == 0 ? 6 : weekday - 1;    //  Monday is 0
+}
+
+//***************************************************************************
+// To Weekday Name
+//***************************************************************************
+
+const char* toWeekdayName(uint day) 
+{
+   const char* dayNames[] = 
+   { 
+      "Monday", 
+      "Tuesday", 
+      "Wednesday", 
+      "Thursday", 
+      "Friday", 
+      "Saturday", 
+      "Sunday",
+      0
+   };
+
+   if (day > 6)
+      return "<unknown>";
+
+   return dayNames[day];
+}
+
+//***************************************************************************
+// hhmm of
+//***************************************************************************
+
+time_t hhmmOf(time_t t)
+{
+   struct tm tm;
+
+   localtime_r(&t, &tm);
+
+   tm.tm_year = 0;
+   tm.tm_mon = 0;
+   tm.tm_mday = 0;
+   tm.tm_wday = 0;
+   tm.tm_yday = 0;
+   tm.tm_sec = 0;
+   tm.tm_isdst = -1;  // force DST auto detect
+
+   return mktime(&tm);
+}
+
+//***************************************************************************
+// time_t to hhmm like '2015'
+//***************************************************************************
+
+int l2hhmm(time_t t)
+{
+   struct tm tm;
+
+   localtime_r(&t, &tm);
+   
+   return  tm.tm_hour * 100 + tm.tm_min;
+}
+
+//***************************************************************************
+// Midnight of
+//***************************************************************************
+
+time_t midnightOf(time_t t)
+{
+   struct tm tm;
+
+   localtime_r(&t, &tm);
+
+   tm.tm_hour = 0;
+   tm.tm_min = 0;
+   tm.tm_sec = 0;
+   tm.tm_isdst = -1;  // force DST auto detect
+
+   return mktime(&tm);
+}
+
 //***************************************************************************
 // MS to Duration
 //***************************************************************************
@@ -396,6 +517,18 @@ const char* c2s(char c, char* buf)
    sprintf(buf, "%c", c);
 
    return buf;
+}
+
+//***************************************************************************
+// End Of String
+//***************************************************************************
+
+char* eos(char* s)
+{
+   if (!s)
+      return 0;
+
+   return s + strlen(s);
 }
 
 //***************************************************************************
@@ -452,7 +585,7 @@ int loadFromFile(const char* infile, MemoryStruct* data)
       data->memory = (char*)malloc(data->size);
       fread(data->memory, sizeof(char), data->size, fin);
       fclose(fin);
-      sprintf(data->tag, "%ld", data->size);
+      sprintf(data->tag, "%ld", (long int)data->size);
 
       if (strcmp(sfx, "gz") == 0)
          sprintf(data->contentEncoding, "gzip");
@@ -661,6 +794,8 @@ xsltStylesheetPtr loadXSLT(const char* name, const char* path, int utf8)
 }
 #endif
 
+#ifdef USEGUNZIP
+
 //***************************************************************************
 // Gnu Unzip
 //***************************************************************************
@@ -743,7 +878,7 @@ int gunzip(MemoryStruct* zippedData, MemoryStruct* unzippedData)
 // gzip
 //***************************************************************************
 
-int _gzip(Bytef* dest, uLongf* destLen, const Bytef* source, uLong sourceLen)
+int gzip(Bytef* dest, uLongf* destLen, const Bytef* source, uLong sourceLen)
 {
     z_stream stream;
     int res;
@@ -758,42 +893,34 @@ int _gzip(Bytef* dest, uLongf* destLen, const Bytef* source, uLong sourceLen)
     stream.zfree = (free_func)0;
     stream.opaque = (voidpf)0;
 
-    if ((res = deflateInit2(&stream, Z_DEFAULT_COMPRESSION, Z_DEFLATED, 15 + 16, 8, Z_DEFAULT_STRATEGY)) != Z_OK)
-       return res;
+    res = deflateInit2(&stream, Z_DEFAULT_COMPRESSION, Z_DEFLATED, 15 + 16, 8, Z_DEFAULT_STRATEGY);
 
-    res = deflate(&stream, Z_FINISH);
-
-    if (res != Z_STREAM_END) 
+    if (res == Z_OK)
     {
-        deflateEnd(&stream);
-        return res == Z_OK ? Z_BUF_ERROR : res;
+       res = deflate(&stream, Z_FINISH);
+
+       if (res != Z_STREAM_END) 
+       {
+          deflateEnd(&stream);
+          res = res == Z_OK ? Z_BUF_ERROR : res;
+       }
+    }
+       
+    if (res == Z_STREAM_END)
+    {
+       *destLen = stream.total_out;
+       res = deflateEnd(&stream);
     }
 
-    *destLen = stream.total_out;
-    res = deflateEnd(&stream);
+    if (res !=  Z_OK)
+       tellZipError(res, " during compression", "");
 
-    return res;
+    return res == Z_OK ? success : fail;
 }
 
-int gzip(MemoryStruct* data, MemoryStruct* zippedData)
-{
-   int res;
-   uLong sizeMax = compressBound(data->size) + 512;
-
-   zippedData->clear();
-   zippedData->memory = (char*)malloc(sizeMax);
-
-   if ((res = _gzip((Bytef*)zippedData->memory, &sizeMax, (Bytef*)data->memory, data->size)) != Z_OK)
-   {
-      tellZipError(res, " during compression", "");
-      return fail;
-   }
-
-   zippedData->copyAttributes(data);
-   zippedData->size = sizeMax;
-   sprintf(zippedData->contentEncoding, "gzip");
-
-   return success;
+ulong gzipBound(ulong size)  
+{ 
+   return compressBound(size); 
 }
 
 //*************************************************************************
@@ -816,6 +943,8 @@ void tellZipError(int errorCode, const char* op, const char* msg)
       default:             tell(0, "Error: Couldn't zip/unzip data for unknown reason (%6d)%s!\n", errorCode, op); return;
    }
 }
+
+#endif //  USEGUNZIP
 
 //*************************************************************************
 // Host Data
@@ -884,6 +1013,35 @@ const char* getFirstIp()
    freeifaddrs(ifaddr);
 
    return host;
+}
+
+//***************************************************************************
+// Get IP Of 
+//***************************************************************************
+
+const char* getIpOf(const char* device)
+{
+   int fd;
+   struct ifreq ifr;
+
+   if (isEmpty(device))
+      return getFirstIp();
+
+   fd = socket(AF_INET, SOCK_DGRAM, 0);
+   
+   // IPv4 IP address
+
+   ifr.ifr_addr.sa_family = AF_INET;
+   
+   strncpy(ifr.ifr_name, device, IFNAMSIZ-1);
+   
+   ioctl(fd, SIOCGIFADDR, &ifr);
+   
+   close(fd);
+   
+   // caller has to copy the result string 'before' calling again!
+
+   return inet_ntoa(((struct sockaddr_in*)&ifr.ifr_addr)->sin_addr);
 }
 
 #ifdef USELIBARCHIVE
@@ -1067,7 +1225,7 @@ LogDuration::LogDuration(const char* aMessage, int aLogLevel)
 LogDuration::~LogDuration()
 {
    tell(logLevel, "duration '%s' was (%ldms)",
-     message, cMyTimeMs::Now() - durationStart);
+        message, cMyTimeMs::Now() - durationStart);
 }
 
 void LogDuration::show(const char* label)

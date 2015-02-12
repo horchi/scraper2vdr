@@ -79,7 +79,6 @@ long toJpeg(Imlib_Image image, MemoryStruct* data, int quality)
    struct jpeg_error_mgr jerr;
    DATA32* ptr;
    DATA8* buf;
-   long unsigned int size = data->size;
 
    imlib_context_set_image(image);
 
@@ -88,7 +87,7 @@ long toJpeg(Imlib_Image image, MemoryStruct* data, int quality)
    cinfo.err = jpeg_std_error(&jerr);
 
    jpeg_create_compress(&cinfo);
-   jpeg_mem_dest(&cinfo, (unsigned char**)(&data->memory), &size);
+   jpeg_mem_dest(&cinfo, (unsigned char**)(&data->memory), &data->size);
 
    cinfo.image_width = imlib_image_get_width();
    cinfo.image_height = imlib_image_get_height();

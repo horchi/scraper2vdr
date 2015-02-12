@@ -65,7 +65,7 @@ endif
 
 ### The object files (add further files here):
 
-OBJS = $(PLUGIN).o config.o setup.o update.o scrapmanager.o tvdbseries.o moviedbmovie.o tools.o filedatemanager.o
+OBJS = $(PLUGIN).o plgconfig.o setup.o update.o scrapmanager.o tvdbseries.o moviedbmovie.o tools.o filedatemanager.o
 
 ### The main target:
 

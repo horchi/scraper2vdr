@@ -7,6 +7,7 @@
  */
 
 #include "lib/config.h"
+#include "lib/epgservice.h"
 
 #include "scraper2vdr.h"
 

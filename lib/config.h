@@ -3,64 +3,25 @@
  *
  * See the README file for copyright information and how to reach the author.
  *
- * $Id: config.h,v 1.2 2012/10/26 08:44:13 wendel Exp $
  */
 
-#ifndef __EPG2VDR_CONFIG_H
-#define __EPG2VDR_CONFIG_H
+#ifndef __EPG_CONFIG_H
+#define __EPG_CONFIG_H
 
 #include "common.h"
-
-#define EPG_PLUGIN_SEM_KEY 0x3db00001
 
 //***************************************************************************
 // Config
 //***************************************************************************
 
-struct cEPG2VDRConfig
+struct cEpgConfig
 {
    public:
       
-      cEPG2VDRConfig(void);
+      cEpgConfig();
 
-      int useproxy;      
-      char httpproxy[256+TB];
-      char username[100+TB];
-      char password[100+TB];
 
-      int checkInitial;
-      int updatetime;
-      int days;
-      int upddays;
-      int storeXmlToFs;
-      int blacklist;         // to enable noepg feature
-
-      int getepgimages;
-      int maximagesperevent;
-      int epgImageSize;
-
-      int seriesEnabled;
-      char seriesUrl[500+TB];
-      int seriesPort;
-      int storeSeriesToFs;
-
-      // for VDR_PLUGIN
-
-      int activeOnEpgd;
-      int scheduleBoot;
-
-      // for epgd
-
-      char cachePath[256+TB];
-      char httpPath[256+TB];
-      char pluginPath[256+TB];
-      char epgView[100+TB];
-      char theTvDBView[100+TB];
-      int updateThreshold;
-      int maintanance;
-      int httpPort;
-
-      // 
+      // database connection
 
       char dbHost[100+TB];
       int dbPort;
@@ -68,19 +29,15 @@ struct cEPG2VDRConfig
       char dbUser[100+TB];
       char dbPass[100+TB];
 
-      int logstdout;
-      int loglevel;
-
-      int mainmenuVisible;
-      int mainmenuFullupdate;
-      int masterMode;
+      char netDevice[20+TB];
       char uuid[sizeUuid+TB];
 
-      int scrapEpg;
-      int scrapRecordings;
+      int getepgimages;
 
+      // static stuff 
+
+      static int logstdout;
+      static int loglevel;
 };
 
-extern cEPG2VDRConfig EPG2VDRConfig;
-
-#endif // __EPG2VDR_CONFIG_H 
+#endif // __EPG_CONFIG_H 

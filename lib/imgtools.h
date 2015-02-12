@@ -10,6 +10,8 @@
 
 #include <stdio.h>
 
+#define X_DISPLAY_MISSING 1
+
 #include <jpeglib.h>
 #include <Imlib2.h>
 

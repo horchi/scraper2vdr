@@ -1,5 +1,5 @@
 /*
- * common.h: EPG2VDR plugin for the Video Disk Recorder
+ * common.h
  *
  * See the README file for copyright information and how to reach the author.
  *
@@ -9,12 +9,17 @@
 #define __COMMON_H
 
 #include <stdint.h>      // uint_64_t
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <zlib.h>
 #include <errno.h>
 #include <string>
 
-#include <openssl/md5.h> // MD5_*
+
+#ifdef USEMD5
+#  include <openssl/md5.h> // MD5_*
+#endif
 
 //#ifdef VDR_PLUGIN
 //#  include <vdr/tools.h>
@@ -26,6 +31,8 @@
 # include <libxslt/xsltutils.h>
 # include <libexslt/exslt.h>
 #endif
+
+class MemoryStruct;
 
 //***************************************************************************
 // Misc
@@ -51,7 +58,9 @@ enum Misc
    no       = 0,
    TB       = 1,
 
+#ifdef USEMD5
    sizeMd5 = 2 * MD5_DIGEST_LENGTH,
+#endif
    sizeUuid = 36,
 
    tmeSecondsPerMinute = 60,
@@ -83,6 +92,15 @@ void __attribute__ ((format(printf, 2, 3))) tell(int eloquence, const char* form
 char* srealloc(void* ptr, size_t size);
 
 //***************************************************************************
+// Gun-Zip
+//***************************************************************************
+
+ulong gzipBound(ulong size);
+int gzip(Bytef* dest, uLongf* destLen, const Bytef* source, uLong sourceLen);
+void tellZipError(int errorCode, const char* op, const char* msg);
+int gunzip(MemoryStruct* zippedData, MemoryStruct* unzippedData);
+
+//***************************************************************************
 // MemoryStruct
 //***************************************************************************
 
@@ -90,16 +108,34 @@ struct MemoryStruct
 {
    public:
 
-      MemoryStruct()   { expireAt = time(0); memory = 0; clear(); }
+      MemoryStruct()   { expireAt = 0; memory = 0; zmemory = 0; clear(); }
       MemoryStruct(const MemoryStruct* o)
       {
          size = o->size;
          memory = (char*)malloc(size);
          memcpy(memory, o->memory, size);
 
+         zsize = o->zsize;
+         zmemory = (char*)malloc(zsize);
+         memcpy(zmemory, o->zmemory, zsize);
+
          copyAttributes(o);
       }
       
+      ~MemoryStruct()  { clear(); }
+
+      int isEmpty()  { return memory == 0; }
+      int isZipped() { return zmemory != 0 && zsize > 0; }
+
+      int append(const char* buf, int len)
+      {
+         memory = srealloc(memory, size+len);
+         memcpy(memory+size, buf, len);
+         size += len;
+
+         return success;
+      }
+
       void copyAttributes(const MemoryStruct* o)
       {
          strcpy(tag, o->tag);
@@ -111,50 +147,68 @@ struct MemoryStruct
          modTime = o->modTime;
          expireAt = o->expireAt;
       }
-      
-      ~MemoryStruct()  { clear(); }
-      
-      int append(const char* buf, int len)
-      {
-         memory = srealloc(memory, size+len);
-         memcpy(memory+size, buf, len);
-         size += len;
 
+      int toGzip()
+      {
+         free(zmemory);
+         zsize = 0;
+
+         if (isEmpty())
+            return fail;
+
+         zsize = gzipBound(size) + 512;  // the maximum calculated by the lib, will adusted at gzip() call
+         zmemory = (char*)malloc(zsize);
+         
+         if (gzip((Bytef*)zmemory, &zsize, (Bytef*)memory, size) != success)
+         {
+            free(zmemory);
+            zsize = 0;
+            tell(0, "Error gzip failed!");
+
+            return fail;
+         }
+         
+         sprintf(contentEncoding, "gzip");
+         
          return success;
       }
-
-      // data
-      
-      char* memory;
-      size_t size;
-      
-      // tag attribute
-      
-      char tag[100];              // the tag to be compared 
-      char name[100];             // content name (filename)
-      char contentType[100];      // e.g. text/html
-      char mimeType[100];         // 
-      char contentEncoding[100];  // 
-      int headerOnly;
-      time_t modTime;
-      time_t expireAt;
-      
-      int isEmpty() { return memory == 0; }
       
       void clear() 
       {
          free(memory);
          memory = 0;
          size = 0;
+         free(zmemory);
+         zmemory = 0;
+         zsize = 0;
          *tag = 0;
          *name = 0;
          *contentType = 0;
          *contentEncoding = 0;
          *mimeType = 0;
          modTime = time(0);
-         // !!!! expireAt = time(0);
          headerOnly = no;
+         // expireAt = time(0); -> don't reset 'expireAt' here !!!!
       }
+
+      // data
+      
+      char* memory;
+      long unsigned int size;
+
+      char* zmemory;
+      long unsigned int zsize;
+      
+      // tag attribute
+      
+      char tag[100+TB];              // the tag to be compared 
+      char name[100+TB];             // content name (filename)
+      char contentType[100+TB];      // e.g. text/html
+      char mimeType[100+TB];         // 
+      char contentEncoding[100+TB];  // 
+      int headerOnly;
+      time_t modTime;
+      time_t expireAt;
 };
 
 //***************************************************************************
@@ -165,6 +219,7 @@ double usNow();
 unsigned int getHostId();
 const char* getHostName();
 const char* getFirstIp();
+const char* getIpOf(const char* device);
 
 #ifdef USEUUID
   const char* getUniqueId();
@@ -180,9 +235,17 @@ char* lTrim(char* buf);
 char* allTrim(char* buf);
 char* sstrcpy(char* dest, const char* src, int max);
 std::string num2Str(int num);
+time_t timeOf(time_t t);
+int weekdayOf(time_t t);
+const char* toWeekdayName(uint day);
+time_t hhmmOf(time_t t);
+int l2hhmm(time_t t);
+time_t midnightOf(time_t t);
 std::string l2pTime(time_t t);
+std::string l2pDate(time_t t);
 std::string ms2Dur(uint64_t t);
 const char* c2s(char c, char* buf);
+char* eos(char* s);
 int urlUnescape(char* dst, const char* src, int normalize = yes);
 
 int storeToFile(const char* filename, const char* data, int size);
@@ -199,7 +262,6 @@ const char* notNull(const char* str);
 int isZero(const char* str);
 int removeFile(const char* filename);
 int chkDir(const char* path);
-int downloadFile(const char* url, int& size, MemoryStruct* data, int timeout = 30, const char* userAgent = "libcurl-agent/1.0");
 
 #ifdef USELIBXML
   xsltStylesheetPtr loadXSLT(const char* name, const char* path, int utf8);
@@ -216,10 +278,6 @@ int downloadFile(const char* url, int& size, MemoryStruct* data, int timeout = 3
 // Zip
 //***************************************************************************
 
-int gunzip(MemoryStruct* zippedData, MemoryStruct* unzippedData);
-int gzip(MemoryStruct* data, MemoryStruct* zippedData);
-void tellZipError(int errorCode, const char* op, const char* msg);
-
 #ifdef USELIBARCHIVE
 int unzip(const char* file, const char* filter, char*& buffer, 
           int& size, char* entryName);
@@ -231,16 +289,16 @@ int unzip(const char* file, const char* filter, char*& buffer,
 
 class cMyMutex 
 {
-  friend class cCondVar;
-private:
-  pthread_mutex_t mutex;
-  int locked;
-public:
-  cMyMutex(void);
-  ~cMyMutex();
-  void Lock(void);
-  void Unlock(void);
-  };
+      friend class cCondVar;
+   private:
+      pthread_mutex_t mutex;
+      int locked;
+   public:
+      cMyMutex(void);
+      ~cMyMutex();
+      void Lock(void);
+      void Unlock(void);
+};
 
 //***************************************************************************
 // cMyTimeMs
