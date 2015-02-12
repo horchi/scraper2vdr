@@ -143,6 +143,7 @@ class cUpdate : public cThread  {
     public:
         cUpdate(cScrapManager *manager);
         virtual ~cUpdate(void);
+        int init();
         int initDb();
         void Stop(void);
         void ForceUpdate(void);

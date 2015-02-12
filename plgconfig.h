@@ -11,6 +11,8 @@
 
 #include <string.h>
 
+#include <vdr/plugin.h>
+
 #include "lib/config.h"
 
 using namespace std;
@@ -25,12 +27,19 @@ struct cScraper2VdrConfig : public cEpgConfig
       
       cScraper2VdrConfig();
 
+      bool SetupParse(const char *Name, const char *Value);
+      void SetUuid(cPlugin *plug);
+      void SetImageDir(cString dir);
+      void SetDefaultImageDir();
+      void SetMode(string mode);
+
       int mainMenuEntry;
       bool headless;
       bool imgDirSet;
       string imageDir;
       string recScrapInfoName;
       int fastmode;
+      int thumbHeight;
 };
 
 extern cScraper2VdrConfig scraper2VdrConfig;

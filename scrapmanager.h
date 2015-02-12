@@ -9,7 +9,6 @@
 
 #include "lib/common.h"
 #include "lib/db.h"
-#include "lib/tabledef.h"
 
 #include "services.h"
 #include "tvdbseries.h"
@@ -64,17 +63,17 @@ class cScrapManager  {
         int GetMoviesNext(cMovieDbMovie* &movieval); // get next movie from iterator
         cTVDBSeries *GetSeries(int seriesId);
         cMovieDbMovie *GetMovie(int movieId);
-        cTVDBSeries *AddSeries(cTableSeries* tSeries);
-        void UpdateSeries(cTVDBSeries *seriesval, cTableSeries* tSeries); // update series using values from current db row
-        cMovieDbMovie *AddMovie(cTableMovies* tMovies);
-        void UpdateMovie(cMovieDbMovie *movieval, cTableMovies* tMovies); // update movie using values from current db row
-        void AddSeriesEpisode(cTVDBSeries *series, cTableSeriesEpisode* tEpisodes);
-        void UpdateSeriesEpisode(cTVDBEpisode *episode, cTableSeriesEpisode* tEpisodes); // update episode using values from current db row
-        cTVDBActor *AddSeriesActor(cTVDBSeries *series, cTableSeriesActor* tActors);
-        void UpdateSeriesActor(cTVDBActor *actor, cTableSeriesActor* tActors); // update actor using values from current db row
-        cMovieActor *AddMovieActor(cMovieDbMovie *movie, cTableMovieActor* tActor, string role, bool noActorThumb);
-        void UpdateMovieActor(cMovieActor *actor, cTableMovieActor* tActor, string role); // update actor using values from current db row
-        void AddMovieMedia(cMovieDbMovie *movie, cTableMovieMedia* tMovieMedia, string path);
+        cTVDBSeries *AddSeries(cDbTable* tSeries);
+        void UpdateSeries(cTVDBSeries *seriesval, cDbTable* tSeries); // update series using values from current db row
+        cMovieDbMovie *AddMovie(cDbTable* tMovies);
+        void UpdateMovie(cMovieDbMovie *movieval, cDbTable* tMovies); // update movie using values from current db row
+        void AddSeriesEpisode(cTVDBSeries *series, cDbTable* tEpisodes);
+        void UpdateSeriesEpisode(cTVDBEpisode *episode, cDbTable* tEpisodes); // update episode using values from current db row
+        cTVDBActor *AddSeriesActor(cTVDBSeries *series, cDbTable* tActors);
+        void UpdateSeriesActor(cTVDBActor *actor, cDbTable* tActors); // update actor using values from current db row
+        cMovieActor *AddMovieActor(cMovieDbMovie *movie, cDbTable* tActor, string role, bool noActorThumb);
+        void UpdateMovieActor(cMovieActor *actor, cDbTable* tActor, string role); // update actor using values from current db row
+        void AddMovieMedia(cMovieDbMovie *movie, cDbTable* tMovieMedia, string path);
         cMovieMedia *GetMovieActorThumb(int actorId); // try to find actor in global movie actor thumbs map
         cMovieMedia *AddMovieActorThumb(int actorId, int imgWidth, int imgHeight, string path, bool needrefresh); // insert movie actor thumb
         int GetMovieActorThumbFirst(int &actorId, cMovieMedia* &movieActorThumb); // get first movie actor (also init series iterator)

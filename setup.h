@@ -2,10 +2,12 @@
 #define __SCRAPER2VDR_SETUP_H
 
 #include <vdr/menuitems.h>
-#include "update.h"
-#include "config.h"
 
-class cScraper2VdrSetup : public cMenuSetupPage {
+#include "plgconfig.h"
+#include "update.h"
+
+class cScraper2VdrSetup : public cMenuSetupPage 
+{
     public:
         cScraper2VdrSetup(cUpdate *update);
         virtual ~cScraper2VdrSetup();       

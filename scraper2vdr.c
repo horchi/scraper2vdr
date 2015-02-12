@@ -6,7 +6,6 @@
  * $Id$
  */
 
-#include "lib/config.h"
 #include "lib/epgservice.h"
 
 #include "scraper2vdr.h"
@@ -136,7 +135,12 @@ bool cPluginScraper2vdr::Initialize(void) {
 }
 
 bool cPluginScraper2vdr::Start(void) {
-    update->Start();
+
+   if (update->init() == success)
+      update->Start();                 // start plugin thread
+   else
+      tell(0, "Initialization failed, start of plugin aborted!");
+
     return true;
 }
 

@@ -1,12 +1,10 @@
 #define __STL_v_H
 #include <vdr/recording.h>
+
 #include "tools.h"
-#include "config.h"
 #include "scrapmanager.h"
 
 using namespace std;
-
-extern cScraper2VdrConfig config;
 
 bool operator<(const sEventsKey& l, const sEventsKey& r) {
      if (l.eventId != r.eventId)
@@ -206,7 +204,7 @@ cMovieDbMovie *cScrapManager::GetMovie(int movieId) {
 	return hit->second;	
 }
 
-cTVDBSeries *cScrapManager::AddSeries(cTableSeries* tSeries) {
+cTVDBSeries *cScrapManager::AddSeries(cDbTable* tSeries) {
     cTVDBSeries *s = new cTVDBSeries();
     UpdateSeries(s,tSeries);
     s->updateimages = true; // have to search images for new series
@@ -215,7 +213,7 @@ cTVDBSeries *cScrapManager::AddSeries(cTableSeries* tSeries) {
 }
 
 // update series using values from current db row
-void cScrapManager::UpdateSeries(cTVDBSeries *seriesval, cTableSeries* tSeries) {
+void cScrapManager::UpdateSeries(cTVDBSeries *seriesval, cDbTable* tSeries) {
     seriesval->id = tSeries->getIntValue("SERIESID");
     seriesval->name = tSeries->getStrValue("SERIESNAME");
     seriesval->overview = tSeries->getStrValue("SERIESOVERVIEW");
@@ -228,7 +226,7 @@ void cScrapManager::UpdateSeries(cTVDBSeries *seriesval, cTableSeries* tSeries) 
     seriesval->lastupdate = tSeries->getIntValue("SERIESLASTUPDATED"); // save when series was last updated on server
 }
 
-cMovieDbMovie *cScrapManager::AddMovie(cTableMovies* tMovies) {
+cMovieDbMovie *cScrapManager::AddMovie(cDbTable* tMovies) {
     cMovieDbMovie *m = new cMovieDbMovie();
     UpdateMovie(m,tMovies);
     m->updateimages = true; // have to search images for new movies
@@ -237,7 +235,7 @@ cMovieDbMovie *cScrapManager::AddMovie(cTableMovies* tMovies) {
 }
 
 // update movie using values from current db row
-void cScrapManager::UpdateMovie(cMovieDbMovie *movieval, cTableMovies* tMovies) {
+void cScrapManager::UpdateMovie(cMovieDbMovie *movieval, cDbTable* tMovies) {
     movieval->id = tMovies->getIntValue("MOVIEID");
     movieval->title = tMovies->getStrValue("TITLE");
     movieval->originalTitle = tMovies->getStrValue("ORIGINALTITLE");
@@ -256,14 +254,14 @@ void cScrapManager::UpdateMovie(cMovieDbMovie *movieval, cTableMovies* tMovies) 
     movieval->voteAverage = tMovies->getFloatValue("VOTEAVERAGE");
 }
 
-void cScrapManager::AddSeriesEpisode(cTVDBSeries *series, cTableSeriesEpisode* tEpisodes) {
+void cScrapManager::AddSeriesEpisode(cTVDBSeries *series, cDbTable* tEpisodes) {
     cTVDBEpisode *e = new cTVDBEpisode();
     UpdateSeriesEpisode(e,tEpisodes);
     series->InsertEpisode(e);
 }
 
 // update episode using values from current db row
-void cScrapManager::UpdateSeriesEpisode(cTVDBEpisode *episode, cTableSeriesEpisode* tEpisodes) {
+void cScrapManager::UpdateSeriesEpisode(cTVDBEpisode *episode, cDbTable* tEpisodes) {
     episode->id = tEpisodes->getIntValue("EPISODEID");
     episode->name = tEpisodes->getStrValue("EPISODENAME");
     episode->number =  tEpisodes->getIntValue("EPISODENUMBER");
@@ -276,7 +274,7 @@ void cScrapManager::UpdateSeriesEpisode(cTVDBEpisode *episode, cTableSeriesEpiso
     episode->lastupdate = tEpisodes->getIntValue("EPISODELASTUPDATED"); 
 }
 
-cTVDBActor *cScrapManager::AddSeriesActor(cTVDBSeries *series, cTableSeriesActor* tActors) {
+cTVDBActor *cScrapManager::AddSeriesActor(cTVDBSeries *series, cDbTable* tActors) {
     cTVDBActor *a = new cTVDBActor();
     UpdateSeriesActor(a,tActors);
     series->InsertActor(a);
@@ -284,13 +282,13 @@ cTVDBActor *cScrapManager::AddSeriesActor(cTVDBSeries *series, cTableSeriesActor
 }
 
 // update actor using values from current db row
-void cScrapManager::UpdateSeriesActor(cTVDBActor *actor, cTableSeriesActor* tActors) {
+void cScrapManager::UpdateSeriesActor(cTVDBActor *actor, cDbTable* tActors) {
     actor->id = tActors->getIntValue("ACTORID");
     actor->name = tActors->getStrValue("ACTORNAME");
     actor->role =  tActors->getStrValue("ACTORROLE");
 }
 
-cMovieActor * cScrapManager::AddMovieActor(cMovieDbMovie *movie, cTableMovieActor* tActor, string role, bool noActorThumb) {
+cMovieActor * cScrapManager::AddMovieActor(cMovieDbMovie *movie, cDbTable* tActor, string role, bool noActorThumb) {
     cMovieActor *a = new cMovieActor();
     UpdateMovieActor(a, tActor, role);
     if (noActorThumb) {
@@ -302,13 +300,13 @@ cMovieActor * cScrapManager::AddMovieActor(cMovieDbMovie *movie, cTableMovieActo
 }
 
 // update actor using values from current db row
-void cScrapManager::UpdateMovieActor(cMovieActor *actor, cTableMovieActor* tActor, string role) {
+void cScrapManager::UpdateMovieActor(cMovieActor *actor, cDbTable* tActor, string role) {
     actor->id = tActor->getIntValue("ACTORID");
     actor->name = tActor->getStrValue("ACTORNAME");
     actor->role =  role;
 }
 
-void cScrapManager::AddMovieMedia(cMovieDbMovie *movie, cTableMovieMedia* tMovieMedia, string path) {
+void cScrapManager::AddMovieMedia(cMovieDbMovie *movie, cDbTable* tMovieMedia, string path) {
 	cMovieMedia *m = new cMovieMedia();
 	m->mediaType = tMovieMedia->getIntValue("MEDIATYPE");
 	m->width = tMovieMedia->getIntValue("MEDIAWIDTH");
@@ -496,9 +494,7 @@ void cScrapManager::DumpRecordings(void) {
 }
 
 bool cScrapManager::GetEventType(ScraperGetEventType *call) {
-	if (config.debug) {
-		tell(0, "scraper2vdr plugin service call GetEventType called");
-	}
+   tell(4, "scraper2vdr plugin service call GetEventType called");
 	sEventsValue v;
    memset(&v, 0, sizeof(sEventsValue));
 	if (call->event) {
@@ -507,13 +503,10 @@ bool cScrapManager::GetEventType(ScraperGetEventType *call) {
 		k.channelId = *(call->event->ChannelID().ToString());
 		map<sEventsKey, sEventsValue>::iterator hit = events.find(k);
 		if (hit == events.end()) {
-			if (config.debug) {
-				tell(0, "no event found for eventID %d, channelID %s", k.eventId, k.channelId.c_str());
-			}
+         tell(4, "no event found for eventID %d, channelID %s", k.eventId, k.channelId.c_str());
 			return false;
 		}
-		if (config.debug)
-			tell(0, "event found for eventID %d, channelID %s", k.eventId, k.channelId.c_str());
+      tell(4, "event found for eventID %d, channelID %s", k.eventId, k.channelId.c_str());
 		v = hit->second;
 	} else if (call->recording) {
 		sRecordingsKey k;
@@ -521,27 +514,20 @@ bool cScrapManager::GetEventType(ScraperGetEventType *call) {
         k.recPath = getRecPath(call->recording);
 		map<sRecordingsKey, sEventsValue>::iterator hit = recordings.find(k);
 		if (hit == recordings.end()) {
-			if (config.debug) {
-				tell(0, "no recording found for recStart %d, recPath %s", k.recStart, k.recPath.c_str());
-			}
+         tell(4, "no recording found for recStart %d, recPath %s", k.recStart, k.recPath.c_str());
 			return false;
 		}
 		v = hit->second;
-		if (config.debug) {
-			tell(0, "recording found for recStart %d, recPath %s", k.recStart, k.recPath.c_str());
-		}
+      tell(4, "recording found for recStart %d, recPath %s", k.recStart, k.recPath.c_str());
 	}
 	if (v.seriesId > 0) {
 		call->type = tSeries;
-		if (config.debug)
-			tell(0, "series detected, seriesId %d, episodeId %d", v.seriesId, v.episodeId);
+      tell(4, "series detected, seriesId %d, episodeId %d", v.seriesId, v.episodeId);
 	} else if (v.movieId > 0) {
 		call->type = tMovie;
-		if (config.debug)
-			tell(0, "movie detected, movieId %d", v.movieId);
+      tell(4, "movie detected, movieId %d", v.movieId);
 	} else {
-		if (config.debug)
-			tell(0, "unvalid entry");
+      tell(4, "unvalid entry");
 		call->type = tNone;
 		return false;			
 	}

@@ -2,9 +2,11 @@
 #define __SCRAPER2VDR_H
 
 #include <getopt.h>
+
 #include <vdr/plugin.h>
+
 #include "lib/common.h"
-#include "config.h"
+
 #include "setup.h"
 #include "scrapmanager.h"
 #include "update.h"
