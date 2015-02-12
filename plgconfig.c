@@ -7,7 +7,7 @@
 
 #include "plgconfig.h"
 
-cScraper2VdrConfig Scraper2VdrConfig;
+cScraper2VdrConfig scraper2VdrConfig;
 
 //***************************************************************************
 // cEpg2VdrConfig
