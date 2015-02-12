@@ -264,9 +264,6 @@ Table vdrs
    STATE                ""  state                Ascii       20 Data,
    MASTER               ""  master               Ascii        1 Data,
    IP                   ""  ip                   Ascii       20 Data,
-   PID                  ""  pid                  UInt         0 Data,
-   SVDRP                ""  svdrp                UInt         0 Data,
-   TUNERCOUNT           ""  tunercount           UInt         0 Data,
 }
 
 // ----------------------------------------------------------------
