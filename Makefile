@@ -122,7 +122,20 @@ $(SOFILE): hlib $(OBJS)
 install-lib: $(SOFILE)
 	install -D -m644 $^ $(DESTDIR)$(LIBDIR)/$^.$(APIVERSION)
 
-install: install-lib install-i18n
+install: install-lib install-i18n install-config
+
+install-config:
+	if ! test -d $(CONFDEST); then \
+	   mkdir -p $(CONFDEST); \
+	   chmod a+rx $(CONFDEST); \
+	   if test -n $(VDR_USER); then \
+	      chown $(VDR_USER) $(CONFDEST); \
+	   fi \
+	fi
+	install --mode=644 -D ./configs/epg.dat $(CONFDEST)
+	if test -n $(VDR_USER); then \
+	   chown $(VDR_USER) $(CONFDEST)/epg.dat; \
+	fi \
 
 dist: $(I18Npo) clean
 	@-rm -rf $(TMPDIR)/$(ARCHIVE)

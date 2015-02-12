@@ -91,7 +91,7 @@ int cUpdate::init()
    
    char* dictPath = 0;
    
-   asprintf(&dictPath, "%s/epg.dat", cPlugin::ConfigDirectory("epg2vdr/"));
+   asprintf(&dictPath, "%s/epg.dat", cPlugin::ConfigDirectory("scraper2vdr/"));
    
    if (dbDict.in(dictPath) != success)
    {
