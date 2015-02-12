@@ -888,7 +888,8 @@ int cUpdate::exitDb() {
     delete tRecordings;   tRecordings = 0;
 
     // try to delete temp. episode cache table
-    connection->query("%s",TempEpisodeDeleteStatement.c_str());
+    if (dbConnected())
+        connection->query("%s",TempEpisodeDeleteStatement.c_str());
     
     delete connection;    connection = 0;
 

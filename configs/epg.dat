@@ -32,12 +32,12 @@ Table events
    SHORTTEXT            ""                                                   shorttext            Ascii      300 Data,
    COMPSHORTTEXT        ""                                                   compshorttext        Ascii      300 Data,
    LONGDESCRIPTION      ""                                                   longdescription      MText    25000 Data,
-   COMPLONGDESCRIPTION  ""                                                   complongdescription  MText    25000 Data,
+//   COMPLONGDESCRIPTION  ""                                                   complongdescription  MText    25000 Data,
    STARTTIME            ""                                                   starttime            Int         10 Data,
    DURATION             ""                                                   duration             Int          5 Data,
    PARENTALRATING       ""                                                   parentalrating       Int          2 Data,
    VPS                  ""                                                   vps                  Int         10 Data,
-   CONTENTS             "Genre code like table 28 of ETSI EN 300 468"        contents             ASCII      100 Data,
+//   CONTENTS             "Genre code like table 28 of ETSI EN 300 468"        contents             ASCII      100 Data,
    SHORTDESCRIPTION     ""                                                   shortdescription     Ascii     3000 Data,
    ACTOR                ""                                                   actor                Ascii     3000 Data,
    AUDIO                ""                                                   audio                Ascii       50 Data,
@@ -55,7 +55,7 @@ Table events
    TOPIC                ""                                                   topic                Ascii      500 Data,
    YEAR                 ""                                                   year                 Ascii       10 Data,
    RATING               ""                                                   rating               Ascii      250 Data,
-   NUMRATING            ""                                                   numrating            Int          2 Data,
+//   NUMRATING            ""                                                   numrating            Int          2 Data,
    MOVIEID              ""                                                   movieid              Ascii       20 Data,
    MODERATOR            ""                                                   moderator            Ascii      250 Data,
    OTHER                ""                                                   other                Text      2000 Data,
@@ -64,9 +64,9 @@ Table events
    EXTEPNUM             ""                                                   extepnum             Int          4 Data,
    IMAGECOUNT           ""                                                   imagecount           Int          2 Data,
 
-   EPISODECOMPNAME      ""                                                   episodecompname      Ascii      100 Data,
-   EPISODECOMPSHORTNAME ""                                                   episodecompshortname Ascii      100 Data,
-   EPISODECOMPPARTNAME  ""                                                   episodecomppartname  Ascii      200 Data,
+//   EPISODECOMPNAME      ""                                                   episodecompname      Ascii      100 Data,
+//   EPISODECOMPSHORTNAME ""                                                   episodecompshortname Ascii      100 Data,
+//   EPISODECOMPPARTNAME  ""                                                   episodecomppartname  Ascii      200 Data,
    EPISODELANG          ""                                                   episodelang          Ascii       10 Data,
 
    SCRSERIESID          ""                                                   scrseriesid          Int          0 Data,
@@ -706,8 +706,8 @@ Table series_media
    ACTORID              ""  actor_id             UInt         0 Primary,
    MEDIATYPE            ""  media_type           UInt         0 Primary,
 
-   INSSP                ""  inssp                Int          0 Meta,
-   UPDSP                ""  updsp                Int          0 Meta,
+//   INSSP                ""  inssp                Int          0 Meta,
+//   UPDSP                ""  updsp                Int          0 Meta,
 
    MEDIAURL             ""  media_url            Ascii      100 Data,
    MEDIAWIDTH           ""  media_width          UInt         0 Data,
@@ -857,8 +857,8 @@ Table recordings
    RECPATH              ""  rec_path             Ascii      200 Primary,
    RECSTART             ""  rec_start            UInt         0 Primary,
 
-   INSSP                ""  inssp                Int         10 Meta,
-   UPDSP                ""  updsp                Int         10 Meta,
+//   INSSP                ""  inssp                Int         10 Meta,
+//   UPDSP                ""  updsp                Int         10 Meta,
 
    EVENTID              ""  event_id             UInt         0 Data,
    CHANNELID            ""  channel_id           Ascii       50 Data,
