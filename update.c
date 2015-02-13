@@ -94,7 +94,7 @@ int cUpdate::init()
    asprintf(&dictPath, "%s/epg.dat", cPlugin::ConfigDirectory("scraper2vdr/"));
    dbDict.setFilterFromNameFct(toFieldFilter);
    
-   if (dbDict.in(dictPath) != success)
+   if (dbDict.in(dictPath, ffScraper2Vdr) != success)
    {
       tell(0, "Fatal: Dictionary not loaded, aborting!");
       return fail;
