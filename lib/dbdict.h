@@ -16,6 +16,8 @@
 
 class cDbDict;
 
+typedef int (*FilterFromName)(const char* name);
+
 //***************************************************************************
 // _casecmp_
 //***************************************************************************
@@ -67,9 +69,8 @@ class cDbService
          ftData       = 1,
          ftPrimary    = 2,
          ftMeta       = 4,
-         ftCalc       = 8,
-         ftAutoinc    = 16,
-         ftDef0       = 32
+         ftAutoinc    = 8,
+         ftDef0       = 16
       };
 
       enum BindType
@@ -121,15 +122,17 @@ class cDbFieldDef : public cDbService
          size = na;
          type = ftUnknown;
          description = 0;
+         filter = 0xFFFF;
       }
 
-      cDbFieldDef(const char* n, const char* dn, FieldFormat f, int s, int t)
+      cDbFieldDef(const char* n, const char* dn, FieldFormat f, int s, int t, int flt = 0xFFFF)
       { 
          name = strdup(n);
          dbname = strdup(dn);
          format = f;
          size = s;
          type = t;
+         filter = flt;
          description = 0;
       }
 
@@ -144,6 +147,8 @@ class cDbFieldDef : public cDbService
       int getSize()                { return size; }
       FieldFormat getFormat()      { return format; }
       int getType()                { return type; }
+      int getFilter()              { return filter; }
+      int filterMatch(int f)       { return !f || filter & f; }
       int hasType(int types)       { return types & type; }
 
       const char* toColumnFormat(char* buf) // column type to be used for create/alter
@@ -194,7 +199,8 @@ class cDbFieldDef : public cDbService
 
          sprintf(fType, "(%s)", toName((FieldType)type, tmp));
             
-         tell(0, "%-20s %-25s %-17s %-20s '%s'", name, dbname, toColumnFormat(colFmt), fType, description); 
+         tell(0, "%-20s %-25s %-17s %-20s (0x%04X) '%s'", name, dbname, 
+              toColumnFormat(colFmt), fType, filter, description); 
       }
 
    protected:
@@ -206,6 +212,7 @@ class cDbFieldDef : public cDbService
       int size;
       int index;
       int type;
+      int filter;     // bitmask (defaults to 0xFFFF)
 };
 
 //***************************************************************************
@@ -368,6 +375,7 @@ class cDbDict : public cDbService
          dtFormat,
          dtSize,
          dtType,
+         dtFilter,
 
          dtCount
       };
@@ -382,7 +390,8 @@ class cDbDict : public cDbService
       cDbDict();
       virtual ~cDbDict();
 
-      int in(const char* file);
+      int in(const char* file, int filter = 0);
+      void setFilterFromNameFct(FilterFromName fct)  { fltFromNameFct = fct; }
 
       cDbTableDef* getTable(const char* name);
       void show();
@@ -397,6 +406,7 @@ class cDbDict : public cDbService
       int atLine(const char* line);
       int parseField(const char* line);
       int parseIndex(const char* line);
+      int toFilter(char* token);
 
       // data
 
@@ -404,6 +414,8 @@ class cDbDict : public cDbService
       cDbTableDef* curTable;
       std::map<std::string, cDbTableDef*, _casecmp_> tables;
       char* path;
+      int fieldFilter;
+      FilterFromName fltFromNameFct;
 };
 
 extern cDbDict dbDict;

@@ -1,0 +1,25 @@
+
+
+// ----------------------------------------------------------------
+// Table Vdrs
+// ----------------------------------------------------------------
+
+Table vdrs
+{
+   UUID                 ""  uuid                 Ascii       40 Primary,
+
+   INSSP                ""  inssp                Int          0 Meta,
+   UPDSP                ""  updsp                Int          0 Meta,
+
+   NAME                 ""  name                 Ascii      100 Data,
+   VERSION              ""  version              Ascii      100 Data,
+   DBAPI                ""  dbapi                UInt         0 Data,
+   LASTUPDATE           ""  lastupd              Int          0 Data,
+   NEXTUPDATE           ""  nextupd              Int          0 Data,
+   STATE                ""  state                Ascii       20 Data,
+   MASTER               ""  master               Ascii        1 Data,
+   IP                   ""  ip                   Ascii       20 Data epgd|httpd|scraper,
+   PID                  ""  pid                  UInt         0 Data all,
+   SVDRP                ""  svdrp                UInt         0 Data 0,
+   TUNERCOUNT           ""  tunercount           UInt         0 Data 4,
+}

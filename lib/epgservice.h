@@ -18,11 +18,23 @@
 
 enum FieldFilter
 {
+   ffAll         = 0xFFFF,
    ffEpgd        = 1,
    ffEpgHttpd    = 2,
    ffEpg2Vdr     = 4,
-   ffScraper2Vdr = 8
+   ffScraper2Vdr = 8,
+
+   ffCount = 5
 };
+
+struct FieldFilterDef
+{
+   int filter;
+   const char* name;
+};
+
+const char* toName(FieldFilter f);
+int toFieldFilter(const char* name);
 
 enum SearchFields
 {

@@ -96,7 +96,6 @@ cDbService::TypeDef cDbService::types[] =
    { ftData,    "data" },
    { ftPrimary, "primary" },
    { ftMeta,    "meta" },
-   { ftCalc,    "calc" },
    { ftAutoinc, "autoinc" },
    { ftDef0,    "def0" },
 
@@ -160,6 +159,8 @@ cDbDict::cDbDict()
    curTable = 0;
    inside = no;
    path = 0;
+   fieldFilter = 0;   // 0 -> filter off use all fields
+   fltFromNameFct = 0;
 }
 
 cDbDict::~cDbDict()
@@ -212,7 +213,7 @@ int cDbDict::init(cDbFieldDef*& field, const char* tname, const char* fname)
 // In
 //***************************************************************************
 
-int cDbDict::in(const char* file)
+int cDbDict::in(const char* file, int filter)
 {
    FILE* f;
    char* line = 0;
@@ -221,6 +222,7 @@ int cDbDict::in(const char* file)
    if (isEmpty(file))
       return fail;
 
+   fieldFilter = filter;
    asprintf(&path, "%s", file);
 
    f = fopen(path, "r");
@@ -332,6 +334,32 @@ int cDbDict::atLine(const char* line)
 }
 
 //***************************************************************************
+// To Filter
+//***************************************************************************
+
+int cDbDict::toFilter(char* token)
+{
+   const int sizeFilterName = 20;
+   char name[sizeFilterName+TB];
+   const char* p = token;
+   int filter = 0;
+
+   if (isEmpty(token))
+      return 0xFFFF;
+
+   while (getToken(p, name, sizeFilterName, '|') == success)   
+   {
+      if (isalpha(*token) && fltFromNameFct)
+         filter |= fltFromNameFct(name);
+      else
+         filter |= atoi(name);
+      
+   }
+
+   return filter;
+}
+
+//***************************************************************************
 // Parse Field
 //***************************************************************************
 
@@ -350,6 +378,9 @@ int cDbDict::parseField(const char* line)
    {
       if (getToken(p, token, sizeTokenMax) != success)
       {
+         if (i >= dtType)  // all after type is optional (filter, ...)
+            break;
+
          delete f;
          tell(0, "Error: Can't parse line [%s]", line);
          return fail;
@@ -366,17 +397,28 @@ int cDbDict::parseField(const char* line)
          case dtFormat:      f->format = toDictFormat(token); break;
          case dtSize:        f->size = atoi(token);           break;
          case dtType:        f->type = toType(token);         break;
+         case dtFilter:      f->filter = toFilter(token);     break;
       }
    }
 
    if (!f->isValid())
    {
       tell(0, "Error: Can't parse line [%s], invalid field configuration", line);
+      delete f;
       return fail;
    }
-   
-   f->index = curTable->fieldCount(); 
-   curTable->addField(f);
+
+   if (f->filterMatch(fieldFilter))
+   {
+      f->index = curTable->fieldCount(); 
+      curTable->addField(f);
+   }
+   else
+   {
+      tell(0, "Info: Ignoring field '%s' due to filter configiuration", 
+           f->getName());
+      delete f;
+   }
 
    return success;
 }

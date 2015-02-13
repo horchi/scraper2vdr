@@ -41,3 +41,36 @@ cEpgdState::State cEpgdState::toState(const char* name)
 
    return esUnknown;
 }
+
+//***************************************************************************
+// Field Filter
+//***************************************************************************
+
+FieldFilterDef fieldFilters[] =
+{
+   { ffAll,         "all"     },
+   { ffEpgd,        "epgd"    },
+   { ffEpgHttpd,    "httpd"   },
+   { ffEpg2Vdr,     "epg2vdr" },
+   { ffScraper2Vdr, "scraper" },
+
+   { 0,             0 }
+};
+
+const char* toName(FieldFilter f)
+{
+   for (int i = 0; fieldFilters[i].name; i++)
+      if (fieldFilters[i].filter == f)
+         return fieldFilters[i].name;
+
+   return "unknown";
+}
+
+int toFieldFilter(const char* name)
+{
+   for (int i = 0; fieldFilters[i].name; i++)
+      if (strcasecmp(fieldFilters[i].name, name) == 0)
+         return fieldFilters[i].filter;
+
+   return ffAll;
+}

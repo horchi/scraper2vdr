@@ -92,6 +92,7 @@ int cUpdate::init()
    char* dictPath = 0;
    
    asprintf(&dictPath, "%s/epg.dat", cPlugin::ConfigDirectory("scraper2vdr/"));
+   dbDict.setFilterFromNameFct(toFieldFilter);
    
    if (dbDict.in(dictPath) != success)
    {

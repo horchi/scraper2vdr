@@ -190,7 +190,7 @@ int joinDemo()
    cDbValue imageSize;
    cDbValue masterId;
 
-   cDbFieldDef imageSizeDef("image", "image", cDBS::ffUInt,  999, cDBS::ftData);  // eine Art ein Feld zu erzeugen
+   cDbFieldDef imageSizeDef("image", "image", cDBS::ffUInt,  999, cDBS::ftData, 0);  // eine Art ein Feld zu erzeugen
    imageSize.setField(&imageSizeDef); 
    imageUpdSp.setField(imageDb->getField("UpdSp"));
    masterId.setField(eventsDb->getField("MasterId"));
@@ -304,14 +304,21 @@ int insertDemo()
 // Main
 //***************************************************************************
 
-int main()
+int main(int argc, char** argv)
 {
    cEpgConfig::logstdout = yes;
    cEpgConfig::loglevel = 2;
 
+   const char* path = "/etc/epgd/epg.dat";
+
+   if (argc > 1)
+      path = argv[1];
+
    // read deictionary
 
-   if (dbDict.in("/etc/epgd/epg.dat") != success)
+   dbDict.setFilterFromNameFct(toFieldFilter);
+
+   if (dbDict.in(path, ffEpgd) != success)
    {
       tell(0, "Invalid dictionary configuration, aborting!");
       return 1;
@@ -319,11 +326,13 @@ int main()
 
    dbDict.show();
 
+   return 0;
+
    initConnection();
 
    // demoStatement();
    // joinDemo();
-   insertDemo();
+   // insertDemo();
 
    tell(0, "uuid: '%s'", getUniqueId());
 

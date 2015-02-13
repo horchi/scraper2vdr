@@ -289,7 +289,7 @@ int cDbStatement::bindAllOut(const char* delim)
 
    for (f = tableDef->dfields.begin(); f != tableDef->dfields.end(); f++)
    {
-      if (f->second->getType() & ftCalc || f->second->getType() & ftMeta)
+      if (f->second->getType() & ftMeta)
          continue;
       
       bind(f->second, bndOut, n++ ? ", " : "");
@@ -669,12 +669,7 @@ int cDbTable::init(int allowAlter)
    n = 0;
 
    for (f = tableDef->dfields.begin(); f != tableDef->dfields.end(); f++)
-   {
-      if (f->second->getType() & ftCalc)
-         continue;
-      
       stmtSelect->bind(f->second, bndOut, n++ ? ", " : "");
-   }
 
    stmtSelect->build(" from %s where ", TableName());
 
@@ -706,7 +701,7 @@ int cDbTable::init(int allowAlter)
    {
       // don't insert autoinc and calculated fields
 
-      if (f->second->getType() & ftCalc || f->second->getType() & ftAutoinc)
+      if (f->second->getType() & ftAutoinc)
          continue;
 
       stmtInsert->bind(f->second, bndIn | bndSet, n++ ? ", " : "");
@@ -728,10 +723,9 @@ int cDbTable::init(int allowAlter)
 
    for (f = tableDef->dfields.begin(); f != tableDef->dfields.end(); f++)
    {
-      // don't update PKey, autoinc and calculated fields
+      // don't update PKey, autoinc and not used fields
 
       if (f->second->getType() & ftPrimary || 
-          f->second->getType() & ftCalc || 
           f->second->getType() & ftAutoinc)
          continue;
       
@@ -830,9 +824,6 @@ int cDbTable::validateStructure()
    for (int i = 0; i < fieldCount(); i++)
    {
       char colType[100];
-
-      if (getField(i)->getType() & ftCalc)
-         continue;
 
       tell(4, "Check field '%s'", getField(i)->getName());
 
@@ -949,9 +940,6 @@ int cDbTable::createTable()
    {
       char colType[100];
 
-      if (getField(i)->getType() & ftCalc)
-         continue;
-
       if (i) statement += string(", ");
 
       statement += string(getField(i)->getDbName()) + " " + string(getField(i)->toColumnFormat(colType));
@@ -1056,7 +1044,7 @@ int cDbTable::createIndices()
          {              
             cDbFieldDef* fld = index->getField(f);
                
-            if (fld && !(fld->getType() & ftCalc))
+            if (fld)
             {
                if (n++) statement += string(", ");
                statement += fld->getDbName();

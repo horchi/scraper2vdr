@@ -17,6 +17,7 @@ LIBOBJS = common.o config.o db.o epgservice.o dbdict.o json.o
 ifdef USEJPEG
 LIBOBJS += imgtools.o
 endif
+
 ifdef USECURL
 LIBOBJS += curl.o
 endif
@@ -25,7 +26,7 @@ BASELIBS = -lrt -lz -luuid
 BASELIBS += $(shell mysql_config --libs_r)
 
 ifdef USECURL
-BASELIBS = -lcurl 
+BASELIBS += -lcurl 
 endif
 
 ifdef USELIBXML
@@ -55,10 +56,10 @@ $(LIBTARGET).a : $(LIBOBJS)
 	$(doLib) $@ $(LIBOBJS)
 
 tst: test.o lib
-	$(doLink) test.o $(HLIB) $(BASELIBS) -o $@
+	$(doLink) test.o $(HLIB) -larchive -lcrypto $(BASELIBS) -o $@
 
 demo: demo.o lib 
-	$(doLink) demo.o $(HLIB) $(BASELIBS) -o $@
+	$(doLink) demo.o $(HLIB) -larchive -lcrypto $(BASELIBS) -o $@
 
 clean:
 	rm -f *.o *~ core $(TEST) $(DEMO) $(LIBTARGET).a

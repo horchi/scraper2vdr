@@ -53,7 +53,7 @@ class cDbValue : public cDbService
       {
          strValue = 0;
          changed = 0;
-         ownField = new cDbFieldDef(name, name, format, size, ftData);
+         ownField = new cDbFieldDef(name, name, format, size, ftData, 0);
 
          field = ownField;
          strValue = (char*)calloc(field->getSize()+TB, sizeof(char));
