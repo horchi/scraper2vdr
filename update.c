@@ -1445,7 +1445,6 @@ void cUpdate::ReadSeriesImagesFast(int &newImages, int &emptySeasonPosters) {
 
         i++;
         if (GetTimeDiffms(lastLog)>LogPeriode) {
-            tell(0, "Handled %d images (for %d series), continuing...", newImages,i);
             tell(0, "Handled %d of %d series (loaded %d new images), continuing...", i, seriesCount, newImages);
             lastLog = GetTimems();
         }    
