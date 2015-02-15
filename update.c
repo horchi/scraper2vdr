@@ -70,6 +70,7 @@ cUpdate::cUpdate(cScrapManager *manager) : cThread("update thread started", true
     forceScrapInfoUpdate = false;
     forceCleanupRecordingDb = false;
     forceFullUpdate = false;
+    forceReconnect = false;
 }
 
 int cUpdate::init()
@@ -905,9 +906,24 @@ void cUpdate::Stop() {
         cCondWait::SleepMs(10);
 }
 
-int cUpdate::CheckConnection(int& timeout) {
+int cUpdate::CheckConnection(bool init, int& timeout) {
+    if (forceReconnect) {
+        forceReconnect = false;
+        if (dbConnected(false)) {
+            tell(0, "Force re-connect to database!");
+            exitDb(); // force closed DB
+        }
+        // apply new settings
+        cDbConnection::setEncoding(withutf8 ? "utf8": "latin1"); // mysql uses latin1 for ISO8851-1
+        cDbConnection::setHost(scraper2VdrConfig.dbHost);
+        cDbConnection::setPort(scraper2VdrConfig.dbPort);
+        cDbConnection::setName(scraper2VdrConfig.dbName);
+        cDbConnection::setUser(scraper2VdrConfig.dbUser);
+        cDbConnection::setPass(scraper2VdrConfig.dbPass);
+        cDbConnection::setConfPath(cPlugin::ConfigDirectory("epg2vdr/"));
+    }    
     static int retry = 0;
-    timeout = retry < 5 ? 10 : 60;
+    timeout = init ? 30 : 60; // 30s during init, otherwise 60s (this is the intervall of update thread)
     // check connection
     if (!dbConnected(yes)) {
         // try to connect
@@ -2533,7 +2549,7 @@ void cUpdate::Action()
 
         waitCondition.TimedWait(mutex, init ? sleep*500 : sleep*1000);
 
-        if (CheckConnection(reconnectTimeout) != success) 
+        if (CheckConnection(init, reconnectTimeout) != success) 
            continue;
 
         // auch beim init auf den epgd warten, wenn der gerade busy ist müssen die sich User etwas gedulden ;) 
@@ -2761,3 +2777,8 @@ void cUpdate::ForceFullUpdate(void) {
     forceFullUpdate = true; // this trigger reset of old data
 }
 
+// forec DB reconnect (e.g. after changing Host/DB/User/Port)
+void cUpdate::ForceReconnect(void) {
+    tell(0, "settings changed, force re-connect to DB");
+    forceReconnect = true; // this trigger the update
+}

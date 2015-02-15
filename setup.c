@@ -1,6 +1,7 @@
-
 #include "plgconfig.h"
 #include "setup.h"
+
+using namespace std;
 
 cScraper2VdrSetup::cScraper2VdrSetup(cUpdate* update) {
     this->update = update;
@@ -58,7 +59,6 @@ void cScraper2VdrSetup::Setup(void) {
 eOSState cScraper2VdrSetup::ProcessKey(eKeys Key) {
     eOSState state = cMenuSetupPage::ProcessKey(Key);
     if (Key == kOk) {
-
        Store();
 
        if (Current() == 13) {
@@ -88,7 +88,17 @@ eOSState cScraper2VdrSetup::ProcessKey(eKeys Key) {
 }
 
 void cScraper2VdrSetup::Store(void) {
-
+    string lastDBHost = scraper2VdrConfig.dbHost; 
+    string lastDBName = scraper2VdrConfig.dbName; 
+    string lastDBUser = scraper2VdrConfig.dbUser; 
+    string lastDBPass = scraper2VdrConfig.dbPass; 
+    if ((lastDBHost != tmpConfig.dbHost) || 
+        (scraper2VdrConfig.dbPort != tmpConfig.dbPort) || 
+        (lastDBName != tmpConfig.dbName) || 
+        (lastDBUser != tmpConfig.dbUser) || 
+        (lastDBPass != tmpConfig.dbPass)) {
+       update->ForceReconnect();
+    }    
     scraper2VdrConfig = tmpConfig;
 
     SetupStore("mainMenuEntry", tmpConfig.mainMenuEntry);

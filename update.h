@@ -48,9 +48,10 @@ class cUpdate : public cThread  {
         bool forceScrapInfoUpdate;
         bool forceCleanupRecordingDb;
         bool forceFullUpdate; // force full update (information and images)
+        bool forceReconnect; // force DB reconnect (e.g. after changing Host/DB/User/Port)
         int exitDb();
         int dbConnected(int force = no) { return connection && (!force || connection->check() == success); };
-        int CheckConnection(int& timeout);
+        int CheckConnection(bool init, int& timeout);
         bool CheckEpgdBusy(void);
         bool CheckRunningAndWait(void); // check if we should abort execution (thread stoped), also check if we should call waitCondition.TimedWait (so other processes can use the CPU) 
         void Action(void);
@@ -152,6 +153,7 @@ class cUpdate : public cThread  {
         void ForceScrapInfoUpdate(void);
         void TriggerCleanRecordingsDB(void);
         void ForceFullUpdate(void);
+        void ForceReconnect(void); // force DB reconnect (e.g. after changing Host/DB/User/Port)
 };
 
 //***************************************************************************

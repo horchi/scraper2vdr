@@ -67,6 +67,7 @@ bool cScraper2VdrConfig::SetupParse(const char *Name, const char *Value)
    else if (strcasecmp(Name, "DbPass") == 0)        sstrcpy(dbPass, Value, sizeof(dbPass));
    else if (strcasecmp(Name, "fastmode") == 0)      fastmode = atoi(Value);
    else if (strcasecmp(Name, "thumbHeight") == 0)   thumbHeight = atoi(Value);
+   else if (strcasecmp(Name, "LogLevel") == 0)      loglevel = atoi(Value);
    else
       return false;
 
