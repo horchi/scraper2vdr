@@ -5,3 +5,5 @@
 *~
 *.mo
 *.pot
+lib/demo
+lib/tst

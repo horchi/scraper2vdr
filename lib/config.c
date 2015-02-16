@@ -34,3 +34,21 @@ cEpgConfig::cEpgConfig()
 
    getepgimages = yes;
 } 
+
+//***************************************************************************
+// Has DB Login Changed
+//***************************************************************************
+
+int cEpgConfig::hasDbLoginChanged(cEpgConfig* old)
+{
+   if (old->dbPort != dbPort || 
+       strcmp(old->dbHost, dbHost) != 0 || 
+       strcmp(old->dbName, dbName) != 0 || 
+       strcmp(old->dbUser, dbUser) != 0 || 
+       strcmp(old->dbPass, dbPass) != 0)
+   {
+      return yes;
+   }    
+   
+   return no;
+}

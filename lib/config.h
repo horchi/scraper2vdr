@@ -20,6 +20,9 @@ struct cEpgConfig
       
       cEpgConfig();
 
+      int hasDbLoginChanged(cEpgConfig* old);
+
+      // config
 
       // database connection
 
