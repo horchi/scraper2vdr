@@ -54,3 +54,4 @@ Version 0.1.7
   this will load existing images also (thumbs get created with new size)
 - prevent logging of unneccessarry messages (e.g. found nothing to update)
 - DB API and LIB porting
+- apply new SQL-DB settings without restart of vdr

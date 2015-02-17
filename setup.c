@@ -88,17 +88,9 @@ eOSState cScraper2VdrSetup::ProcessKey(eKeys Key) {
 }
 
 void cScraper2VdrSetup::Store(void) {
-    string lastDBHost = scraper2VdrConfig.dbHost; 
-    string lastDBName = scraper2VdrConfig.dbName; 
-    string lastDBUser = scraper2VdrConfig.dbUser; 
-    string lastDBPass = scraper2VdrConfig.dbPass; 
-    if ((lastDBHost != tmpConfig.dbHost) || 
-        (scraper2VdrConfig.dbPort != tmpConfig.dbPort) || 
-        (lastDBName != tmpConfig.dbName) || 
-        (lastDBUser != tmpConfig.dbUser) || 
-        (lastDBPass != tmpConfig.dbPass)) {
+    if (tmpConfig.hasDbLoginChanged(&scraper2VdrConfig)) {
        update->ForceReconnect();
-    }    
+    }
     scraper2VdrConfig = tmpConfig;
 
     SetupStore("mainMenuEntry", tmpConfig.mainMenuEntry);
