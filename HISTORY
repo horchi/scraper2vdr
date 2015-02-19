@@ -55,3 +55,7 @@ Version 0.1.7
 - prevent logging of unneccessarry messages (e.g. found nothing to update)
 - DB API and LIB porting
 - apply new SQL-DB settings without restart of vdr
+- changed log-level values:
+  0 - only SQL-Connection messages (connected/disconnected...) and errors
+  1 - add status messages
+  2 - add debug messages (missing images, sql commands...)

@@ -1030,7 +1030,7 @@ int cUpdate::ReadSeries(bool isRec) {
             }
         }
         if (++i % 500 == 0)
-            tell(0, "Loaded %d series, continuing...", i);
+            tell(1, "Loaded %d series, continuing...", i);
         numNew++;
     }
     return numNew;
@@ -1082,7 +1082,7 @@ int cUpdate::ReadSeriesFast(long &maxscrsp) {
         maxscrsp = max(maxscrsp, series->lastscraped);
         i++;
         if (GetTimeDiffms(lastLog)>LogPeriode) {
-            tell(0, "Loaded %d series, continuing...", i);
+            tell(1, "Loaded %d series, continuing...", i);
             lastLog = GetTimems();
         }    
         if (isNew)
@@ -1126,7 +1126,7 @@ int cUpdate::ReadSeriesContentFast(int &newImages, int &newSeasonPoster) {
 
         i++;
         if (GetTimeDiffms(lastLog)>LogPeriode) {
-            tell(0, "Handled %d of %d series, continuing...", i, seriescount);
+            tell(1, "Handled %d of %d series, continuing...", i, seriescount);
             lastLog = GetTimems();
         }    
     }    
@@ -1310,9 +1310,9 @@ void cUpdate::CheckSeriesMedia(cTVDBSeries *series, int mediaType, int imgWidth,
 }
 
 // read all images with needrefresh from sql-db
-void cUpdate::ReadSeriesImagesFast(int &newImages, int &emptySeasonPosters) { 
+void cUpdate::ReadSeriesImagesFast(int &newImages, int &emptyImages) { 
     newImages = 0;
-    emptySeasonPosters = 0;
+    emptyImages = 0;
     int i = 0;
     cTVDBMedia *media = NULL;
     cTVDBMedia *mediaThumb;
@@ -1351,7 +1351,8 @@ void cUpdate::ReadSeriesImagesFast(int &newImages, int &emptySeasonPosters) {
                             fileDateManager.SetLastUpdated(imageName.str(),series->lastupdate); // use lastupdated of series for actor images
                             newImages++;
                         } else {
-                           tell(0,"failed to read image (series %d, actor %d)",series->id,actor->id);
+                            tell(2,"failed to read image (series %d, actor %d)",series->id,actor->id);
+                            emptyImages++;
                         }    
                     }     
                 }    
@@ -1368,7 +1369,8 @@ void cUpdate::ReadSeriesImagesFast(int &newImages, int &emptySeasonPosters) {
                             fileDateManager.SetLastUpdated(imageName.str(),episode->lastupdate); // use lastupdated of episode for episode images
                             newImages++;
                         } else {
-                           tell(0,"failed to read image (series %d, episode %d)",series->id,episode->id);
+                            tell(2,"failed to read image (series %d, episode %d)",series->id,episode->id);
+                            emptyImages++;
                         }
                     }     
                 }    
@@ -1390,7 +1392,8 @@ void cUpdate::ReadSeriesImagesFast(int &newImages, int &emptySeasonPosters) {
                             imageName.str("");
                             imageName << "season_" << season << ".jpg";
                             fileDateManager.DeleteImage(imageName.str());
-                            emptySeasonPosters++;
+                            tell(2,"failed to read image (series %d, season %d)",series->id,season);
+                            emptyImages++;
                         }
                     }    
                 }    
@@ -1449,7 +1452,8 @@ void cUpdate::ReadSeriesImagesFast(int &newImages, int &emptySeasonPosters) {
                             fileDateManager.SetLastUpdated(mediaName,series->lastupdate); // use lastupdated of series for series images
                             newImages++;
                         } else {
-                           tell(0,"failed to read image (series %d, mediatype %d)",series->id,mediaType);
+                            tell(2,"failed to read image (series %d, mediatype %d)",series->id,mediaType);
+                            emptyImages++;
                         }    
                     }    
                 }
@@ -1461,7 +1465,7 @@ void cUpdate::ReadSeriesImagesFast(int &newImages, int &emptySeasonPosters) {
 
         i++;
         if (GetTimeDiffms(lastLog)>LogPeriode) {
-            tell(0, "Handled %d of %d series (loaded %d new images), continuing...", i, seriesCount, newImages);
+            tell(1, "Handled %d of %d series (loaded %d new images), continuing...", i, seriesCount, newImages);
             lastLog = GetTimems();
         }    
     }  
@@ -1794,7 +1798,7 @@ int cUpdate::ReadMoviesFast(long &maxscrsp) {
         maxscrsp = max(maxscrsp, movie->lastscraped);
         i++;
         if (GetTimeDiffms(lastLog)>LogPeriode) {
-            tell(0, "Loaded %d movies, continuing...", i);
+            tell(1, "Loaded %d movies, continuing...", i);
             lastLog = GetTimems();
         }    
         if (isNew)
@@ -1828,7 +1832,7 @@ int cUpdate::ReadMoviesContentFast(void) {
 
         i++;
         if (GetTimeDiffms(lastLog)>LogPeriode) {
-            tell(0, "Handled %d of %d movies, continuing...", i, moviecount);
+            tell(1, "Handled %d of %d movies, continuing...", i, moviecount);
             lastLog = GetTimems();
         }
     }        
@@ -1994,12 +1998,12 @@ int cUpdate::ReadMovieImagesFast(void) {
             if (ReadMovieImageFast(0,actorId,mmActorThumb,media,NULL,1)) {
                 newActors++;
             } else {
-                tell(0,"failed to read image (movie actor id %d)",actorId);
+                tell(2,"failed to read image (movie actor id %d)",actorId);
             }
         }
         i++;
         if (GetTimeDiffms(lastLog)>LogPeriode) {
-            tell(0, "Handled %d of %d actors (loaded %d new images), continuing...", i, actorCount, newActors);
+            tell(1, "Handled %d of %d actors (loaded %d new images), continuing...", i, actorCount, newActors);
             lastLog = GetTimems();
         }    
     }        
@@ -2040,7 +2044,7 @@ int cUpdate::ReadMovieImagesFast(void) {
                         if (ReadMovieImageFast(movie->id,0,mediaType,media,mediaThumb,4)) {
                             newImages++;
                         } else {
-                           tell(0,"failed to read image (movie %d, mediatype %d)",movie->id,mediaType);
+                           tell(2,"failed to read image (movie %d, mediatype %d)",movie->id,mediaType);
                         }    
                     }    
                 }
@@ -2050,7 +2054,7 @@ int cUpdate::ReadMovieImagesFast(void) {
 
         i++;
         if (GetTimeDiffms(lastLog)>LogPeriode) {
-            tell(0, "Handled %d of %d movies (loaded %d new images), continuing...", i, movieCount, newImages);
+            tell(1, "Handled %d of %d movies (loaded %d new images), continuing...", i, movieCount, newImages);
             lastLog = GetTimems();
         }    
     }  
@@ -2573,7 +2577,7 @@ void cUpdate::Action()
                 {
                     numNewSeries = ReadSeries(true);
                     numNewMovies = ReadMovies(true);
-                    tell(0, "Loaded %d new Recordings from Database, %d series, %d movies", numNewRecs, numNewSeries, numNewMovies);
+                    tell(1, "Loaded %d new Recordings from Database, %d series, %d movies", numNewRecs, numNewSeries, numNewMovies);
                 }
             }           
             forceRecordingUpdate = false;
@@ -2588,7 +2592,7 @@ void cUpdate::Action()
 
            if (numNewEvents > 0) 
            {
-              tell(0, "Loaded %d new scraped Events from Database", numNewEvents);
+              tell(1, "Loaded %d new scraped Events from Database", numNewEvents);
            } 
            else 
            {
@@ -2611,14 +2615,14 @@ void cUpdate::Action()
                // new mode
                showlog = (MaxScrspMovies == 0) || (MaxScrspSeries == 0) || numNewEvents || forceUpdate || (scraper2VdrConfig.loglevel>1); // force log if: first run, found new events, forced update or loglevel > 1
                if (showlog)
-                 tell(0, "Loading Movies information from Database...");
+                 tell(1, "Loading Movies information from Database...");
                now = time(0);
                numValues = ReadMoviesFast(MaxScrspMovies);
                dur = time(0) - now; 
                showlog = showlog || (numValues>0);
                if (showlog) {
-                   tell(0, "Loaded %d new/updated Movies in %ds from Database (new max scrsp: %ld)", numValues, dur, MaxScrspMovies);
-                   tell(0, "Loading Movies content from Database...");
+                   tell(1, "Loaded %d new/updated Movies in %ds from Database (new max scrsp: %ld)", numValues, dur, MaxScrspMovies);
+                   tell(1, "Loading Movies content from Database...");
                }
                
                now = time(0);
@@ -2626,8 +2630,8 @@ void cUpdate::Action()
                dur = time(0) - now; 
                showlog = showlog || (numValues>0);
                if (showlog) {
-                   tell(0, "Loaded %d new/updated Image information in %ds from Database", numValues, dur);
-                   tell(0, "Loading Series information from Database...");
+                   tell(1, "Loaded %d new/updated Image information in %ds from Database", numValues, dur);
+                   tell(1, "Loading Series information from Database...");
                }
                    
                now = time(0);
@@ -2635,16 +2639,16 @@ void cUpdate::Action()
                dur = time(0) - now;
                showlog = showlog || (numValues>0);
                if (showlog) {
-                   tell(0, "Loaded %d new/updated Series in %ds from Database (new max scrsp: %ld)", numValues, dur, MaxScrspSeries);
-                   tell(0, "Loading Series content from Database...");
+                   tell(1, "Loaded %d new/updated Series in %ds from Database (new max scrsp: %ld)", numValues, dur, MaxScrspSeries);
+                   tell(1, "Loading Series content from Database...");
                }    
                now = time(0);
                numValues = ReadSeriesContentFast(numNewImages,numNewImages2);
                dur = time(0) - now;
                showlog = showlog || (numValues>0) || (numNewImages-numNewImages2>0); // ignore season thumbs here
                if (showlog) {
-                   tell(0, "Loaded %d new/updated Episodes and %d new/updated Image information (including %d possible not available season poster) in %ds from Database", numValues, numNewImages+numNewImages2, numNewImages2, dur);
-                   tell(0, "Loading Image content from Database...");
+                   tell(1, "Loaded %d new/updated Episodes and %d new/updated Image information (including %d possible not available season poster) in %ds from Database", numValues, numNewImages+numNewImages2, numNewImages2, dur);
+                   tell(1, "Loading Image content from Database...");
                }    
                now = time(0);
                ReadSeriesImagesFast(numNewImages,numNewImages2);
@@ -2652,20 +2656,20 @@ void cUpdate::Action()
                dur = time(0) - now; 
                showlog = showlog || (numNewImages>0);
                if (showlog)
-                   tell(0, "Loaded %d new/updated Images (found %d not available season posters) in %ds from Database", numNewImages, numNewImages2, dur);
+                   tell(1, "Loaded %d new/updated Images (found %d not available images) in %ds from Database", numNewImages, numNewImages2, dur);
            } else {
                // old mode
-               tell(0, "Loading new Movies from Database...");
+               tell(1, "Loading new Movies from Database...");
                now = time(0);
                numValues = ReadMovies(false);
                dur = time(0) - now;
-               tell(0, "Loaded %d new Movies in %ds from Database", numValues, dur);
+               tell(1, "Loaded %d new Movies in %ds from Database", numValues, dur);
 
-               tell(0, "Loading new Series and Episodes from Database...");
+               tell(1, "Loading new Series and Episodes from Database...");
                now = time(0);
                numValues = ReadSeries(false);
                dur = time(0) - now; 
-               tell(0, "Loaded %d new Series and Episodes in %ds from Database", numValues, dur);
+               tell(1, "Loaded %d new Series and Episodes in %ds from Database", numValues, dur);
            }   
            lastScan = time(0);
            forceUpdate = false;
@@ -2680,10 +2684,10 @@ void cUpdate::Action()
 
            if (Recordings.StateChanged(recState)) 
            {
-              tell(0, "Searching for new recordings because of Recordings State Change...");
+              tell(1, "Searching for new recordings because of Recordings State Change...");
               worked++;
               numNewRecs = ScanVideoDir();
-              tell(0, "found %d new recordings", numNewRecs);
+              tell(1, "found %d new recordings", numNewRecs);
            }
            
            lastScanNewRec = time(0);
@@ -2697,9 +2701,9 @@ void cUpdate::Action()
         if (forceScrapInfoUpdate) 
         {
            worked++;
-           tell(0, "Checking for new or updated scrapinfo files in recordings...");
+           tell(1, "Checking for new or updated scrapinfo files in recordings...");
            int numUpdated = ScanVideoDirScrapInfo();
-           tell(0, "found %d new or updated scrapinfo files", numUpdated);
+           tell(1, "found %d new or updated scrapinfo files", numUpdated);
            forceScrapInfoUpdate = false;
         }
         
@@ -2713,8 +2717,8 @@ void cUpdate::Action()
 
            if (seriesDeleted > 0 || moviesDeleted > 0) 
            {
-              tell(0, "Deleted %d outdated series image folders", seriesDeleted);            
-              tell(0, "Deleted %d outdated movie image folders", moviesDeleted);
+              tell(1, "Deleted %d outdated series image folders", seriesDeleted);            
+              tell(1, "Deleted %d outdated movie image folders", moviesDeleted);
            }
            
            lastCleanup = time(0);
@@ -2725,9 +2729,9 @@ void cUpdate::Action()
         if (forceCleanupRecordingDb) 
         {
             worked++;
-            tell(0, "Cleaning up recordings in database...");
+            tell(1, "Cleaning up recordings in database...");
             int recsDeleted = CleanupRecordings();
-            tell(0, "Deleted %d not anymore existing recordings in database", recsDeleted);
+            tell(1, "Deleted %d not anymore existing recordings in database", recsDeleted);
             forceCleanupRecordingDb = false;
         }
 
