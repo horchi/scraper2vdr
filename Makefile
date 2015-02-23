@@ -129,16 +129,16 @@ install-lib: $(SOFILE)
 install: install-lib install-i18n install-config
 
 install-config:
-	if ! test -d $(CONFDEST); then \
-	   mkdir -p $(CONFDEST); \
-	   chmod a+rx $(CONFDEST); \
+	if ! test -d $(DESTDIR)$(CONFDEST); then \
+	   mkdir -p $(DESTDIR)$(CONFDEST); \
+	   chmod a+rx $(DESTDIR)$(CONFDEST); \
 	   if test -n $(VDR_USER); then \
-	      chown $(VDR_USER) $(CONFDEST); \
+	      chown $(VDR_USER) $(DESTDIR)$(CONFDEST); \
 	   fi \
 	fi
-	install --mode=644 -D ./configs/epg.dat $(CONFDEST)
+	install --mode=644 -D ./configs/epg.dat $(DESTDIR)$(CONFDEST)
 	if test -n $(VDR_USER); then \
-	   chown $(VDR_USER) $(CONFDEST)/epg.dat; \
+	   chown $(VDR_USER) $(DESTDIR)$(CONFDEST)/epg.dat; \
 	fi \
 
 dist: $(I18Npo) clean
