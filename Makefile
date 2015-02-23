@@ -23,8 +23,6 @@ LOCDIR = $(call PKGCFG,locdir)
 PLGCFG = $(call PKGCFG,plgcfg)
 CONFDEST = $(call PKGCFG,configdir)/plugins/$(PLUGIN)
 
-VDR_USER ?= vdr
-
 #
 TMPDIR ?= /tmp
 
@@ -132,14 +130,14 @@ install-config:
 	if ! test -d $(DESTDIR)$(CONFDEST); then \
 	   mkdir -p $(DESTDIR)$(CONFDEST); \
 	   chmod a+rx $(DESTDIR)$(CONFDEST); \
-	   if test -n $(VDR_USER); then \
-	      chown $(VDR_USER) $(DESTDIR)$(CONFDEST); \
-	   fi \
 	fi
 	install --mode=644 -D ./configs/epg.dat $(DESTDIR)$(CONFDEST)
+ifdef VDR_USER
 	if test -n $(VDR_USER); then \
+		chown $(VDR_USER) $(DESTDIR)$(CONFDEST); \
 	   chown $(VDR_USER) $(DESTDIR)$(CONFDEST)/epg.dat; \
-	fi \
+	fi
+endif
 
 dist: $(I18Npo) clean
 	@-rm -rf $(TMPDIR)/$(ARCHIVE)
