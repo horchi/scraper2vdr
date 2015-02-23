@@ -59,3 +59,8 @@ Version 0.1.7
   0 - only SQL-Connection messages (connected/disconnected...) and errors
   1 - add status messages
   2 - add debug messages (missing images, sql commands...)
+
+Version 0.1.8
+- modified makefile to be compatible to launchpad
+- add backward compatibility to epgd without recordings.scrsp field (but update to current version is recommended)
+- init new setup parameters with values of scraper2vdr < 0.1.7 (Mysql...), so no user actions are necessary after update to scraper2vdr >= 0.1.7

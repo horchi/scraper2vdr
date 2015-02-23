@@ -23,6 +23,12 @@ using namespace std;
 
 struct cScraper2VdrConfig : public cEpgConfig
 {
+   private: 
+      bool NewDBHost; 
+      bool NewDBName; 
+      bool NewDBPort; 
+      bool NewDBUser; 
+      bool NewDBPass; 
    public:
       
       cScraper2VdrConfig();

@@ -139,6 +139,7 @@ class cDbFieldDef : public cDbService
       ~cDbFieldDef()  { free(name); free(dbname); free(description); }
       
       int getIndex()               { return index; }
+      void setIndex(int newIndex)  {index = newIndex; }
       const char* getName()        { return name; }
       int hasName(const char* n)   { return strcasecmp(n, name) == 0; }
       int hasDbName(const char* n) { return strcasecmp(n, dbname) == 0; }
@@ -317,11 +318,7 @@ class cDbTableDef : public cDbService
             return fail;
          }
          
-         if (f->second)
-            delete f->second;
-         
-         dfields.erase(f);
-
+         int removedIndex = f->second->getIndex();
          for (uint i = 0; i < _dfields.size(); i++)
          {
             if (_dfields[i]->hasName(fname))
@@ -331,9 +328,28 @@ class cDbTableDef : public cDbService
             }
          }
 
+         if (f->second)
+            delete f->second;
+         
+         dfields.erase(f);
+
+         // now correct index-values of remaining entries
+         int curIndex;
+         for (f = dfields.begin(); f != dfields.end(); f++) {
+            curIndex = f->second->getIndex();
+            if (curIndex > removedIndex)
+               f->second->setIndex(curIndex-1);
+         }
+         
          return success;
       }
-
+      void printfields(void)
+      {
+        std::map<std::string, cDbFieldDef*>::iterator f;
+        tell(0,"Table  %s",getName());
+        for (f = dfields.begin(); f != dfields.end(); f++)
+            tell(0,"Column %s (index %d)",f->first.c_str(),f->second->getIndex());
+      }    
       int indexCount()                    { return indices.size(); }
       cDbIndexDef* getIndex(int i)        { return indices[i]; }
       void addIndex(cDbIndexDef* i)       { indices.push_back(i); }
