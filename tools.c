@@ -85,12 +85,12 @@ string TwoFoldersHigher(string folder) {
 }
 
 // get last changed timestamp of file (using st_mtime)
-long GetFileChangedTime(string filename) { 
-    struct stat st;
-    if(stat(filename.c_str() , &st) < 0)
-      return 0; // default = 0 if file not exists
-    return st.st_mtime;
-}
+// long GetFileChangedTime(string filename) { 
+//     struct stat st;
+//     if(stat(filename.c_str() , &st) < 0)
+//       return 0; // default = 0 if file not exists
+//     return st.st_mtime;
+// }
 
 // trim from start
 string &ltrim(string &s) {

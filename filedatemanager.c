@@ -117,7 +117,7 @@ bool cFileDateManager::CheckImageNeedRefresh(string fileName, long lastUpdated) 
     } else {
         // new file, check if we can read filedate of existing file     
         if (fExists)
-            fileLastUpdated=GetFileChangedTime(fullFileName);
+           fileLastUpdated = fileExists(fullFileName.c_str());
         AddFileValue(fileName,fileLastUpdated,true); // add with lastupdated from file (if available)
         return fileLastUpdated < lastUpdated;
     }    

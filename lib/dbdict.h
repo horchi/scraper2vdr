@@ -307,6 +307,33 @@ class cDbTableDef : public cDbService
             tell(0, "Fatal: Field '%s.%s' doubly defined", getName(), f->getName());
       }
 
+      int removeField(const char* fname)
+      {
+         std::map<std::string, cDbFieldDef*, _casecmp_>::iterator f;
+
+         if ((f = dfields.find(fname)) == dfields.end())
+         {
+            tell(0, "Fatal: Missing definition of field '%s.%s' in dictionary!", name, fname);
+            return fail;
+         }
+         
+         if (f->second)
+            delete f->second;
+         
+         dfields.erase(f);
+
+         for (uint i = 0; i < _dfields.size(); i++)
+         {
+            if (_dfields[i]->hasName(fname))
+            {
+               _dfields.erase(_dfields.begin()+i);
+               break;
+            }
+         }
+
+         return success;
+      }
+
       int indexCount()                    { return indices.size(); }
       cDbIndexDef* getIndex(int i)        { return indices[i]; }
       void addIndex(cDbIndexDef* i)       { indices.push_back(i); }
@@ -322,6 +349,8 @@ class cDbTableDef : public cDbService
             
             dfields.erase(f);
          }
+
+         _dfields.clear();
       }
 
       void show()

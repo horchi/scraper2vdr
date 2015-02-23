@@ -353,7 +353,6 @@ int cDbDict::toFilter(char* token)
          filter |= fltFromNameFct(name);
       else
          filter |= atoi(name);
-      
    }
 
    return filter;

@@ -11,7 +11,7 @@ bool CheckDirExists(const char* dirName);
 void DeleteFile(string filename);
 void DeleteDirectory(string dirname);
 string TwoFoldersHigher(string folder);
-long GetFileChangedTime(string filename); // get last changed timestamp of file (using st_mtime)
+// long GetFileChangedTime(string filename); // get last changed timestamp of file (using st_mtime)
 
 //String Functions
 string &ltrim(string &s);
