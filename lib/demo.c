@@ -326,6 +326,10 @@ int main(int argc, char** argv)
 
    dbDict.show();
 
+   cDbTableDef* td = dbDict.getTable("vdrs");
+   td->removeField("NAME");
+   dbDict.show();
+
    return 0;
 
    initConnection();

@@ -139,7 +139,7 @@ class cDbFieldDef : public cDbService
       ~cDbFieldDef()  { free(name); free(dbname); free(description); }
       
       int getIndex()               { return index; }
-      void setIndex(int newIndex)  {index = newIndex; }
+      void setIndex(int newIndex)  { index = newIndex; }
       const char* getName()        { return name; }
       int hasName(const char* n)   { return strcasecmp(n, name) == 0; }
       int hasDbName(const char* n) { return strcasecmp(n, dbname) == 0; }
@@ -200,7 +200,8 @@ class cDbFieldDef : public cDbService
 
          sprintf(fType, "(%s)", toName((FieldType)type, tmp));
             
-         tell(0, "%-20s %-25s %-17s %-20s (0x%04X) '%s'", name, dbname, 
+         tell(0, "%3d %-20s %-25s %-17s %-20s (0x%04X) '%s'", 
+              index, name, dbname, 
               toColumnFormat(colFmt), fType, filter, description); 
       }
 
@@ -270,7 +271,7 @@ class cDbTableDef : public cDbService
 
       cDbTableDef(const char* n)       { name = strdup(n); }
 
-      ~cDbTableDef()                
+      ~cDbTableDef()
       { 
          for (uint i = 0; i < indices.size(); i++)
             delete indices[i];
@@ -310,6 +311,7 @@ class cDbTableDef : public cDbService
 
       int removeField(const char* fname)
       {
+         int found = no;
          std::map<std::string, cDbFieldDef*, _casecmp_>::iterator f;
 
          if ((f = dfields.find(fname)) == dfields.end())
@@ -317,15 +319,17 @@ class cDbTableDef : public cDbService
             tell(0, "Fatal: Missing definition of field '%s.%s' in dictionary!", name, fname);
             return fail;
          }
-         
-         int removedIndex = f->second->getIndex();
+
          for (uint i = 0; i < _dfields.size(); i++)
          {
             if (_dfields[i]->hasName(fname))
             {
                _dfields.erase(_dfields.begin()+i);
-               break;
+               found = yes;
             }
+
+            if (found)
+               _dfields[i]->setIndex(_dfields[i]->getIndex()-1);
          }
 
          if (f->second)
@@ -333,23 +337,9 @@ class cDbTableDef : public cDbService
          
          dfields.erase(f);
 
-         // now correct index-values of remaining entries
-         int curIndex;
-         for (f = dfields.begin(); f != dfields.end(); f++) {
-            curIndex = f->second->getIndex();
-            if (curIndex > removedIndex)
-               f->second->setIndex(curIndex-1);
-         }
-         
          return success;
       }
-      void printfields(void)
-      {
-        std::map<std::string, cDbFieldDef*>::iterator f;
-        tell(0,"Table  %s",getName());
-        for (f = dfields.begin(); f != dfields.end(); f++)
-            tell(0,"Column %s (index %d)",f->first.c_str(),f->second->getIndex());
-      }    
+
       int indexCount()                    { return indices.size(); }
       cDbIndexDef* getIndex(int i)        { return indices[i]; }
       void addIndex(cDbIndexDef* i)       { indices.push_back(i); }
