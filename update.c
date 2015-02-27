@@ -71,6 +71,7 @@ cUpdate::cUpdate(cScrapManager *manager) : cThread("update thread started", true
     forceCleanupRecordingDb = false;
     forceFullUpdate = false;
     forceReconnect = false;
+    scrspRemoved = false;
 }
 
 int cUpdate::init()
@@ -89,20 +90,7 @@ int cUpdate::init()
    }
    
    // initialize the dictionary
-   
-   char* dictPath = 0;
-   
-   asprintf(&dictPath, "%s/epg.dat", cPlugin::ConfigDirectory("scraper2vdr/"));
-   dbDict.setFilterFromNameFct(toFieldFilter);
-   
-   if (dbDict.in(dictPath, ffScraper2Vdr) != success)
-   {
-      tell(0, "Fatal: Dictionary not loaded, aborting!");
-      return fail;
-   }
-   
-   tell(0, "Dictionary '%s' loaded", dictPath);
-   free(dictPath);
+   if (LoadDBDict() != success) return fail;
    
    // init database ...
    
@@ -133,6 +121,12 @@ int cUpdate::initDb() {
     if (!connection)
         connection = new cDbConnection();
     
+    if (scrspRemoved) {
+        // have to reload dbdict, because we removed scrsp field from recordings table 
+        if (LoadDBDict() != success) return fail;
+        scrspRemoved = false;
+    }    
+    
     vdrDb = new cDbTable(connection, "vdrs");
     if (vdrDb->open() != success) return fail;
 
@@ -146,8 +140,8 @@ int cUpdate::initDb() {
         }
         connection->queryReset();
         if (!recordingScrSPExist) {
+            scrspRemoved = true; // sign that we have removed scrsp column, so dbdect get reloaded on next initDb
             recordingsDef->removeField("SCRSP"); // remove scrsp field from recordings table definition to be compatible with old epgd table
-            // recordingsDef->printfields();
             tell(0,"ATTENTION. Old version of epgd database without recordings.scrsp field detected. Update to newer version of epgd is suggested to obtain full optimized refresh handling (please do not forget to alter tables after update!)");
         }    
     }    
@@ -903,6 +897,27 @@ int cUpdate::initDb() {
     status += selectMovieImage->prepare();
     
     return status;
+}
+
+// load database dictionary
+int cUpdate::LoadDBDict(void) {
+   char* dictPath = 0;
+
+   dbDict.clear(); // clear all old data
+   
+   asprintf(&dictPath, "%sepg.dat", cPlugin::ConfigDirectory("scraper2vdr/"));
+   dbDict.setFilterFromNameFct(toFieldFilter);
+   
+   if (dbDict.in(dictPath, ffScraper2Vdr) != success)
+   {
+      tell(0, "Fatal: Dictionary not loaded, aborting!");
+      return fail;
+   }
+   
+   tell(0, "Dictionary '%s' loaded", dictPath);
+   free(dictPath);
+   
+   return success;
 }
 
 int cUpdate::exitDb() {

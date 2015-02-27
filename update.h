@@ -49,6 +49,8 @@ class cUpdate : public cThread  {
         bool forceCleanupRecordingDb;
         bool forceFullUpdate; // force full update (information and images)
         bool forceReconnect; // force DB reconnect (e.g. after changing Host/DB/User/Port)
+        bool scrspRemoved; // true if field scrsp get removed from dbdict (recordings table)
+        int LoadDBDict(void); // load database dictionary
         int exitDb();
         int dbConnected(int force = no) { return connection && (!force || connection->check() == success); };
         int CheckConnection(bool init, int& timeout);

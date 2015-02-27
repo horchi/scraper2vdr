@@ -165,17 +165,7 @@ cDbDict::cDbDict()
 
 cDbDict::~cDbDict()
 {
-   std::map<std::string, cDbTableDef*>::iterator t;
-
-   while ((t = tables.begin()) != tables.end())
-   {
-      if (t->second)
-         delete t->second;
-
-      tables.erase(t);
-   }
-
-   free(path);
+   clear(); 
 }
 
 //***************************************************************************
@@ -208,6 +198,31 @@ int cDbDict::init(cDbFieldDef*& field, const char* tname, const char* fname)
 
    return fail;
 }
+
+//***************************************************************************
+// clear/reset all values
+//***************************************************************************
+
+void cDbDict::clear()
+{
+   std::map<std::string, cDbTableDef*>::iterator t;
+
+   while ((t = tables.begin()) != tables.end())
+   {
+      if (t->second)
+         delete t->second;
+
+      tables.erase(t);
+   }
+
+   free(path);
+   
+   curTable = 0;
+   inside = no;
+   path = 0;
+   fieldFilter = 0;   // 0 -> filter off use all fields
+   fltFromNameFct = 0;
+}    
 
 //***************************************************************************
 // In

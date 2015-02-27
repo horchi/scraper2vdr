@@ -432,6 +432,7 @@ class cDbDict : public cDbService
       void show();
       int init(cDbFieldDef*& field, const char* tname, const char* fname);
       const char* getPath() { return path ? path : ""; }
+      void clear(); // clear/reset all values
 
       std::map<std::string, cDbTableDef*>::iterator getFirstTableIterator() { return tables.begin(); }
       std::map<std::string, cDbTableDef*>::iterator getTableEndIterator()   { return tables.end(); }
