@@ -64,3 +64,6 @@ Version 0.1.8
 - modified makefile to be compatible to launchpad
 - add backward compatibility to epgd without recordings.scrsp field (but update to current version is recommended)
 - init new setup parameters with values of scraper2vdr < 0.1.7 (Mysql...), so no user actions are necessary after update to scraper2vdr >= 0.1.7
+
+Version 0.1.9
+- fixed crash when reconnect to DB (introduced during add backward compatibility)
