@@ -100,7 +100,7 @@ int cUpdate::init()
    cDbConnection::setName(scraper2VdrConfig.dbName);
    cDbConnection::setUser(scraper2VdrConfig.dbUser);
    cDbConnection::setPass(scraper2VdrConfig.dbPass);
-   cDbConnection::setConfPath(cPlugin::ConfigDirectory("epg2vdr/"));
+   cDbConnection::setConfPath(cPlugin::ConfigDirectory("scraper2vdr/"));
    
    return success;
 }
@@ -991,7 +991,7 @@ int cUpdate::CheckConnection(bool init, int& timeout) {
         cDbConnection::setName(scraper2VdrConfig.dbName);
         cDbConnection::setUser(scraper2VdrConfig.dbUser);
         cDbConnection::setPass(scraper2VdrConfig.dbPass);
-        cDbConnection::setConfPath(cPlugin::ConfigDirectory("epg2vdr/"));
+        cDbConnection::setConfPath(cPlugin::ConfigDirectory("scraper2vdr/"));
     }    
     static int retry = 0;
     timeout = init ? 30 : 60; // 30s during init, otherwise 60s (this is the intervall of update thread)
