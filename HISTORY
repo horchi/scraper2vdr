@@ -67,3 +67,6 @@ Version 0.1.8
 
 Version 0.1.9
 - fixed crash when reconnect to DB (introduced during add backward compatibility)
+
+Version 0.1.10
+- setup now react to ok/return keys like other plugins (do not close setup when press ok during edit string parameter)

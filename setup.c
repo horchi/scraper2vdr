@@ -58,32 +58,49 @@ void cScraper2VdrSetup::Setup(void) {
 
 eOSState cScraper2VdrSetup::ProcessKey(eKeys Key) {
     eOSState state = cMenuSetupPage::ProcessKey(Key);
-    if (Key == kOk) {
-       Store();
+    switch (state) 
+    {
+        case osContinue:
+        {
+            if (NORMALKEY(Key) == kUp || NORMALKEY(Key) == kDown) {
+                cOsdItem* item = Get(Current());
 
-       if (Current() == 13) {
-          Skins.Message(mtInfo, tr("Updating Scraper EPG Information from Database"));
-          update->ForceUpdate();
-       } else if (Current() == 14) {
-          Skins.Message(mtInfo, tr("Updating Scraper Recordings Information from Database"));
-          update->ForceRecordingUpdate();
-       } else if (Current() == 15) {
-          Skins.Message(mtInfo, tr("Scanning for new recordings in video directory"));
-          update->ForceVideoDirUpdate();
-       } else if (Current() == 16 ) {
-          Skins.Message(mtInfo, tr("Scanning for new or updated scrapinfo files"));
-          update->ForceScrapInfoUpdate();
-       } else if (Current() == 17) {
-          Skins.Message(mtInfo, tr("Cleaning up Recordings in Database"));
-          update->TriggerCleanRecordingsDB();
-       } else if (Current() == 18) {
-          Skins.Message(mtInfo, tr("Loading Series, Movies and Images from Database"));
-          update->ForceFullUpdate();
-       }
-
-       return osEnd;
+                if (item)
+                    item->ProcessKey(kNone);
+            }    
+            break;
+        }
+        default:
+        {
+            if ((NORMALKEY(Key) == kOk) && (Current()>=13) && (Current()<=18)) {
+                // handle ok for action entries
+                Store();
+                if (Current() == 13) {
+                    Skins.Message(mtInfo, tr("Updating Scraper EPG Information from Database"));
+                    update->ForceUpdate();
+                } else if (Current() == 14) {
+                    Skins.Message(mtInfo, tr("Updating Scraper Recordings Information from Database"));
+                    update->ForceRecordingUpdate();
+                } else if (Current() == 15) {
+                    Skins.Message(mtInfo, tr("Scanning for new recordings in video directory"));
+                    update->ForceVideoDirUpdate();
+                } else if (Current() == 16 ) {
+                    Skins.Message(mtInfo, tr("Scanning for new or updated scrapinfo files"));
+                    update->ForceScrapInfoUpdate();
+                } else if (Current() == 17) {
+                    Skins.Message(mtInfo, tr("Cleaning up Recordings in Database"));
+                    update->TriggerCleanRecordingsDB();
+                } else if (Current() == 18) {
+                    Skins.Message(mtInfo, tr("Loading Series, Movies and Images from Database"));
+                    update->ForceFullUpdate();
+                }
+                
+                return osEnd; // close setup
+            }            
+            break;
+        }    
     }
-
+   
     return state;
 }
 
