@@ -56,6 +56,7 @@ class cUpdate : public cThread  {
         int CheckConnection(bool init, int& timeout);
         bool CheckEpgdBusy(void);
         bool CheckRunningAndWait(void); // check if we should abort execution (thread stoped), also check if we should call waitCondition.TimedWait (so other processes can use the CPU) 
+        bool GetUsedImageSize(int originalWidth, int originalHeight, bool isPoster, bool isSeasonPoster, int& usedWidth, int& usedHeight); // get used image size (depends on isPoster/isSeasonPoster and useFixPosterSize)
         void Action(void);
         //EVENTS
         int ReadScrapedEvents(void);
@@ -67,7 +68,7 @@ class cUpdate : public cThread  {
         void ReadSeriesMediaFast(cTVDBSeries *series, int &newImages, int &newSeasonPoster); // read all images of series (also create actors if not available yet)
         void CheckSeriesMedia(cTVDBSeries *series, int mediaType, int imgWidth, int imgHeight, string imgName, int season, bool needRefresh); // create media if not exists in series, update size, path, needRefresh of media
         void ReadSeriesImagesFast(int &newImages, int &emptyImages); // read all images with needrefresh from sql-db
-        bool ReadSeriesImageFast(int seriesId, int season, int episodeId, int actorId, int mediaType, cTVDBMedia *media, cTVDBMedia *mediaThumb, int shrinkFactor); // read real image data from sql-db
+        bool ReadSeriesImageFast(int seriesId, int season, int episodeId, int actorId, int mediaType, cTVDBMedia *media, cTVDBMedia *mediaThumb); // read real image data from sql-db
         void ReadEpisode(int episodeId, cTVDBSeries *series, string path);
         void LoadEpisodeImage(cTVDBSeries *series, int episodeId, string path);
         void LoadSeasonPoster(cTVDBSeries *series, int season, string path);
@@ -83,7 +84,7 @@ class cUpdate : public cThread  {
         int ReadMovieMediaFast(cMovieDbMovie *movie); // read all images for current movie from sql-db
         void CheckMovieMedia(cMovieDbMovie *movie, int mediaType, int imgWidth, int imgHeight, string imgName, bool needRefresh); // create media if not exists in movie, update size, path, needRefresh of media
         int ReadMovieImagesFast(void); // read all images with needrefresh from sql-db
-        bool ReadMovieImageFast(int movieId, int actorId, int mediaType, cMovieMedia *media, cMovieMedia *mediaThumb, int shrinkFactor); // read real image data from sql-db
+        bool ReadMovieImageFast(int movieId, int actorId, int mediaType, cMovieMedia *media, cMovieMedia *mediaThumb); // read real image data from sql-db
         void ReadMovieActors(cMovieDbMovie *movie);
         void LoadMovieActorThumbs(cMovieDbMovie *movie);
         void LoadMovieMedia(cMovieDbMovie *movie, string moviePath);

@@ -33,8 +33,14 @@ public:
 //Image Functions
 void CreateThumbnail(string sourcePath, string destPath, int origWidth, int origHeight, int shrinkFactor);
 
-// create thumbnail using fix thumbnail height
-void CreateThumbnailFixHeight(string sourcePath, string destPath, int origWidth, int origHeight, int thumbHeight);
+// calc used thumb size (depends on thumbHeight)
+void CalcThumbSize(int originalWidth, int originalHeight, int thumbHeight, int& usedWidth, int& usedHeight);
+
+// resize/stretch/crop image to given image size (maxdisortion -> 0 = zero disortion, 0.1 = 10% disortion...) if enabled
+// create thumb if enabled
+void HandleImage(string imagePath, int originalWidth, int originalHeight,
+                 bool forceFixImageSize, int newWidth, int newHeight, float maxDistortion,
+                 bool createThumb, string thumbPath, int thumbHeight);
 
 // Get systemtime in ms (since unspecified starting point)
 long GetTimems(void);

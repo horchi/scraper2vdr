@@ -70,3 +70,10 @@ Version 0.1.9
 
 Version 0.1.10
 - setup now react to ok/return keys like other plugins (do not close setup when press ok during edit string parameter)
+
+Version 0.1.11
+- add fixed poster size (enabled/defined in setup)
+  if is enabled, all posters get stretched/scaled/croped to defined size 
+  because of that all thumbnails will have the same size also (using definend thumbnail height)
+  this is a enhancement for skin, because now they can calculate with a fixed poster size and aspect ratio
+  Warning, this functionality need more CPU power. But the CPU load should not reach problematic levels, because a sleep is used periodically.

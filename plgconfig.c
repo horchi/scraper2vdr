@@ -28,6 +28,12 @@ cScraper2VdrConfig::cScraper2VdrConfig()
    recScrapInfoName = "scrapinfo";
    fastmode = yes;
    thumbHeight = 200;
+   useFixPosterSize = no;
+   fixPosterWidth = 500;
+   fixPosterHeight = 735;
+   fixSeasonPosterWidth = 400;
+   fixSeasonPosterHeight = 588;
+   maxPosterDistortion = 5;
 }
 
 void cScraper2VdrConfig::SetUuid(cPlugin *plug) 
@@ -87,6 +93,12 @@ bool cScraper2VdrConfig::SetupParse(const char *Name, const char *Value)
    }    
    else if (strcasecmp(Name, "fastmode") == 0)      fastmode = atoi(Value);
    else if (strcasecmp(Name, "thumbHeight") == 0)   thumbHeight = atoi(Value);
+   else if (strcasecmp(Name, "useFixPosterSize") == 0)   useFixPosterSize = atoi(Value);
+   else if (strcasecmp(Name, "fixPosterWidth") == 0)   fixPosterWidth = atoi(Value);
+   else if (strcasecmp(Name, "fixPosterHeight") == 0)   fixPosterHeight = atoi(Value);
+   else if (strcasecmp(Name, "fixSeasonPosterWidth") == 0)   fixSeasonPosterWidth = atoi(Value);
+   else if (strcasecmp(Name, "fixSeasonPosterHeight") == 0)   fixSeasonPosterHeight = atoi(Value);
+   else if (strcasecmp(Name, "maxPosterDistortion") == 0)   maxPosterDistortion = atoi(Value);
    else if (strcasecmp(Name, "LogLevel") == 0)      loglevel = atoi(Value);
    // handle old setup entries
    else if (strcasecmp(Name, "mysqlHost") == 0) {

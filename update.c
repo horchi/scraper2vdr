@@ -1248,6 +1248,10 @@ void cUpdate::ReadSeriesMediaFast(cTVDBSeries *series, int &newImages, int &newS
     bool imgNeedRefresh = false;
     int imgWidth = 0;
     int imgHeight = 0;
+    int originalWidth = 0;
+    int originalHeight = 0;
+    int thbWidth = 0;
+    int thbHeight = 0;
     int season;
 
     cTVDBActor *actor;
@@ -1267,8 +1271,11 @@ void cUpdate::ReadSeriesMediaFast(cTVDBSeries *series, int &newImages, int &newS
         isFirst = false;
         
         mediaType = tSeriesMedia->getIntValue("MEDIATYPE");
-        imgWidth = tSeriesMedia->getIntValue("MEDIAWIDTH");
-        imgHeight = tSeriesMedia->getIntValue("MEDIAHEIGHT");
+        originalWidth = tSeriesMedia->getIntValue("MEDIAWIDTH");
+        originalHeight = tSeriesMedia->getIntValue("MEDIAHEIGHT");
+        GetUsedImageSize(originalWidth, originalHeight,
+                        (mediaType >= msPoster1) && (mediaType <= msPoster3),mediaType == msSeasonPoster,
+                         imgWidth, imgHeight);
         imgNeedRefresh = false;
         // check type of media first
         switch (mediaType) {
@@ -1287,7 +1294,8 @@ void cUpdate::ReadSeriesMediaFast(cTVDBSeries *series, int &newImages, int &newS
             case msPoster1:
                 imgNeedRefresh = fileDateManager.CheckImageNeedRefreshThumb("poster1.jpg", "poster_thumb.jpg", series->lastupdate) || forceFullUpdate;
                 CheckSeriesMedia(series, mediaType, imgWidth, imgHeight, "poster1.jpg", 0, imgNeedRefresh);
-                CheckSeriesMedia(series, msPosterThumb, imgWidth/5, imgHeight/5, "poster_thumb.jpg", 0, imgNeedRefresh);
+                CalcThumbSize(imgWidth, imgHeight, scraper2VdrConfig.thumbHeight, thbWidth, thbHeight);
+                CheckSeriesMedia(series, msPosterThumb, thbWidth, thbHeight, "poster_thumb.jpg", 0, imgNeedRefresh);
                 break;
             case msPoster2:
                 imgNeedRefresh = fileDateManager.CheckImageNeedRefresh("poster2.jpg", series->lastupdate) || forceFullUpdate;
@@ -1318,7 +1326,8 @@ void cUpdate::ReadSeriesMediaFast(cTVDBSeries *series, int &newImages, int &newS
                 imageName << "season_" << season << ".jpg";
                 imgNeedRefresh = fileDateManager.CheckImageNeedRefreshThumb(imageName.str(),thumbName,series->lastupdate) || forceFullUpdate;
                 CheckSeriesMedia(series, mediaType, imgWidth, imgHeight, imageName.str(), season, imgNeedRefresh);
-                CheckSeriesMedia(series, msSeasonPosterThumb, imgWidth/2, imgHeight/2, thumbName, season, imgNeedRefresh);
+                CalcThumbSize(imgWidth, imgHeight, scraper2VdrConfig.thumbHeight, thbWidth, thbHeight);
+                CheckSeriesMedia(series, msSeasonPosterThumb, thbWidth, thbHeight, thumbName, season, imgNeedRefresh);
                 break;
             case msEpisodePic:
                 episode = series->GetEpisode(tSeriesMedia->getIntValue("EPISODEID"));
@@ -1416,7 +1425,7 @@ void cUpdate::ReadSeriesImagesFast(int &newImages, int &emptyImages) {
                 if (actor->actorThumb) {
                     if (actor->actorThumb->needrefresh) {
                         // have to load this image from DB
-                        if (ReadSeriesImageFast(series->id,0,0,actor->id,msActorThumb,actor->actorThumb,NULL,1)) {
+                        if (ReadSeriesImageFast(series->id,0,0,actor->id,msActorThumb,actor->actorThumb,NULL)) {
                             imageName.str("");
                             imageName << "actor_" << actor->id << ".jpg";
                             fileDateManager.SetLastUpdated(imageName.str(),series->lastupdate); // use lastupdated of series for actor images
@@ -1434,7 +1443,7 @@ void cUpdate::ReadSeriesImagesFast(int &newImages, int &emptyImages) {
                 if (episode->episodeImage) {
                     if (episode->episodeImage->needrefresh) {
                         // have to load this image from DB
-                        if (ReadSeriesImageFast(series->id,episode->season,episode->id,0,msEpisodePic,episode->episodeImage,NULL,1)) {
+                        if (ReadSeriesImageFast(series->id,episode->season,episode->id,0,msEpisodePic,episode->episodeImage,NULL)) {
                             imageName.str("");
                             imageName << "episode_" << episode->id << ".jpg";
                             fileDateManager.SetLastUpdated(imageName.str(),episode->lastupdate); // use lastupdated of episode for episode images
@@ -1453,7 +1462,7 @@ void cUpdate::ReadSeriesImagesFast(int &newImages, int &emptyImages) {
                     if (media->needrefresh) {
                         // have to load this image from DB
                         mediaThumb = series->GetMedia(msSeasonPosterThumb, season); // try to get season thumb for this season
-                        if (ReadSeriesImageFast(series->id,season,0,0,msSeasonPoster,media,mediaThumb,2)) {
+                        if (ReadSeriesImageFast(series->id,season,0,0,msSeasonPoster,media,mediaThumb)) {
                             imageName.str("");
                             imageName << "season_" << season << ".jpg";
                             fileDateManager.SetLastUpdated(imageName.str(),series->lastupdate); // use lastupdated of series for season images
@@ -1519,7 +1528,7 @@ void cUpdate::ReadSeriesImagesFast(int &newImages, int &emptyImages) {
                 if (media) {
                     if (media->needrefresh) {
                         // have to load this image from DB
-                        if (ReadSeriesImageFast(series->id,0,0,0,mediaType,media,mediaThumb,5)) {
+                        if (ReadSeriesImageFast(series->id,0,0,0,mediaType,media,mediaThumb)) {
                             fileDateManager.SetLastUpdated(mediaName,series->lastupdate); // use lastupdated of series for series images
                             newImages++;
                         } else {
@@ -1543,8 +1552,9 @@ void cUpdate::ReadSeriesImagesFast(int &newImages, int &emptyImages) {
 }
 
 // read real image data from sql-db
-bool cUpdate::ReadSeriesImageFast(int seriesId, int season, int episodeId, int actorId, int mediaType, cTVDBMedia *media, cTVDBMedia *mediaThumb, int shrinkFactor) {
+bool cUpdate::ReadSeriesImageFast(int seriesId, int season, int episodeId, int actorId, int mediaType, cTVDBMedia *media, cTVDBMedia *mediaThumb) {
     bool imageSaved = false;
+    bool forceImageSize;
     tSeriesMedia->clear();
     tSeriesMedia->setValue("SERIESID", seriesId);
     tSeriesMedia->setValue("SEASONNUMBER", season);
@@ -1554,21 +1564,34 @@ bool cUpdate::ReadSeriesImageFast(int seriesId, int season, int episodeId, int a
     //tell(0,"serie: %d / season: %d / episode: %d / actor: %d / media: %d / pfad: %s",seriesId,season,episodeId,actorId,mediaType,media->path.c_str());
     int res = selectSeriesImage->find();
     if (res) {
-        media->width = tSeriesMedia->getIntValue("MEDIAWIDTH");
-        media->height = tSeriesMedia->getIntValue("MEDIAHEIGHT");
+        int originalWidth = tSeriesMedia->getIntValue("MEDIAWIDTH");
+        int originalHeight = tSeriesMedia->getIntValue("MEDIAHEIGHT");
+        forceImageSize = GetUsedImageSize(originalWidth, originalHeight,
+                                          (mediaType >= msPoster1) && (mediaType <= msPoster3),mediaType == msSeasonPoster,
+                                          media->width, media->height);
         int size = imageSize.getIntValue();
         if (size > 0) {
             if (FILE* fh = fopen(media->path.c_str(), "w")) {
                 fwrite(tSeriesMedia->getStrValue("MEDIACONTENT"), 1, size, fh);
                 fclose(fh);
+                bool handleThumb = false;
+                string thumbPath = "";
+                if (mediaThumb) {
+                   handleThumb = true;
+                   thumbPath = mediaThumb->path;
+                }    
+                HandleImage(media->path, originalWidth, originalHeight,
+                            forceImageSize, media->width, media->height, float(scraper2VdrConfig.maxPosterDistortion)/100,
+                            handleThumb, thumbPath, scraper2VdrConfig.thumbHeight);
+
                 media->needrefresh = false; // reset update flag
                 media->mediavalid = true; // we have a image file for this media
+                if (mediaThumb) {
+                    mediaThumb->needrefresh = false;
+                    mediaThumb->mediavalid = true; // we have a image file for this media
+                }    
+
                 imageSaved = true;
-            }
-            if (mediaThumb) {
-                CreateThumbnailFixHeight(media->path, mediaThumb->path, media->width, media->height, scraper2VdrConfig.thumbHeight);
-                mediaThumb->needrefresh = false;
-                mediaThumb->mediavalid = true; // we have a image file for this media
             }
         } else {
             media->needrefresh = false; // reset update flag for empty images also
@@ -1963,14 +1986,21 @@ int cUpdate::ReadMovieMediaFast(cMovieDbMovie *movie) {
     bool imgNeedRefresh = false;
     int imgWidth = 0;
     int imgHeight = 0;
+    int originalWidth = 0;
+    int originalHeight = 0;
+    int thbWidth = 0;
+    int thbHeight = 0;
 
     tMovieMedia->clear();
     tMovieMedia->setValue("MOVIEID", movie->id);
 
     for (int res = selectMovieMediaFast->find(); res; res = selectMovieMediaFast->fetch() && CheckRunningAndWait()) {
         mediaType = tMovieMedia->getIntValue("MEDIATYPE");
-        imgWidth = tMovieMedia->getIntValue("MEDIAWIDTH");
-        imgHeight = tMovieMedia->getIntValue("MEDIAHEIGHT");
+        originalWidth = tMovieMedia->getIntValue("MEDIAWIDTH");
+        originalHeight = tMovieMedia->getIntValue("MEDIAHEIGHT");
+        GetUsedImageSize(originalWidth, originalHeight,
+                         (mediaType == mmPoster) || (mediaType == mmCollectionPoster), false,
+                         imgWidth, imgHeight);
 
         imgNeedRefresh = false;
         // check type of media first
@@ -1984,7 +2014,8 @@ int cUpdate::ReadMovieMediaFast(cMovieDbMovie *movie) {
                 imgNeedRefresh = !(FileExists(imageName.str(),true) && FileExists(thumbName,true)); // refresh image if one file not exist
                 imgNeedRefresh = imgNeedRefresh || forceFullUpdate;
                 CheckMovieMedia(movie, mediaType, imgWidth, imgHeight, imageName.str(), imgNeedRefresh);
-                CheckMovieMedia(movie, mmPosterThumb, imgWidth/4, imgHeight/4, thumbName, imgNeedRefresh);
+                CalcThumbSize(imgWidth, imgHeight, scraper2VdrConfig.thumbHeight, thbWidth, thbHeight);
+                CheckMovieMedia(movie, mmPosterThumb, thbWidth, thbHeight, thumbName, imgNeedRefresh);
                 break;
             case mmFanart:
                 imageName.str("");
@@ -2066,7 +2097,7 @@ int cUpdate::ReadMovieImagesFast(void) {
     for (int res = scrapManager->GetMovieActorThumbFirst(actorId, media); res; res = scrapManager->GetMovieActorThumbNext(actorId, media) && CheckRunningAndWait()) {
         if (media->needrefresh) {
             // have to load this image from DB
-            if (ReadMovieImageFast(0,actorId,mmActorThumb,media,NULL,1)) {
+            if (ReadMovieImageFast(0,actorId,mmActorThumb,media,NULL)) {
                 newActors++;
             } else {
                 tell(2,"failed to read image (movie actor id %d)",actorId);
@@ -2112,7 +2143,7 @@ int cUpdate::ReadMovieImagesFast(void) {
                 if (media) {
                     if (media->needrefresh) {
                         // have to load this image from DB
-                        if (ReadMovieImageFast(movie->id,0,mediaType,media,mediaThumb,4)) {
+                        if (ReadMovieImageFast(movie->id,0,mediaType,media,mediaThumb)) {
                             newImages++;
                         } else {
                            tell(2,"failed to read image (movie %d, mediatype %d)",movie->id,mediaType);
@@ -2133,29 +2164,43 @@ int cUpdate::ReadMovieImagesFast(void) {
 }
 
 // read real image data from sql-db
-bool cUpdate::ReadMovieImageFast(int movieId, int actorId, int mediaType, cMovieMedia *media, cMovieMedia *mediaThumb, int shrinkFactor) {
+bool cUpdate::ReadMovieImageFast(int movieId, int actorId, int mediaType, cMovieMedia *media, cMovieMedia *mediaThumb) {
     bool imageSaved = false;
+    bool forceImageSize;
     tMovieMedia->clear();
     tMovieMedia->setValue("MOVIEID", movieId);
     tMovieMedia->setValue("ACTORID", actorId);
     tMovieMedia->setValue("MEDIATYPE", mediaType);
     int res = selectMovieImage->find();
     if (res) {
-        media->width = tMovieMedia->getIntValue("MEDIAWIDTH");
-        media->height = tMovieMedia->getIntValue("MEDIAHEIGHT");
+        int originalWidth = tMovieMedia->getIntValue("MEDIAWIDTH");
+        int originalHeight = tMovieMedia->getIntValue("MEDIAHEIGHT");
+        forceImageSize = GetUsedImageSize(originalWidth, originalHeight,
+                                          (mediaType == mmPoster) || (mediaType == mmCollectionPoster), false,
+                                          media->width, media->height);
         int size = imageSize.getIntValue();
         if (size > 0) {
             if (FILE* fh = fopen(media->path.c_str(), "w")) {
                 fwrite(tMovieMedia->getStrValue("MEDIACONTENT"), 1, size, fh);
                 fclose(fh);
+                bool handleThumb = false;
+                string thumbPath = "";
+                if (mediaThumb) {
+                   handleThumb = true;
+                   thumbPath = mediaThumb->path;
+                }    
+                HandleImage(media->path, originalWidth, originalHeight,
+                            forceImageSize, media->width, media->height, float(scraper2VdrConfig.maxPosterDistortion)/100,
+                            handleThumb, thumbPath, scraper2VdrConfig.thumbHeight);
+
                 media->needrefresh = false; // reset update flag
                 media->mediavalid = true; // we have a image file for this media
+                if (mediaThumb) {
+                    mediaThumb->needrefresh = false;
+                    mediaThumb->mediavalid = true; // we have a image file for this media
+                }
+            
                 imageSaved = true;
-            }
-            if (mediaThumb) {
-                CreateThumbnailFixHeight(media->path, mediaThumb->path, media->width, media->height, scraper2VdrConfig.thumbHeight);
-                mediaThumb->needrefresh = false;
-                mediaThumb->mediavalid = true; // we have a image file for this media
             }
         } else {
             media->needrefresh = false; // reset update flag for empty images also
@@ -2580,6 +2625,28 @@ bool cUpdate::CheckRunningAndWait(void)  {
   {
     return false; // should abort
   }  
+}
+
+// get used image size (depends on isPoster/isSeasonPoster and useFixPosterSize)
+bool cUpdate::GetUsedImageSize(int originalWidth, int originalHeight, bool isPoster, bool isSeasonPoster, int& usedWidth, int& usedHeight) {
+    if (isPoster && (scraper2VdrConfig.useFixPosterSize)) {
+        // use fix size for posters
+        usedWidth = scraper2VdrConfig.fixPosterWidth;
+        usedHeight = scraper2VdrConfig.fixPosterHeight; 
+        return true;
+    } else {
+        if (isSeasonPoster && (scraper2VdrConfig.useFixPosterSize)) {
+            // use fix size for season posters
+            usedWidth = scraper2VdrConfig.fixSeasonPosterWidth;
+            usedHeight = scraper2VdrConfig.fixSeasonPosterHeight; 
+            return true;
+        } else {
+            // no fixed size for this image, use size values from database
+            usedWidth = originalWidth;
+            usedHeight = originalHeight;
+            return false;
+        }    
+    }    
 }
 
 //***************************************************************************

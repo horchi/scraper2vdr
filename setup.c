@@ -23,7 +23,13 @@ void cScraper2VdrSetup::Setup(void) {
     cList<cOsdItem>::Last()->SetSelectable(false);
     Add(new cMenuEditBoolItem(tr("Show Main Menu Entry"), &tmpConfig.mainMenuEntry));
     Add(new cMenuEditBoolItem(tr("Fast Mode"), &tmpConfig.fastmode));
-    Add(new cMenuEditIntItem(tr("Thumbnail height"), &tmpConfig.thumbHeight));
+    Add(new cMenuEditIntItem(tr("Thumbnail Height"), &tmpConfig.thumbHeight));
+    Add(new cMenuEditBoolItem(tr("Fixed Poster Size (resize,stretch,crop)"), &tmpConfig.useFixPosterSize));
+    Add(new cMenuEditIntItem(tr("Poster Width (default 500)"), &tmpConfig.fixPosterWidth));
+    Add(new cMenuEditIntItem(tr("Poster Height (default 735)"), &tmpConfig.fixPosterHeight));
+    Add(new cMenuEditIntItem(tr("Season Poster Width (default 400)"), &tmpConfig.fixSeasonPosterWidth));
+    Add(new cMenuEditIntItem(tr("Season Poster Height (default 578)"), &tmpConfig.fixSeasonPosterHeight));
+    Add(new cMenuEditIntItem(tr("Max. Poster Distortion (in %)"), &tmpConfig.maxPosterDistortion));
 
     asprintf(&buf, "--------------------- %s ---------------------------------", tr("MySQL"));   
     Add(new cOsdItem(buf));
@@ -72,25 +78,25 @@ eOSState cScraper2VdrSetup::ProcessKey(eKeys Key) {
         }
         default:
         {
-            if ((NORMALKEY(Key) == kOk) && (Current()>=13) && (Current()<=18)) {
+            if ((NORMALKEY(Key) == kOk) && (Current()>=19) && (Current()<=24)) {
                 // handle ok for action entries
                 Store();
-                if (Current() == 13) {
+                if (Current() == 19) {
                     Skins.Message(mtInfo, tr("Updating Scraper EPG Information from Database"));
                     update->ForceUpdate();
-                } else if (Current() == 14) {
+                } else if (Current() == 20) {
                     Skins.Message(mtInfo, tr("Updating Scraper Recordings Information from Database"));
                     update->ForceRecordingUpdate();
-                } else if (Current() == 15) {
+                } else if (Current() == 21) {
                     Skins.Message(mtInfo, tr("Scanning for new recordings in video directory"));
                     update->ForceVideoDirUpdate();
-                } else if (Current() == 16 ) {
+                } else if (Current() == 22 ) {
                     Skins.Message(mtInfo, tr("Scanning for new or updated scrapinfo files"));
                     update->ForceScrapInfoUpdate();
-                } else if (Current() == 17) {
+                } else if (Current() == 23) {
                     Skins.Message(mtInfo, tr("Cleaning up Recordings in Database"));
                     update->TriggerCleanRecordingsDB();
-                } else if (Current() == 18) {
+                } else if (Current() == 24) {
                     Skins.Message(mtInfo, tr("Loading Series, Movies and Images from Database"));
                     update->ForceFullUpdate();
                 }
@@ -119,4 +125,10 @@ void cScraper2VdrSetup::Store(void) {
     SetupStore("fastmode", tmpConfig.fastmode);
     SetupStore("LogLevel", tmpConfig.loglevel);
     SetupStore("thumbHeight", tmpConfig.thumbHeight);
+    SetupStore("useFixPosterSize", tmpConfig.useFixPosterSize);
+    SetupStore("fixPosterWidth", tmpConfig.fixPosterWidth);
+    SetupStore("fixPosterHeight", tmpConfig.fixPosterHeight);
+    SetupStore("fixSeasonPosterWidth", tmpConfig.fixSeasonPosterWidth);
+    SetupStore("fixSeasonPosterHeight", tmpConfig.fixSeasonPosterHeight);
+    SetupStore("maxPosterDistortion", tmpConfig.maxPosterDistortion);
 }

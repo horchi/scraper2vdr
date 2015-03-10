@@ -185,30 +185,100 @@ void CreateThumbnail(string sourcePath, string destPath, int origWidth, int orig
     } catch( ... ) {}
 }
 
-// create thumbnail using fix thumbnail height
-void CreateThumbnailFixHeight(string sourcePath, string destPath, int origWidth, int origHeight, int thumbHeight) {
-    if (sourcePath.size() < 5 || destPath.size() < 5 || origHeight < 1) // no empty images allowed
-        return;
-
-    int thbWidth;
-    int thbHeight;
-    
-    if (thumbHeight < origHeight) {
-        thbHeight = thumbHeight;
-        float factor = thbHeight/origHeight;
-        thbWidth = factor*origWidth;
+// calc used thumb size (depends on thumbHeight)
+void CalcThumbSize(int originalWidth, int originalHeight, int thumbHeight, int& usedWidth, int& usedHeight) {
+    if ((thumbHeight < originalHeight) && (originalHeight > 0)) {
+        usedHeight = thumbHeight;
+        float factor = usedHeight/originalHeight;
+        usedWidth = factor*originalWidth;
     } else {
-        thbHeight = origHeight;
-        thbWidth = origWidth;
+        usedHeight = originalHeight;
+        usedWidth = originalWidth;
     }
+}
 
-    InitializeMagick(NULL);
-    Image buffer;
-    try {
-        buffer.read(sourcePath.c_str());
-        buffer.sample(Geometry(thbWidth, thbHeight)); 
-        buffer.write(destPath.c_str());
-    } catch( ... ) {}
+// resize/stretch/crop image to given image size (maxdisortion -> 0 = zero disortion, 0.1 = 10% disortion...) if enabled
+// create thumb if enabled
+void HandleImage(string imagePath, int originalWidth, int originalHeight,
+                 bool forceFixImageSize, int newWidth, int newHeight, float maxDistortion,
+                 bool createThumb, string thumbPath, int thumbHeight) {
+    if (imagePath.size() > 5) {
+        bool handleResize = forceFixImageSize && (newWidth > 0) && (newHeight > 0);
+        bool handleThumb = createThumb && (thumbPath.size() > 5) && (thumbHeight > 0);
+        
+        if (handleResize || handleThumb) {
+            // have to do something    
+            InitializeMagick(NULL);
+            Image buffer;
+            try {
+                buffer.read(imagePath.c_str()); // read source image
+
+                // read real original size of image, because values from db are incorrect!
+                originalWidth = buffer.columns();
+                originalHeight = buffer.rows();
+                if ((originalWidth > 0) && (originalHeight > 0)) {
+                    // only not empty images 
+                    handleResize = handleResize && ((originalWidth != newWidth) || (originalHeight != newHeight));
+                    
+                    int thbSourceWidth = originalWidth;
+                    int thbSourceHeight = originalHeight;
+                
+                    if (handleResize) {
+                        // have to resize image
+                        thbSourceWidth = newWidth; // use fixed size as thumb source
+                        thbSourceHeight = newHeight;
+                    
+                        float tempX = float(newWidth) / float(originalWidth);
+                        float tempY = float(newHeight) / float(originalHeight);
+                        float scaleUsed = tempX; 
+                        if (tempY > tempX)
+                            scaleUsed = tempY; // force side with larger scale factor get desired size
+           
+                        int tempWidth = float(originalWidth) * scaleUsed; // calc new image size using current scale factor
+                        int tempHeight = float(originalHeight) * scaleUsed;
+               
+                        // calc distortion factor
+                        tempX = float(tempWidth) / float(newWidth);
+                        tempY = float(tempHeight) / float(newHeight);
+           
+                        // limit distortion factor
+                        if (tempX < 1 - maxDistortion)
+                            tempX = 1 - maxDistortion;
+                        if (tempX > 1 + maxDistortion)
+                            tempX = 1 + maxDistortion;
+                        if (tempY < 1 - maxDistortion)
+                            tempY = 1 - maxDistortion;
+                        if (tempY > 1 + maxDistortion)
+                            tempY = 1 + maxDistortion;
+               
+                        // calc image size using current distortion factor
+                        tempWidth = float(tempWidth) / tempX;
+                        tempHeight = float(tempHeight) / tempY; 
+           
+                        tell(3,"scale image %s from %dx%d to %dx%d",imagePath.c_str(),originalWidth,originalHeight,newWidth,newHeight);
+                        if ((tempWidth != originalWidth) || (tempHeight != originalHeight)) {
+                            Geometry usedGeometry;
+                            usedGeometry.width(tempWidth);
+                            usedGeometry.height(tempHeight);
+                            usedGeometry.aspect(true); // ignore aspect ratio
+                            buffer.resize(usedGeometry); // strech/scale to new size using max distortion factors    
+                        }    
+                        if ((tempWidth != newWidth) || (tempHeight != newHeight))
+                            buffer.crop(Geometry(newWidth, newHeight, (tempWidth - newWidth)/2, (tempHeight - newHeight)/2)); // crop to desired size
+                        buffer.write(imagePath.c_str()); // overwrite source image
+                    }    
+                
+                    if (handleThumb) {
+                        int thbWidth;
+                        int thbHeight;
+                        CalcThumbSize(thbSourceWidth, thbSourceHeight, thumbHeight, thbWidth, thbHeight);
+                        buffer.sample(Geometry(thbWidth, thbHeight)); 
+                        buffer.write(thumbPath.c_str());
+                    }    
+                }    
+            } catch( ... ) {}
+        }    
+    }
 }
 
 // Get systemtime in ms (since unspecified starting point)

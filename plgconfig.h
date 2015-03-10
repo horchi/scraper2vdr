@@ -46,6 +46,12 @@ struct cScraper2VdrConfig : public cEpgConfig
       string recScrapInfoName;
       int fastmode;
       int thumbHeight;
+      int useFixPosterSize;
+      int fixPosterWidth;
+      int fixPosterHeight;
+      int fixSeasonPosterWidth;
+      int fixSeasonPosterHeight;
+      int maxPosterDistortion; 
 };
 
 extern cScraper2VdrConfig scraper2VdrConfig;

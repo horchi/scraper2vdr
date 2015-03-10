@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: vdr-scraper2vdr 0.0.1\n"
 "Report-Msgid-Bugs-To: <see README>\n"
-"POT-Creation-Date: 2015-02-12 12:27+0100\n"
+"POT-Creation-Date: 2015-03-10 09:33+0100\n"
 "PO-Revision-Date: 2014-03-30 18:30+0100\n"
 "Last-Translator: 3PO\n"
 "Language-Team: German <vdr@linuxtv.org>\n"
@@ -52,7 +52,7 @@ msgid "Loading Series, Movies and Images from Database"
 msgstr "Filme, Serien und Bilder werden aus Datenbank neu geladen"
 
 msgid "General"
-msgstr ""
+msgstr "Allgemein"
 
 msgid "Show Main Menu Entry"
 msgstr "Hauptmenüeintrag anzeigen"
@@ -60,8 +60,26 @@ msgstr "Hauptmenüeintrag anzeigen"
 msgid "Fast Mode"
 msgstr "Neuer Datenbankparser"
 
-msgid "Thumbnail height"
+msgid "Thumbnail Height"
 msgstr "Höhe der Miniaturbilder"
+
+msgid "Fixed Poster Size (resize,stretch,crop)"
+msgstr "Feste Postergröße (skalieren,strecken,zuschneiden)"
+
+msgid "Poster Width (default 500)"
+msgstr "Breite der Poster (Standard 500)"
+
+msgid "Poster Height (default 735)"
+msgstr "Höhe der Poster (Standard 735)"
+
+msgid "Season Poster Width (default 400)"
+msgstr "Breite der Staffelposter (Standard 400)"
+
+msgid "Season Poster Height (default 578)"
+msgstr "Höhe der Staffelposter (Standard 578)"
+
+msgid "Max. Poster Distortion (in %)"
+msgstr "Max. Posterverzerrung (in %)"
 
 msgid "MySQL"
 msgstr ""
@@ -73,37 +91,19 @@ msgid "Port"
 msgstr ""
 
 msgid "Database Name"
-msgstr ""
+msgstr "Name der Datenbank"
 
 msgid "User"
-msgstr ""
+msgstr "Benutzer"
 
 msgid "Password"
-msgstr ""
+msgstr "Passwort"
 
 msgid "Technical Stuff"
-msgstr ""
+msgstr "Technisches"
 
 msgid "Log level"
-msgstr ""
+msgstr "Protokollierungs Stufe"
 
 msgid "Actions"
-msgstr ""
-
-#~ msgid "Debug Mode"
-#~ msgstr "Debug Modus"
-
-#~ msgid "MySQL Host"
-#~ msgstr "MySQL Host"
-
-#~ msgid "MySQL Port"
-#~ msgstr "MySQL Port"
-
-#~ msgid "MySQL Database Name"
-#~ msgstr "MySQL Datenbannk Name"
-
-#~ msgid "MySQL User"
-#~ msgstr "MySQL Benutzer"
-
-#~ msgid "MySQL Password"
-#~ msgstr "MySQL Passwort"
+msgstr "Aktionen"
