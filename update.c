@@ -29,16 +29,7 @@ cUpdate::cUpdate(cScrapManager *manager) : cThread("update thread started", true
 
     selectReadScrapedEventsInit = 0;
     selectReadScrapedEvents = 0;
-    selectImg = 0;
-    selectEpisodeImg = 0;
-    selectSeasonPoster = 0;
-    selectActors = 0;
-    selectActorThumbs = 0;
-    selectSeriesMedia = 0;
     selectMovieActors = 0;
-    selectMovieActorThumbs = 0;
-    selectMovieMedia = 0;
-    selectMediaMovie = 0;
     selectRecordings = 0;
     selectCleanupRecordings = 0;
     clearTempEpisodeTable = 0;
@@ -191,9 +182,6 @@ int cUpdate::initDb() {
     episode_LastUpdate.setField(tEpisodes->getField("EPISODELASTUPDATED"));
     vdr_uuid.setField(&uuIDDef);
     imageSize.setField(&imageSizeDef);
-    episodeImageSize.setField(&imageSizeDef);
-    posterSize.setField(&imageSizeDef);
-    actorImageSize.setField(&imageSizeDef);
     actorRole.setField(tMovieActors->getField("ROLE"));
     actorMovie.setField(tMovieActors->getField("MOVIEID"));
     thbWidth.setField(tMovieMedia->getField("MEDIAWIDTH"));
@@ -242,102 +230,6 @@ int cUpdate::initDb() {
    
     status += selectReadScrapedEvents->prepare();
     
-    // select image
-
-    selectImg = new cDbStatement(tSeriesMedia);
-    selectImg->build("select ");
-    selectImg->bind("MEDIAWIDTH", cDBS::bndOut);
-    selectImg->bind("MEDIAHEIGHT", cDBS::bndOut, ", ");
-    selectImg->bind("MEDIACONTENT", cDBS::bndOut, ", ");
-    selectImg->build(", length(");
-    selectImg->bind(&imageSize, cDBS::bndOut);
-    selectImg->build(")");
-    selectImg->build(" from %s where ", tSeriesMedia->TableName());
-    selectImg->bind("SERIESID", cDBS::bndIn | cDBS::bndSet);
-    selectImg->bind("MEDIATYPE", cDBS::bndIn | cDBS::bndSet, " and ");
-    status += selectImg->prepare();
-
-    // select episode image
-
-    selectEpisodeImg = new cDbStatement(tSeriesMedia);
-    selectEpisodeImg->build("select ");
-    selectEpisodeImg->bind("MEDIAWIDTH", cDBS::bndOut);
-    selectEpisodeImg->bind("MEDIAHEIGHT", cDBS::bndOut, ", ");
-    selectEpisodeImg->bind("MEDIACONTENT", cDBS::bndOut, ", ");
-    selectEpisodeImg->build(", length(");
-    selectEpisodeImg->bind(&episodeImageSize, cDBS::bndOut);
-    selectEpisodeImg->build(")");
-    selectEpisodeImg->build(" from %s where ", tSeriesMedia->TableName());
-    selectEpisodeImg->bind("SERIESID", cDBS::bndIn | cDBS::bndSet);
-    selectEpisodeImg->bind("EPISODEID", cDBS::bndIn | cDBS::bndSet, " and ");
-    status += selectEpisodeImg->prepare();
-
-    // select poster image
-
-    selectSeasonPoster = new cDbStatement(tSeriesMedia);
-    selectSeasonPoster->build("select ");
-    selectSeasonPoster->bind("MEDIAWIDTH", cDBS::bndOut);
-    selectSeasonPoster->bind("MEDIAHEIGHT", cDBS::bndOut, ", ");
-    selectSeasonPoster->bind("MEDIACONTENT", cDBS::bndOut, ", ");
-    selectSeasonPoster->build(", length(");
-    selectSeasonPoster->bind(&posterSize, cDBS::bndOut);
-    selectSeasonPoster->build(")");
-    selectSeasonPoster->build(" from %s where ", tSeriesMedia->TableName());
-    selectSeasonPoster->bind("SERIESID", cDBS::bndIn | cDBS::bndSet);
-    selectSeasonPoster->bind("SEASONNUMBER", cDBS::bndIn | cDBS::bndSet, " and ");
-    selectSeasonPoster->bind("MEDIATYPE", cDBS::bndIn | cDBS::bndSet, " and ");
-    status += selectSeasonPoster->prepare();
-
-    // select actor
-
-    selectActors = new cDbStatement(tSeriesActors);
-    selectActors->build("select ");
-    selectActors->setBindPrefix("series_actor.");
-    selectActors->bind("ACTORID", cDBS::bndOut);
-    selectActors->bind("ACTORNAME", cDBS::bndOut, ", ");
-    selectActors->bind("ACTORROLE", cDBS::bndOut, ", ");
-    selectActors->clrBindPrefix();
-    selectActors->build(" from %s, %s where ", tSeriesActors->TableName(), tSeriesMedia->TableName());
-    selectActors->build(" %s.%s  = %s.%s ", tSeriesActors->TableName(),
-                                            tSeriesActors->getField("ACTORID")->getDbName(),
-                                            tSeriesMedia->TableName(),
-                                            tSeriesMedia->getField("ACTORID")->getDbName());
-    selectActors->setBindPrefix("series_media.");
-    selectActors->bind(&series_id, cDBS::bndIn | cDBS::bndSet, " and ");
-    selectActors->build(" order by %s, %s asc", tSeriesActors->getField("SORTORDER")->getDbName(), 
-                                                tSeriesActors->getField("ACTORROLE")->getDbName());    
-    status += selectActors->prepare();
-
-    // select actor thumbs
-
-    selectActorThumbs = new cDbStatement(tSeriesMedia);
-    selectActorThumbs->build("select ");
-    selectActorThumbs->bind("MEDIAWIDTH", cDBS::bndOut);
-    selectActorThumbs->bind("MEDIAHEIGHT", cDBS::bndOut, ", ");
-    selectActorThumbs->bind("MEDIACONTENT", cDBS::bndOut, ", ");
-    selectActorThumbs->build(", length(");
-    selectActorThumbs->bind(&actorImageSize, cDBS::bndOut);
-    selectActorThumbs->build(")");
-    selectActorThumbs->build(" from %s where ", tSeriesMedia->TableName());
-    selectActorThumbs->bind("ACTORID", cDBS::bndIn | cDBS::bndSet);
-    status += selectActorThumbs->prepare();
-    
-    // 
-
-    selectSeriesMedia = new cDbStatement(tSeriesMedia);
-    selectSeriesMedia->build("select ");
-    selectSeriesMedia->bind("MEDIAWIDTH", cDBS::bndOut);
-    selectSeriesMedia->bind("MEDIAHEIGHT", cDBS::bndOut, ", ");
-    selectSeriesMedia->bind("MEDIATYPE", cDBS::bndOut, ", ");
-    selectSeriesMedia->build(" from %s where ", tSeriesMedia->TableName());
-    selectSeriesMedia->bind("SERIESID", cDBS::bndIn | cDBS::bndSet);
-    selectSeriesMedia->build(" and %s in (%d, %d, %d, %d, %d, %d, %d, %d, %d)",
-                             tSeriesMedia->getField("MEDIATYPE")->getDbName(),
-                             msPoster1, msPoster2, msPoster3,
-                             msFanart1, msFanart2, msFanart3,
-                             msBanner1, msBanner2, msBanner3);
-    status += selectSeriesMedia->prepare();
-
     // 
 
     selectMovieActors = new cDbStatement(tMovieActor);
@@ -362,48 +254,6 @@ int cUpdate::initDb() {
     selectMovieActors->setBindPrefix("role.");
     selectMovieActors->bind(&actorMovie, cDBS::bndIn | cDBS::bndSet, " and ");
     status += selectMovieActors->prepare();
-
-    // 
-
-    selectMovieActorThumbs = new cDbStatement(tMovieMedia);
-    selectMovieActorThumbs->build("select ");
-    selectMovieActorThumbs->bind("MEDIACONTENT", cDBS::bndOut);
-    selectMovieActorThumbs->build(", length(");
-    selectMovieActorThumbs->bind(&imageSize, cDBS::bndOut);
-    selectMovieActorThumbs->build(")");
-    selectMovieActorThumbs->build(" from %s where ", tMovieMedia->TableName());
-    selectMovieActorThumbs->bind("ACTORID", cDBS::bndIn | cDBS::bndSet);
-    status += selectMovieActorThumbs->prepare();
-
-    //
-
-    selectMovieMedia = new cDbStatement(tMovieMedia);
-    selectMovieMedia->build("select ");
-    selectMovieMedia->bind("MEDIAWIDTH", cDBS::bndOut);
-    selectMovieMedia->bind("MEDIAHEIGHT", cDBS::bndOut, ", ");
-    selectMovieMedia->bind("MEDIATYPE", cDBS::bndOut, ", ");
-    selectMovieMedia->build(" from %s where ", tMovieMedia->TableName());
-    selectMovieMedia->bind("MOVIEID", cDBS::bndIn | cDBS::bndSet);
-    selectMovieMedia->build(" and %s in (%d, %d, %d, %d)",
-                        tMovieMedia->getField("MEDIATYPE")->getDbName(),
-                        mmPoster,
-                        mmFanart,
-                        mmCollectionPoster,
-                        mmCollectionFanart);
-    status += selectMovieMedia->prepare();
-
-    // 
-
-    selectMediaMovie = new cDbStatement(tMovieMedia);
-    selectMediaMovie->build("select ");
-    selectMediaMovie->bind("MEDIACONTENT", cDBS::bndOut);
-    selectMediaMovie->build(", length(");
-    selectMediaMovie->bind(&imageSize, cDBS::bndOut);
-    selectMediaMovie->build(")");
-    selectMediaMovie->build(" from %s where ", tMovieMedia->TableName());
-    selectMediaMovie->bind("MOVIEID", cDBS::bndIn | cDBS::bndSet);
-    selectMediaMovie->bind("MEDIATYPE", cDBS::bndIn | cDBS::bndSet, " and ");
-    status += selectMediaMovie->prepare();
 
     // 
 
@@ -924,16 +774,7 @@ int cUpdate::exitDb() {
 
     delete selectReadScrapedEvents;     selectReadScrapedEvents = 0;
     delete selectReadScrapedEventsInit; selectReadScrapedEventsInit = 0;
-    delete selectImg;                   selectImg = 0;
-    delete selectEpisodeImg;            selectEpisodeImg = 0;
-    delete selectSeasonPoster;          selectSeasonPoster = 0;
-    delete selectActors;                selectActors = 0;
-    delete selectActorThumbs;           selectActorThumbs = 0;
-    delete selectSeriesMedia;           selectSeriesMedia = 0;
     delete selectMovieActors;           selectMovieActors = 0;
-    delete selectMovieActorThumbs;      selectMovieActorThumbs = 0;
-    delete selectMovieMedia;            selectMovieMedia = 0;
-    delete selectMediaMovie;            selectMediaMovie = 0;
     delete selectRecordings;            selectRecordings = 0;
     delete selectCleanupRecordings;     selectCleanupRecordings = 0;
     delete clearTempEpisodeTable;       clearTempEpisodeTable = 0;
@@ -1060,52 +901,6 @@ int cUpdate::ReadScrapedEvents(void) {
 //***************************************************************************
 // SERIES
 //***************************************************************************
-
-int cUpdate::ReadSeries(bool isRec) {
-    scrapManager->InitIterator(isRec);
-    int seriesId = 0;
-    int episodeId = 0;
-    
-    if (!CreateDirectory(scraper2VdrConfig.imageDir))
-        return 0;
-    if (!CreateDirectory(imgPathSeries))
-        return 0;
-
-    bool isNew = false;
-    int numNew = 0;
-    int i = 0;
-    lastWait = GetTimems(); // init time for CheckRunningAndWait
-    while (scrapManager->GetNextSeries(isRec, seriesId, episodeId) && CheckRunningAndWait()) {
-        cTVDBSeries *series = scrapManager->GetSeries(seriesId);
-        if (!series) {
-            tSeries->clear();
-            tSeries->setValue("SERIESID", seriesId);
-            int res = tSeries->find();
-            if (res) {
-                series = scrapManager->AddSeries(tSeries);
-            }
-            isNew = true;
-        } else {
-            isNew = false;
-        }
-        if (series) {
-            stringstream sPath("");
-            sPath << imgPathSeries << "/" << seriesId;
-            string seriesPath = sPath.str();
-            if (episodeId) {
-                ReadEpisode(episodeId, series, seriesPath);
-            }
-            if (isNew) {
-                ReadSeriesActors(series, seriesPath);
-                LoadSeriesMedia(series, seriesPath);
-            }
-        }
-        if (++i % 500 == 0)
-            tell(1, "Loaded %d series, continuing...", i);
-        numNew++;
-    }
-    return numNew;
-}
 
 // read all series with event from sql-db
 int cUpdate::ReadSeriesFast(long &maxscrsp) {
@@ -1601,254 +1396,9 @@ bool cUpdate::ReadSeriesImageFast(int seriesId, int season, int episodeId, int a
     return imageSaved;
 }
 
-void cUpdate::ReadEpisode(int episodeId, cTVDBSeries *series, string path) {
-    tEpisodes->clear();
-    tEpisodes->setValue("EPISODEID", episodeId);
-    int res = tEpisodes->find();
-    if (res) {
-        scrapManager->AddSeriesEpisode(series, tEpisodes);
-        LoadEpisodeImage(series, episodeId, path);
-        int season = tEpisodes->getIntValue("SEASONNUMBER");
-        if (season > 0)
-            LoadSeasonPoster(series, season, path);
-    }
-    return;
-}
-
-void cUpdate::LoadEpisodeImage(cTVDBSeries *series, int episodeId, string path) {
-    stringstream iPath("");
-    iPath << path << "/" << "episode_" << episodeId << ".jpg";
-    string imgPath = iPath.str();
-    bool imgExists = FileExists(imgPath);
-    if (!imgExists)
-        if (!CreateDirectory(path))
-            return;
-
-    tSeriesMedia->clear();
-    tSeriesMedia->setValue("SERIESID", series->id);
-    tSeriesMedia->setValue("EPISODEID", episodeId);
-
-    int res = selectEpisodeImg->find();
-
-    if (res) {
-        if (!imgExists) {
-            int size = episodeImageSize.getIntValue();
-            if (FILE* fh = fopen(imgPath.c_str(), "w")) {
-                fwrite(tSeriesMedia->getStrValue("MEDIACONTENT"), 1, size, fh);
-                fclose(fh);
-            }
-        }
-        int imgWidth = tSeriesMedia->getIntValue("MEDIAWIDTH");
-        int imgHeight = tSeriesMedia->getIntValue("MEDIAHEIGHT");
-        series->InsertEpisodeImage(episodeId, imgWidth, imgHeight, imgPath);
-    }
-
-    selectEpisodeImg->freeResult();
-}
-
-void cUpdate::LoadSeasonPoster(cTVDBSeries *series, int season, string path) {
-    stringstream iPath("");
-    iPath << path << "/" << "season_" << season << ".jpg";
-    stringstream tPath("");
-    tPath << path << "/" << "season_" << season << "_thumb.jpg";
-    string imgPath = iPath.str();
-    string thumbPath = tPath.str();
-    bool imgExists = FileExists(imgPath);
-    if (!imgExists)
-        if (!CreateDirectory(path))
-            return;
-
-    tSeriesMedia->clear();
-    tSeriesMedia->setValue("SERIESID", series->id);
-    tSeriesMedia->setValue("SEASONNUMBER", season);
-    tSeriesMedia->setValue("MEDIATYPE", msSeasonPoster);
-
-    int res = selectSeasonPoster->find();
-
-    if (res) {
-        if (!imgExists) {
-            int size = posterSize.getIntValue();
-            if (FILE* fh = fopen(imgPath.c_str(), "w")) {
-                fwrite(tSeriesMedia->getStrValue("MEDIACONTENT"), 1, size, fh);
-                fclose(fh);
-            }
-        }
-        int imgWidth = tSeriesMedia->getIntValue("MEDIAWIDTH");
-        int imgHeight = tSeriesMedia->getIntValue("MEDIAHEIGHT");
-        if (!FileExists(thumbPath)) {
-            CreateThumbnail(imgPath, thumbPath, imgWidth, imgHeight, 2);
-        }
-        series->InsertMedia(msSeasonPoster, imgWidth, imgHeight, imgPath, season);
-        series->InsertMedia(msSeasonPosterThumb, imgWidth/2, imgHeight/2, thumbPath, season);
-    }
-
-    selectSeasonPoster->freeResult();
-}
-
-void cUpdate::ReadSeriesActors(cTVDBSeries *series, string path) {
-    tSeriesActors->clear();
-    series_id.setValue(series->id);
-
-    for (int res = selectActors->find(); res; res = selectActors->fetch()) {
-        scrapManager->AddSeriesActor(series, tSeriesActors);
-        LoadSeriesActorThumb(series, tSeriesActors->getIntValue("ACTORID"), path);
-    }
-    selectActors->freeResult();
-}
-
-void cUpdate::LoadSeriesActorThumb(cTVDBSeries *series, int actorId, string path) {
-    stringstream iPath("");
-    iPath << path << "/" << "actor_" << actorId << ".jpg";
-    string imgPath = iPath.str();
-    bool imgExists = FileExists(imgPath);
-    if (!imgExists)
-        if (!CreateDirectory(path))
-            return;
-
-    tSeriesMedia->clear();
-    tSeriesMedia->setValue("ACTORID", actorId);
-
-    int res = selectActorThumbs->find();
-
-    if (res) {
-        if (!imgExists) {
-            int size = actorImageSize.getIntValue();
-            if (FILE* fh = fopen(imgPath.c_str(), "w")) {
-                fwrite(tSeriesMedia->getStrValue("MEDIACONTENT"), 1, size, fh);
-                fclose(fh);
-            }
-        }
-        int tmbWidth = tSeriesMedia->getIntValue("MEDIAWIDTH");
-        int tmbHeight = tSeriesMedia->getIntValue("MEDIAHEIGHT");
-        series->SetActorThumb(actorId, tmbWidth, tmbHeight, imgPath);
-    }
-
-    selectActorThumbs->freeResult();
-}
-
-void cUpdate::LoadSeriesMedia(cTVDBSeries *series, string path) {  
-   tSeriesMedia->clear();  
-   tSeriesMedia->setValue("SERIESID", series->id);
-   
-   for (int res = selectSeriesMedia->find(); res; res = selectSeriesMedia->fetch()) {
-      int mediaType = tSeriesMedia->getIntValue("MEDIATYPE");
-      int mediaWidth = tSeriesMedia->getIntValue("MEDIAWIDTH");
-      int mediaHeight = tSeriesMedia->getIntValue("MEDIAHEIGHT");
-      string mediaPath = LoadMediaSeries(series->id, mediaType, path, mediaWidth, mediaHeight);
-      series->InsertMedia(mediaType, mediaWidth, mediaHeight, mediaPath);
-      if (mediaType == msPoster1) {
-         string thumbPath = path + "/poster_thumb.jpg";
-         series->InsertMedia(msPosterThumb, mediaWidth/5, mediaHeight/5, thumbPath);
-      }
-   }
-
-   selectSeriesMedia->freeResult();
-}
-
-string cUpdate::LoadMediaSeries(int seriesId, int mediaType, string path, int width, int height) {
-    stringstream iPath("");
-    iPath << path << "/";
-    bool createThumb = false;
-    stringstream tPath("");
-    tPath << path << "/";
-    switch (mediaType) {
-        case msPoster1:
-            iPath << "poster1.jpg";
-            createThumb = true;
-            tPath << "poster_thumb.jpg";
-            break;
-        case msPoster2:
-            iPath << "poster2.jpg";
-            break;
-        case msPoster3:
-            iPath << "poster3.jpg";
-            break;
-        case msFanart1:
-            iPath << "fanart1.jpg";
-            break;
-        case msFanart2:
-            iPath << "fanart2.jpg";
-            break;
-        case msFanart3:
-            iPath << "fanart3.jpg";
-            break;
-        case msBanner1:
-            iPath << "banner1.jpg";
-            break;
-        case msBanner2:
-            iPath << "banner2.jpg";
-            break;
-        case msBanner3:
-            iPath << "banner3.jpg";
-            break;
-        default:
-        break;
-    }   
-    string imgPath = iPath.str();
-    string thumbPath = tPath.str();
-    if (FileExists(imgPath)) {
-        if (createThumb && !FileExists(thumbPath)) {
-            CreateThumbnail(imgPath, thumbPath, width, height, 5);
-        }
-        return imgPath;
-    }
-    if (!CreateDirectory(path))
-        return "";
-
-    tSeriesMedia->clear();
-    tSeriesMedia->setValue("SERIESID", seriesId);
-    tSeriesMedia->setValue("MEDIATYPE", mediaType);
-    int res = selectImg->find();
-    if (res) {
-        int size = imageSize.getIntValue();
-        if (FILE* fh = fopen(imgPath.c_str(), "w")) {
-            fwrite(tSeriesMedia->getStrValue("MEDIACONTENT"), 1, size, fh);
-            fclose(fh);
-        }
-        if (createThumb && !FileExists(thumbPath)) {
-            CreateThumbnail(imgPath, thumbPath, width, height, 5);
-        }
-    }
-
-    selectImg->freeResult();
-    return imgPath;
-}
-
 //***************************************************************************
 // MOVIES
 //***************************************************************************
-
-int cUpdate::ReadMovies(bool isRec) {
-    scrapManager->InitIterator(isRec);
-    int movieId = 0;
-   
-    if (!CreateDirectory(scraper2VdrConfig.imageDir))
-        return 0;
-    if (!CreateDirectory(imgPathMovies))
-        return 0;
-
-    int numNew = 0;
-    lastWait = GetTimems(); // init time for CheckRunningAndWait
-    while (scrapManager->GetNextMovie(isRec, movieId) && CheckRunningAndWait()) {
-        cMovieDbMovie *movie = scrapManager->GetMovie(movieId);
-        if (movie)
-            continue;
-        tMovies->clear();
-        tMovies->setValue("MOVIEID", movieId);
-        int res = tMovies->find();
-        if (!res)
-            continue;
-        movie = scrapManager->AddMovie(tMovies);
-        stringstream mPath("");
-        mPath << imgPathMovies << "/" << movieId;
-        string moviePath = mPath.str();
-        ReadMovieActors(movie);
-        LoadMovieActorThumbs(movie);
-        LoadMovieMedia(movie, moviePath);
-        numNew++;
-    }
-    return numNew;
-}
 
 // read all movies with event or recording from sql-db
 int cUpdate::ReadMoviesFast(long &maxscrsp) {
@@ -2059,21 +1609,6 @@ void cUpdate::CheckMovieMedia(cMovieDbMovie *movie, int mediaType, int imgWidth,
     }    
 }
 
-void cUpdate::ReadMovieActors(cMovieDbMovie *movie) {
-    tMovieActor->clear();
-    tMovieMedia->clear();
-    actorMovie.setValue(movie->id);
-
-    for (int res = selectMovieActors->find(); res; res = selectMovieActors->fetch()) {
-        scrapManager->AddMovieActor(movie, tMovieActor, actorRole.getStrValue(), false);
-        int tmbWidth = thbWidth.getIntValue();
-        int tmbHeight = thbHeight.getIntValue();
-        movie->SetActorThumbSize(tMovieActor->getIntValue("ACTORID"), tmbWidth, tmbHeight);
-    }
-
-    selectMovieActors->freeResult();
-}
-
 // read all images with needrefresh from sql-db
 int cUpdate::ReadMovieImagesFast(void) {
     string movieActorsPath = imgPathMovies + "/actors";
@@ -2208,118 +1743,6 @@ bool cUpdate::ReadMovieImageFast(int movieId, int actorId, int mediaType, cMovie
     }
     selectMovieImage->freeResult();
     return imageSaved;
-}
-
-void cUpdate::LoadMovieActorThumbs(cMovieDbMovie *movie) {
-    tMovieMedia->clear();
-
-    string movieActorsPath = imgPathMovies + "/actors";
-    if (!CreateDirectory(movieActorsPath))
-        return;
-
-    vector<int> IDs = movie->GetActorIDs();
-    for (vector<int>::iterator it = IDs.begin(); it != IDs.end(); it++) {
-        int actorId = (int)*it;
-        stringstream tName("");
-        tName << "actor_" << actorId << ".jpg";
-        string thumbName = tName.str();
-        string thumbFullPath = movieActorsPath + "/" + thumbName; 
-        if (!FileExists(thumbFullPath)) {
-            tMovieMedia->setValue("ACTORID", actorId);
-            int res = selectMovieActorThumbs->find();
-            if (res) {
-                int size = imageSize.getIntValue();
-                if (FILE* fh = fopen(thumbFullPath.c_str(), "w")) {
-                    fwrite(tMovieMedia->getStrValue("MEDIACONTENT"), 1, size, fh);
-                    fclose(fh);
-                }
-                movie->SetActorPath(actorId, thumbFullPath);
-            }
-        } else {
-            movie->SetActorPath(actorId, thumbFullPath);
-        }
-    }
-
-    selectMovieActorThumbs->freeResult();
-}        
-
-void cUpdate::LoadMovieMedia(cMovieDbMovie *movie, string moviePath) {
-    tMovieMedia->clear();
-    tMovieMedia->setValue("MOVIEID", movie->id);
-
-    for (int res = selectMovieMedia->find(); res; res = selectMovieMedia->fetch()) {
-        int mediaType = tMovieMedia->getIntValue("MEDIATYPE");
-        int mediaWidth = tMovieMedia->getIntValue("MEDIAWIDTH");
-        int mediaHeight = tMovieMedia->getIntValue("MEDIAHEIGHT");
-        string imgPath = LoadMediaMovie(movie->id, mediaType, moviePath, mediaWidth, mediaHeight);
-        if (imgPath.size() > 0)
-            scrapManager->AddMovieMedia(movie, tMovieMedia, imgPath);
-        if (mediaType == mmPoster) {
-            cMovieMedia *m = new cMovieMedia();
-            m->mediaType = mmPosterThumb;
-            m->width = mediaWidth/4;
-            m->height = mediaHeight/4;
-            m->path = moviePath + "/poster_thumb.jpg";
-            movie->InsertMedia(m);
-        }
-    }
-
-    selectMovieMedia->freeResult();
-}
-
-string cUpdate::LoadMediaMovie(int movieId, int mediaType, string path, int width, int height) {
-    stringstream iPath("");
-    iPath << path << "/";
-    bool createThumb = false;
-    stringstream tPath("");
-    tPath << path << "/";
-    switch (mediaType) {
-        case mmPoster:
-            iPath << "poster.jpg";
-            createThumb = true;
-            tPath << "poster_thumb.jpg";
-            break;
-        case mmFanart:
-            iPath << "fanart.jpg";
-            break;
-        case mmCollectionPoster:
-            iPath << "collectionPoster.jpg";
-            break;
-        case mmCollectionFanart:
-            iPath << "collectionFanart.jpg";
-            break;
-        default:
-        break;
-    }   
-    string imgPath = iPath.str();
-    string thumbPath = tPath.str();
-    if (FileExists(imgPath)) {
-        if (createThumb && !FileExists(thumbPath)) {
-            CreateThumbnail(imgPath, thumbPath, width, height, 4);
-        }
-        return imgPath;
-    }
-    if (!CreateDirectory(path))
-        return imgPath;
-
-    tMovieMedia->clear();
-    tMovieMedia->setValue("MOVIEID", movieId);
-    tMovieMedia->setValue("MEDIATYPE", mediaType);
-
-    int res = selectMediaMovie->find();
-    if (res) {
-        int size = imageSize.getIntValue();
-        if (FILE* fh = fopen(imgPath.c_str(), "w")) {
-            fwrite(tMovieMedia->getStrValue("MEDIACONTENT"), 1, size, fh);
-            fclose(fh);
-        }
-        if (createThumb && !FileExists(thumbPath)) {
-            CreateThumbnail(imgPath, thumbPath, width, height, 4);
-        }
-    }
-
-    selectMediaMovie->freeResult();
-    return imgPath;
 }
 
 //***************************************************************************
@@ -2679,8 +2102,6 @@ void cUpdate::Action()
     int dur = 0;
     int numNewRecs = 0;
     int numValues = 0;
-    int numNewSeries = 0;
-    int numNewMovies = 0;
     int numNewImages = 0;
     int numNewImages2 = 0;
     bool showlog = false;
@@ -2708,16 +2129,6 @@ void cUpdate::Action()
             worked++;
             numNewRecs = ReadRecordings();
             lastScanNewRecDB = time(0);
-
-            if (!scraper2VdrConfig.fastmode) {
-                // scan for new recordings not neccessarry in fastmode (get done together with events)
-                if (numNewRecs > 0) 
-                {
-                    numNewSeries = ReadSeries(true);
-                    numNewMovies = ReadMovies(true);
-                    tell(1, "Loaded %d new Recordings from Database, %d series, %d movies", numNewRecs, numNewSeries, numNewMovies);
-                }
-            }           
             forceRecordingUpdate = false;
         }
         
@@ -2728,87 +2139,66 @@ void cUpdate::Action()
            worked++;
            int numNewEvents = ReadScrapedEvents();
 
-           if (numNewEvents > 0) 
-           {
+           if (numNewEvents > 0) {
               tell(1, "Loaded %d new scraped Events from Database", numNewEvents);
-           } 
-           else 
-           {
+           } else {
               lastScan = time(0);
               init = false;
-              if (!scraper2VdrConfig.fastmode) {
-                  forceUpdate = false;
-                  continue;
-              }   
            }
            
            worked++;
-           if (scraper2VdrConfig.fastmode) {
-               if (forceFullUpdate) {
-                   // force loading of all data
-                   MaxScrspMovies = 0;
-                   MaxScrspSeries = 0;
-               }
+           if (forceFullUpdate) {
+               // force loading of all data
+               MaxScrspMovies = 0;
+               MaxScrspSeries = 0;
+           }
                
-               // new mode
-               showlog = (MaxScrspMovies == 0) || (MaxScrspSeries == 0) || numNewEvents || forceUpdate || (scraper2VdrConfig.loglevel>1); // force log if: first run, found new events, forced update or loglevel > 1
-               if (showlog)
-                 tell(1, "Loading Movies information from Database...");
-               now = time(0);
-               numValues = ReadMoviesFast(MaxScrspMovies);
-               dur = time(0) - now; 
-               showlog = showlog || (numValues>0);
-               if (showlog) {
-                   tell(1, "Loaded %d new/updated Movies in %ds from Database (new max scrsp: %ld)", numValues, dur, MaxScrspMovies);
-                   tell(1, "Loading Movies content from Database...");
-               }
+           // new mode
+           showlog = (MaxScrspMovies == 0) || (MaxScrspSeries == 0) || numNewEvents || forceUpdate || (scraper2VdrConfig.loglevel>1); // force log if: first run, found new events, forced update or loglevel > 1
+           if (showlog)
+               tell(1, "Loading Movies information from Database...");
+           now = time(0);
+           numValues = ReadMoviesFast(MaxScrspMovies);
+           dur = time(0) - now; 
+           showlog = showlog || (numValues>0);
+           if (showlog) {
+               tell(1, "Loaded %d new/updated Movies in %ds from Database (new max scrsp: %ld)", numValues, dur, MaxScrspMovies);
+               tell(1, "Loading Movies content from Database...");
+           }
                
-               now = time(0);
-               numValues = ReadMoviesContentFast();
-               dur = time(0) - now; 
-               showlog = showlog || (numValues>0);
-               if (showlog) {
-                   tell(1, "Loaded %d new/updated Image information in %ds from Database", numValues, dur);
-                   tell(1, "Loading Series information from Database...");
-               }
+           now = time(0);
+           numValues = ReadMoviesContentFast();
+           dur = time(0) - now; 
+           showlog = showlog || (numValues>0);
+           if (showlog) {
+               tell(1, "Loaded %d new/updated Image information in %ds from Database", numValues, dur);
+               tell(1, "Loading Series information from Database...");
+           }
                    
-               now = time(0);
-               numValues = ReadSeriesFast(MaxScrspSeries);
-               dur = time(0) - now;
-               showlog = showlog || (numValues>0);
-               if (showlog) {
-                   tell(1, "Loaded %d new/updated Series in %ds from Database (new max scrsp: %ld)", numValues, dur, MaxScrspSeries);
-                   tell(1, "Loading Series content from Database...");
-               }    
-               now = time(0);
-               numValues = ReadSeriesContentFast(numNewImages,numNewImages2);
-               dur = time(0) - now;
-               showlog = showlog || (numValues>0) || (numNewImages-numNewImages2>0); // ignore season thumbs here
-               if (showlog) {
-                   tell(1, "Loaded %d new/updated Episodes and %d new/updated Image information (including %d possible not available season poster) in %ds from Database", numValues, numNewImages+numNewImages2, numNewImages2, dur);
-                   tell(1, "Loading Image content from Database...");
-               }    
-               now = time(0);
-               ReadSeriesImagesFast(numNewImages,numNewImages2);
-               numNewImages = numNewImages + ReadMovieImagesFast();
-               dur = time(0) - now; 
-               showlog = showlog || (numNewImages>0);
-               if (showlog)
-                   tell(1, "Loaded %d new/updated Images (found %d not available images) in %ds from Database", numNewImages, numNewImages2, dur);
-           } else {
-               // old mode
-               tell(1, "Loading new Movies from Database...");
-               now = time(0);
-               numValues = ReadMovies(false);
-               dur = time(0) - now;
-               tell(1, "Loaded %d new Movies in %ds from Database", numValues, dur);
+           now = time(0);
+           numValues = ReadSeriesFast(MaxScrspSeries);
+           dur = time(0) - now;
+           showlog = showlog || (numValues>0);
+           if (showlog) {
+               tell(1, "Loaded %d new/updated Series in %ds from Database (new max scrsp: %ld)", numValues, dur, MaxScrspSeries);
+               tell(1, "Loading Series content from Database...");
+           }    
+           now = time(0);
+           numValues = ReadSeriesContentFast(numNewImages,numNewImages2);
+           dur = time(0) - now;
+           showlog = showlog || (numValues>0) || (numNewImages-numNewImages2>0); // ignore season thumbs here
+           if (showlog) {
+               tell(1, "Loaded %d new/updated Episodes and %d new/updated Image information (including %d possible not available season poster) in %ds from Database", numValues, numNewImages+numNewImages2, numNewImages2, dur);
+               tell(1, "Loading Image content from Database...");
+           }    
+           now = time(0);
+           ReadSeriesImagesFast(numNewImages,numNewImages2);
+           numNewImages = numNewImages + ReadMovieImagesFast();
+           dur = time(0) - now; 
+           showlog = showlog || (numNewImages>0);
+           if (showlog)
+               tell(1, "Loaded %d new/updated Images (found %d not available images) in %ds from Database", numNewImages, numNewImages2, dur);
 
-               tell(1, "Loading new Series and Episodes from Database...");
-               now = time(0);
-               numValues = ReadSeries(false);
-               dur = time(0) - now; 
-               tell(1, "Loaded %d new Series and Episodes in %ds from Database", numValues, dur);
-           }   
            lastScan = time(0);
            forceUpdate = false;
            forceFullUpdate = false;

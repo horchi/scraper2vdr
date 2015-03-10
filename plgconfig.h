@@ -44,7 +44,6 @@ struct cScraper2VdrConfig : public cEpgConfig
       bool imgDirSet;
       string imageDir;
       string recScrapInfoName;
-      int fastmode;
       int thumbHeight;
       int useFixPosterSize;
       int fixPosterWidth;

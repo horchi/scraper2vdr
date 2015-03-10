@@ -61,7 +61,6 @@ class cUpdate : public cThread  {
         //EVENTS
         int ReadScrapedEvents(void);
         //SERIES
-        int ReadSeries(bool isRec);
         int ReadSeriesFast(long &maxscrsp); // read all series with event or recording from sql-db
         int ReadSeriesContentFast(int &newImages, int &newSeasonPoster); // read all episodes/actors/media from all series where series->updatecontent = true
         int ReadEpisodesContentFast(cTVDBSeries *series); // read all episodes for current series with event or recording from sql-db
@@ -69,15 +68,7 @@ class cUpdate : public cThread  {
         void CheckSeriesMedia(cTVDBSeries *series, int mediaType, int imgWidth, int imgHeight, string imgName, int season, bool needRefresh); // create media if not exists in series, update size, path, needRefresh of media
         void ReadSeriesImagesFast(int &newImages, int &emptyImages); // read all images with needrefresh from sql-db
         bool ReadSeriesImageFast(int seriesId, int season, int episodeId, int actorId, int mediaType, cTVDBMedia *media, cTVDBMedia *mediaThumb); // read real image data from sql-db
-        void ReadEpisode(int episodeId, cTVDBSeries *series, string path);
-        void LoadEpisodeImage(cTVDBSeries *series, int episodeId, string path);
-        void LoadSeasonPoster(cTVDBSeries *series, int season, string path);
-        void ReadSeriesActors(cTVDBSeries *series, string path);
-        void LoadSeriesMedia(cTVDBSeries *series, string path);
-        string LoadMediaSeries(int seriesId, int mediaType, string path, int width, int height);
-        void LoadSeriesActorThumb(cTVDBSeries *series, int actorId, string path);
         //MOVIES
-        int ReadMovies(bool isRec);
         int ReadMoviesFast(long &maxscrsp); // read all movies with event or recording from sql-db
         int ReadMoviesContentFast(void); // read all actors/media from all movies where movie->updateimages = true
         int ReadMovieActorsFast(cMovieDbMovie *movie); // read all actor for current movie from sql-db
@@ -85,10 +76,6 @@ class cUpdate : public cThread  {
         void CheckMovieMedia(cMovieDbMovie *movie, int mediaType, int imgWidth, int imgHeight, string imgName, bool needRefresh); // create media if not exists in movie, update size, path, needRefresh of media
         int ReadMovieImagesFast(void); // read all images with needrefresh from sql-db
         bool ReadMovieImageFast(int movieId, int actorId, int mediaType, cMovieMedia *media, cMovieMedia *mediaThumb); // read real image data from sql-db
-        void ReadMovieActors(cMovieDbMovie *movie);
-        void LoadMovieActorThumbs(cMovieDbMovie *movie);
-        void LoadMovieMedia(cMovieDbMovie *movie, string moviePath);
-        string LoadMediaMovie(int movieId, int mediaType, string path, int width, int height);
         //RECORDINGS
         int ReadRecordings(void);
         int ScanVideoDir(void);
@@ -105,16 +92,7 @@ class cUpdate : public cThread  {
 
       cDbStatement* selectReadScrapedEventsInit;
       cDbStatement* selectReadScrapedEvents;
-      cDbStatement* selectImg;
-      cDbStatement* selectEpisodeImg;
-      cDbStatement* selectSeasonPoster;
-      cDbStatement* selectActors;
-      cDbStatement* selectActorThumbs;
-      cDbStatement* selectSeriesMedia;
       cDbStatement* selectMovieActors;
-      cDbStatement* selectMovieActorThumbs;
-      cDbStatement* selectMovieMedia;
-      cDbStatement* selectMediaMovie;
       cDbStatement* selectRecordings;
       cDbStatement* selectCleanupRecordings;
       cDbStatement* clearTempEpisodeTable;
@@ -130,14 +108,11 @@ class cUpdate : public cThread  {
       cDbStatement* selectMovieImage; // statement to select one single image from movie_media (with binary image data)
 
       cDbValue imageSize;
-      cDbValue episodeImageSize;
-      cDbValue posterSize;
       cDbValue series_id;
       cDbValue event_scrsp;
       cDbValue events_ScrSeriesId;
       cDbValue episode_LastUpdate;
       cDbValue vdr_uuid;
-      cDbValue actorImageSize;
 
       cDbValue actorRole;
       cDbValue actorMovie;

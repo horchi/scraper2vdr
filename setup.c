@@ -22,7 +22,6 @@ void cScraper2VdrSetup::Setup(void) {
     free(buf);
     cList<cOsdItem>::Last()->SetSelectable(false);
     Add(new cMenuEditBoolItem(tr("Show Main Menu Entry"), &tmpConfig.mainMenuEntry));
-    Add(new cMenuEditBoolItem(tr("Fast Mode"), &tmpConfig.fastmode));
     Add(new cMenuEditIntItem(tr("Thumbnail Height"), &tmpConfig.thumbHeight));
     Add(new cMenuEditBoolItem(tr("Fixed Poster Size (resize,stretch,crop)"), &tmpConfig.useFixPosterSize));
     Add(new cMenuEditIntItem(tr("Poster Width (default 500)"), &tmpConfig.fixPosterWidth));
@@ -78,25 +77,25 @@ eOSState cScraper2VdrSetup::ProcessKey(eKeys Key) {
         }
         default:
         {
-            if ((NORMALKEY(Key) == kOk) && (Current()>=19) && (Current()<=24)) {
+            if ((NORMALKEY(Key) == kOk) && (Current()>=18) && (Current()<=23)) {
                 // handle ok for action entries
                 Store();
-                if (Current() == 19) {
+                if (Current() == 18) {
                     Skins.Message(mtInfo, tr("Updating Scraper EPG Information from Database"));
                     update->ForceUpdate();
-                } else if (Current() == 20) {
+                } else if (Current() == 19) {
                     Skins.Message(mtInfo, tr("Updating Scraper Recordings Information from Database"));
                     update->ForceRecordingUpdate();
-                } else if (Current() == 21) {
+                } else if (Current() == 20) {
                     Skins.Message(mtInfo, tr("Scanning for new recordings in video directory"));
                     update->ForceVideoDirUpdate();
-                } else if (Current() == 22 ) {
+                } else if (Current() == 21 ) {
                     Skins.Message(mtInfo, tr("Scanning for new or updated scrapinfo files"));
                     update->ForceScrapInfoUpdate();
-                } else if (Current() == 23) {
+                } else if (Current() == 22) {
                     Skins.Message(mtInfo, tr("Cleaning up Recordings in Database"));
                     update->TriggerCleanRecordingsDB();
-                } else if (Current() == 24) {
+                } else if (Current() == 23) {
                     Skins.Message(mtInfo, tr("Loading Series, Movies and Images from Database"));
                     update->ForceFullUpdate();
                 }
@@ -122,7 +121,6 @@ void cScraper2VdrSetup::Store(void) {
     SetupStore("DbName", tmpConfig.dbName);
     SetupStore("DbUser", tmpConfig.dbUser);
     SetupStore("DbPass", tmpConfig.dbPass);
-    SetupStore("fastmode", tmpConfig.fastmode);
     SetupStore("LogLevel", tmpConfig.loglevel);
     SetupStore("thumbHeight", tmpConfig.thumbHeight);
     SetupStore("useFixPosterSize", tmpConfig.useFixPosterSize);

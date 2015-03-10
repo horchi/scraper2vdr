@@ -30,9 +30,6 @@ public:
     vector<string>& split(char delim, int rep=0);
 };
 
-//Image Functions
-void CreateThumbnail(string sourcePath, string destPath, int origWidth, int origHeight, int shrinkFactor);
-
 // calc used thumb size (depends on thumbHeight)
 void CalcThumbSize(int originalWidth, int originalHeight, int thumbHeight, int& usedWidth, int& usedHeight);
 

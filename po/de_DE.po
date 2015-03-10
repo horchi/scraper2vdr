@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: vdr-scraper2vdr 0.0.1\n"
 "Report-Msgid-Bugs-To: <see README>\n"
-"POT-Creation-Date: 2015-03-10 09:33+0100\n"
+"POT-Creation-Date: 2015-03-10 22:22+0100\n"
 "PO-Revision-Date: 2014-03-30 18:30+0100\n"
 "Last-Translator: 3PO\n"
 "Language-Team: German <vdr@linuxtv.org>\n"
@@ -56,9 +56,6 @@ msgstr "Allgemein"
 
 msgid "Show Main Menu Entry"
 msgstr "Hauptmenüeintrag anzeigen"
-
-msgid "Fast Mode"
-msgstr "Neuer Datenbankparser"
 
 msgid "Thumbnail Height"
 msgstr "Höhe der Miniaturbilder"

@@ -77,3 +77,9 @@ Version 0.1.11
   because of that all thumbnails will have the same size also (using definend thumbnail height)
   this is a enhancement for skin, because now they can calculate with a fixed poster size and aspect ratio
   Warning, this functionality need more CPU power. But the CPU load should not reach problematic levels, because a sleep is used periodically.
+
+Version 0.1.12
+- fixed wrong poster thumbnail width in service calls (introduced in 0.1.11)
+  this was only a visibility problem, the stored files are ok
+- removed option for using new DB parser
+- removed all code of old DB parser

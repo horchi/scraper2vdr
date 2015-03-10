@@ -26,7 +26,6 @@ cScraper2VdrConfig::cScraper2VdrConfig()
    imgDirSet = no;
    imageDir = "";
    recScrapInfoName = "scrapinfo";
-   fastmode = yes;
    thumbHeight = 200;
    useFixPosterSize = no;
    fixPosterWidth = 500;
@@ -91,7 +90,6 @@ bool cScraper2VdrConfig::SetupParse(const char *Name, const char *Value)
        sstrcpy(dbPass, Value, sizeof(dbPass));
        NewDBPass = true;
    }    
-   else if (strcasecmp(Name, "fastmode") == 0)      fastmode = atoi(Value);
    else if (strcasecmp(Name, "thumbHeight") == 0)   thumbHeight = atoi(Value);
    else if (strcasecmp(Name, "useFixPosterSize") == 0)   useFixPosterSize = atoi(Value);
    else if (strcasecmp(Name, "fixPosterWidth") == 0)   fixPosterWidth = atoi(Value);

@@ -169,28 +169,12 @@ vector<string>& splitstring::split(char delim, int rep) {
     return flds;
 }
 
-void CreateThumbnail(string sourcePath, string destPath, int origWidth, int origHeight, int shrinkFactor) {
-    if (sourcePath.size() < 5 || destPath.size() < 5 || shrinkFactor < 2)
-        return;
-    
-    int thumbWidth = origWidth / shrinkFactor;
-    int thumbHeight = origHeight / shrinkFactor;
-
-    InitializeMagick(NULL);
-    Image buffer;
-    try {
-        buffer.read(sourcePath.c_str());
-        buffer.sample(Geometry(thumbWidth, thumbHeight)); 
-        buffer.write(destPath.c_str());
-    } catch( ... ) {}
-}
-
 // calc used thumb size (depends on thumbHeight)
 void CalcThumbSize(int originalWidth, int originalHeight, int thumbHeight, int& usedWidth, int& usedHeight) {
     if ((thumbHeight < originalHeight) && (originalHeight > 0)) {
         usedHeight = thumbHeight;
-        float factor = usedHeight/originalHeight;
-        usedWidth = factor*originalWidth;
+        float factor = float(usedHeight)/float(originalHeight);
+        usedWidth = round(float(factor)*float(originalWidth));
     } else {
         usedHeight = originalHeight;
         usedWidth = originalWidth;
@@ -234,8 +218,8 @@ void HandleImage(string imagePath, int originalWidth, int originalHeight,
                         if (tempY > tempX)
                             scaleUsed = tempY; // force side with larger scale factor get desired size
            
-                        int tempWidth = float(originalWidth) * scaleUsed; // calc new image size using current scale factor
-                        int tempHeight = float(originalHeight) * scaleUsed;
+                        int tempWidth = round(float(originalWidth) * scaleUsed); // calc new image size using current scale factor
+                        int tempHeight = round(float(originalHeight) * scaleUsed);
                
                         // calc distortion factor
                         tempX = float(tempWidth) / float(newWidth);
@@ -252,8 +236,8 @@ void HandleImage(string imagePath, int originalWidth, int originalHeight,
                             tempY = 1 + maxDistortion;
                
                         // calc image size using current distortion factor
-                        tempWidth = float(tempWidth) / tempX;
-                        tempHeight = float(tempHeight) / tempY; 
+                        tempWidth = round(float(tempWidth) / tempX);
+                        tempHeight = round(float(tempHeight) / tempY); 
            
                         tell(3,"scale image %s from %dx%d to %dx%d",imagePath.c_str(),originalWidth,originalHeight,newWidth,newHeight);
                         if ((tempWidth != originalWidth) || (tempHeight != originalHeight)) {
@@ -265,6 +249,9 @@ void HandleImage(string imagePath, int originalWidth, int originalHeight,
                         }    
                         if ((tempWidth != newWidth) || (tempHeight != newHeight))
                             buffer.crop(Geometry(newWidth, newHeight, (tempWidth - newWidth)/2, (tempHeight - newHeight)/2)); // crop to desired size
+                        if ((int(buffer.columns()) != newWidth) || (int(buffer.rows()) != newHeight)) {
+                            tell(3,"wrong result image size %ldx%ld",buffer.columns(),buffer.rows());
+                        }    
                         buffer.write(imagePath.c_str()); // overwrite source image
                     }    
                 
