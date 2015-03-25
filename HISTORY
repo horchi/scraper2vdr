@@ -83,3 +83,7 @@ Version 0.1.12
   this was only a visibility problem, the stored files are ok
 - removed option for using new DB parser
 - removed all code of old DB parser
+
+Version 0.1.13 (horchi)
+- fixed format string handling at call of deleteWhere
+- added format string to deleteWhere to avoid buggy format strings

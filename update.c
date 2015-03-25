@@ -2023,7 +2023,7 @@ int cUpdate::CleanupRecordings(void) {
             mysql_real_escape_string(connection->getMySql(), escapedPath, recPath.c_str(), recPath.size());            
             stringstream delWhere("");
             delWhere << "uuid = '" << scraper2VdrConfig.uuid << "' and rec_path = '" << escapedPath << "' and rec_start = " << recStart;
-            tRecordings->deleteWhere(delWhere.str().c_str());
+            tRecordings->deleteWhere("%s", delWhere.str().c_str());
             numRecsDeleted++;
         }
     }

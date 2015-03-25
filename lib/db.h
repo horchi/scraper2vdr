@@ -897,7 +897,7 @@ class cDbTable : public cDbService
       virtual int update();
       virtual int store();
 
-      virtual int deleteWhere(const char* where, ...);
+      virtual int __attribute__ ((format(printf, 2, 3))) deleteWhere(const char* where, ...);
       virtual int countWhere(const char* where, int& count, const char* what = 0);
       virtual int truncate();
 
