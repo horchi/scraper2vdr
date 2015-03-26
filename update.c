@@ -2008,27 +2008,35 @@ int cUpdate::CleanupMovies(void) {
     return deletedMovies;
 }
 
-int cUpdate::CleanupRecordings(void) {
-    // delete all not anymore existing recordings in database
+int cUpdate::CleanupRecordings(void) 
+{
+   // delete all not anymore existing recordings in database
+   
+   tRecordings->clear();
+   tRecordings->setValue("UUID", scraper2VdrConfig.uuid);
+   int numRecsDeleted = 0;
+   
+   for (int res = selectCleanupRecordings->find(); res; res = selectCleanupRecordings->fetch()) 
+   {
+      int recStart = tRecordings->getIntValue("RECSTART");
+      const char* recPath = tRecordings->getStrValue("RECPATH");
+      
+      if (!Recordings.GetByName(recPath)) 
+      {
+         char escapedPath[2*strlen(recPath) + 1];
 
-    tRecordings->clear();
-    tRecordings->setValue("UUID", scraper2VdrConfig.uuid);
-    int numRecsDeleted = 0;
+         mysql_real_escape_string(connection->getMySql(), escapedPath, recPath, strlen(recPath));
 
-    for (int res = selectCleanupRecordings->find(); res; res = selectCleanupRecordings->fetch()) {
-        int recStart = tRecordings->getIntValue("RECSTART");
-        string recPath = tRecordings->getStrValue("RECPATH");
-        if (!Recordings.GetByName(recPath.c_str())) {
-            char escapedPath[recPath.size()+1];
-            mysql_real_escape_string(connection->getMySql(), escapedPath, recPath.c_str(), recPath.size());            
-            stringstream delWhere("");
-            delWhere << "uuid = '" << scraper2VdrConfig.uuid << "' and rec_path = '" << escapedPath << "' and rec_start = " << recStart;
-            tRecordings->deleteWhere("%s", delWhere.str().c_str());
-            numRecsDeleted++;
-        }
-    }
-    selectCleanupRecordings->freeResult();
-    return numRecsDeleted;
+         tRecordings->deleteWhere("uuid = '%s' and rec_path = '%s' and rec_start = %d",
+                                  scraper2VdrConfig.uuid, escapedPath, recStart);
+
+         numRecsDeleted++;
+      }
+   }
+   
+   selectCleanupRecordings->freeResult();
+   
+   return numRecsDeleted;
 }
 
 // check if we should abort execution (thread stoped), also check if we should call waitCondition.TimedWait (so other processes can use the CPU) 
