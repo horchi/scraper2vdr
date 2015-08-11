@@ -121,8 +121,12 @@ int cUpdate::initDb() {
     vdrDb = new cDbTable(connection, "vdrs");
     if (vdrDb->open() != success) return fail;
 
-    // Check if the column scrsp exists in recordings table
     bool recordingScrSPExist = true;
+/*
+  // REMOVED due to http branch porting!
+
+    // Check if the column scrsp exists in recordings table
+
     cDbTableDef* recordingsDef = dbDict.getTable("recordings");
     if (recordingsDef) {
         const char* select = "select max(%s) from %s";
@@ -136,7 +140,7 @@ int cUpdate::initDb() {
             tell(0,"ATTENTION. Old version of epgd database without recordings.scrsp field detected. Update to newer version of epgd is suggested to obtain full optimized refresh handling (please do not forget to alter tables after update!)");
         }    
     }    
-    
+*/    
     tEvents = new cDbTable(connection, "events");
     if (tEvents->open() != success) return fail;
 
@@ -307,7 +311,7 @@ int cUpdate::initDb() {
                                 tRecordings->getField("EPISODEID")->getDbName(),
                                 tEvents->getField("SCRSERIESEPISODE")->getDbName(),
                                 tRecordings->TableName());
-    fillTempEpisodeTable->build("where (episode_id > 0) and (",
+    fillTempEpisodeTable->build("where (%s > 0) and (",
                                 tRecordings->getField("EPISODEID")->getDbName());
     fillTempEpisodeTable->bind(&series_id, cDBS::bndIn | cDBS::bndSet);
     fillTempEpisodeTable->build(") and (");
@@ -753,7 +757,7 @@ int cUpdate::initDb() {
 int cUpdate::LoadDBDict(void) {
    char* dictPath = 0;
 
-   dbDict.clear(); // clear all old data
+   dbDict.forget();       // clear all old data
    
    asprintf(&dictPath, "%sepg.dat", cPlugin::ConfigDirectory("scraper2vdr/"));
    dbDict.setFilterFromNameFct(toFieldFilter);

@@ -86,6 +86,28 @@ const char* getLogPrefix();
 void __attribute__ ((format(printf, 2, 3))) tell(int eloquence, const char* format, ...);
 
 //***************************************************************************
+// Syslog 
+//***************************************************************************
+
+class Syslog
+{
+   public:
+      
+      struct Facilities
+      {
+         const char* name;                                            // #83
+         int code;
+      };
+
+      static const Facilities facilities[];
+
+      static char* toName(int code);
+      static int toCode(const char* name);
+
+      static int syslogFacility;
+};
+
+//***************************************************************************
 // 
 //***************************************************************************
 
@@ -229,10 +251,15 @@ void removeChars(std::string& str, const char* ignore);
 void removeCharsExcept(std::string& str, const char* except);
 void removeWord(std::string& pattern, std::string word);
 void prepareCompressed(std::string& pattern);
+std::string strReplace(const std::string& what, const std::string& with, const std::string& subject);
+std::string strReplace(const std::string& what, long with, const std::string& subject);
+std::string strReplace(const std::string& what, double with, const std::string& subject);
 
 char* rTrim(char* buf);
 char* lTrim(char* buf);
 char* allTrim(char* buf);
+
+int isMember(const char** list, const char* item);
 char* sstrcpy(char* dest, const char* src, int max);
 std::string num2Str(int num);
 time_t timeOf(time_t t);
@@ -241,8 +268,9 @@ const char* toWeekdayName(uint day);
 time_t hhmmOf(time_t t);
 int l2hhmm(time_t t);
 time_t midnightOf(time_t t);
-std::string l2pTime(time_t t);
+std::string l2pTime(time_t t, const char* format = "%d.%m.%Y %T");
 std::string l2pDate(time_t t);
+std::string l2HttpTime(time_t t);
 std::string ms2Dur(uint64_t t);
 const char* c2s(char c, char* buf);
 char* eos(char* s);
@@ -256,7 +284,7 @@ int fileSize(const char* path);
 time_t fileModTime(const char* path);
 int createLink(const char* link, const char* dest, int force);
 int isLink(const char* path);
-const char*  suffixOf(const char* path);
+const char* suffixOf(const char* path);
 int isEmpty(const char* str);
 const char* notNull(const char* str);
 int isZero(const char* str);

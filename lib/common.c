@@ -34,7 +34,7 @@
 cMyMutex logMutex;
 
 //***************************************************************************
-// Debug
+// Tell
 //***************************************************************************
 
 const char* getLogPrefix() 
@@ -47,11 +47,21 @@ void tell(int eloquence, const char* format, ...)
    if (cEpgConfig::loglevel < eloquence)
       return ;
 
+   logMutex.Lock();
+
+#ifndef VDR_PLUGIN
+   static int init = no;
+
+   if (!init)
+   {
+      init = yes;
+      openlog(cEpgConfig::logName, LOG_CONS, cEpgConfig::logFacility);
+   }
+#endif
+
    const int sizeBuffer = 100000;
    char t[sizeBuffer+100]; *t = 0;
    va_list ap;
-
-   logMutex.Lock();
 
    va_start(ap, format);
 
@@ -81,6 +91,60 @@ void tell(int eloquence, const char* format, ...)
    logMutex.Unlock();
 
    va_end(ap);
+}
+
+//***************************************************************************
+// Syslog Facilities
+//***************************************************************************
+
+const Syslog::Facilities Syslog::facilities[] =
+{
+   { "auth",     LOG_AUTH   },
+   { "cron",     LOG_CRON   },
+   { "daemon",   LOG_DAEMON },
+   { "kern",     LOG_KERN   },
+   { "lpr",      LOG_LPR    },
+   { "mail",     LOG_MAIL   },
+   { "news",     LOG_NEWS   },
+   { "security", LOG_AUTH   },
+   { "syslog",   LOG_SYSLOG },
+   { "user",     LOG_USER   },
+   { "uucp",     LOG_UUCP   },
+   { "local0",   LOG_LOCAL0 },
+   { "local1",   LOG_LOCAL1 },
+   { "local2",   LOG_LOCAL2 },
+   { "local3",   LOG_LOCAL3 },
+   { "local4",   LOG_LOCAL4 },
+   { "local5",   LOG_LOCAL5 },
+   { "local6",   LOG_LOCAL6 },
+   { "local7",   LOG_LOCAL7 },
+   { 0, 0 }
+};
+
+//***************************************************************************
+// To Name
+//***************************************************************************
+
+char* Syslog::toName(int code)
+{
+   for (int i = 0; facilities[i].name; i++)
+      if (facilities[i].code == code)
+         return (char*) facilities[i].name;                           // #83
+
+   return 0;
+}
+
+//***************************************************************************
+// To Code
+//***************************************************************************
+
+int Syslog::toCode(const char* name)
+{
+   for (int i = 0; facilities[i].name; i++)
+      if (strcmp(facilities[i].name, name) == 0)
+         return facilities[i].code;
+
+   return na;
 }
 
 //***************************************************************************
@@ -347,6 +411,38 @@ char* allTrim(char* buf)
    return lTrim(rTrim(buf));
 }
 
+std::string strReplace(const std::string& what, const std::string& with, const std::string& subject)
+{
+   std::string str = subject;
+   size_t pos = 0;
+   
+   while((pos = str.find(what, pos)) != std::string::npos) 
+   {
+      str.replace(pos, what.length(), with);
+      pos += with.length();
+   }
+
+   return str;
+}
+
+std::string strReplace(const std::string& what, long with, const std::string& subject)
+{
+   char swith[100];
+
+   sprintf(swith, "%ld", with);
+
+   return strReplace(what, swith, subject);
+}
+
+std::string strReplace(const std::string& what, double with, const std::string& subject)
+{
+   char swith[100];
+
+   sprintf(swith, "%.2f", with);
+
+   return strReplace(what, swith, subject);
+}
+
 //***************************************************************************
 // Number to String
 //***************************************************************************
@@ -364,12 +460,12 @@ std::string num2Str(int num)
 // Long to Pretty Time
 //***************************************************************************
 
-std::string l2pTime(time_t t)
+std::string l2pTime(time_t t, const char* format)
 {
-   char txt[30];
+   char txt[100];
    tm* tmp = localtime(&t);
    
-   strftime(txt, sizeof(txt), "%d.%m.%Y %T", tmp);
+   strftime(txt, sizeof(txt), format, tmp);
    
    return std::string(txt);
 }
@@ -382,6 +478,35 @@ std::string l2pDate(time_t t)
    strftime(txt, sizeof(txt), "%d.%m.%Y", tmp);
    
    return std::string(txt);
+}
+
+//***************************************************************************
+// To HTTP Header Date Format
+//***************************************************************************
+
+std::string l2HttpTime(time_t t)
+{
+   char date[128+TB];
+   tm now;
+
+   static const char *const days[] =
+      { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
+
+   static const char *const mons[] = 
+      { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+   
+   gmtime_r(&t, &now);
+
+   sprintf(date, "%3s, %02u %3s %04u %02u:%02u:%02u GMT",
+           days[now.tm_wday % 7],
+           (unsigned int)now.tm_mday,
+           mons[now.tm_mon % 12],
+           (unsigned int)(1900 + now.tm_year),
+           (unsigned int)now.tm_hour, 
+           (unsigned int)now.tm_min, 
+           (unsigned int)now.tm_sec);
+
+   return std::string(date);
 }
 
 //***************************************************************************
@@ -641,6 +766,22 @@ int isZero(const char* str)
    }
 
    return yes;
+}
+
+//***************************************************************************
+// Is Member
+//***************************************************************************
+
+int isMember(const char** list, const char* item)
+{
+   const char** p;
+   int i;
+
+   for (i = 0, p = list; *p; i++, p++)
+      if (strcmp(*p, item) == 0)
+         return i;
+
+   return na;
 }
 
 //***************************************************************************

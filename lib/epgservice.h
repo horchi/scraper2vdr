@@ -72,6 +72,15 @@ enum TimerNamingMode
 
 };
 
+enum TimerState
+{
+   tsPending  = 'P',
+   tsRunning  = 'R',
+   tsFinished = 'F',
+   tsDeleted  = 'D',
+   tsError    = 'E'
+};
+
 enum TimerDoneState
 {
    tdsTimerRequested     = 'Q',  // timer requested by epgd/webif
@@ -81,8 +90,38 @@ enum TimerDoneState
    tdsRecordingDone      = 'R',  // Recording finished successfull
    tdsRecordingFailed    = 'F',  // Recording failed
 
-   tdsTimerDeleted       = 'D'   // timer deleted by user
+   tdsTimerDeleted       = 'D',  // timer deleted by user
+   tdsTimerRejected      = 'J'   // timer rejected due to user action or timer conflict
 };
+
+enum UserMask
+{
+   umNone            = 0x0,
+   umAll             = 0xFFFFFFFF,
+
+   umConfig          = 0x1,
+   umConfigEdit      = 0x2,
+   umConfigUsers     = 0x4,
+
+   umFree3           = 0x8,
+
+   umTimer           = 0x10,
+   umTimerEdit       = 0x20,
+   umSearchTimer     = 0x40,
+   umSearchTimerEdit = 0x80,
+
+   umFree5           = 0x100,
+
+   umFsk             = 0x200,
+
+   umFree6           = 0x400,
+   umFree7           = 0x800,
+
+   umRecordings      = 0x1000,
+   umRecordingsEdit  = 0x2000
+};
+
+int hasUserMask(unsigned int rights, UserMask mask);
 
 //***************************************************************************
 // cEpgdState
@@ -148,7 +187,8 @@ class cUpdateState
          // don't care for VDRs EPG
          
          usInactive    = 'I',
-         usTarget      = 'T'
+         usTarget      = 'T',
+         usMergeSpare  = 'S'
       };
 
       // get lists for SQL 'in' statements

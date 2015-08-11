@@ -30,6 +30,7 @@ void initConnection()
    cDbConnection::init(0x3db00011);
 
    cDbConnection::setEncoding("utf8");
+   // cDbConnection::setHost("192.168.200.101");
    cDbConnection::setHost("localhost");
    cDbConnection::setPort(3306);
    cDbConnection::setName("epg2vdr");
@@ -452,6 +453,140 @@ int insertTag(char* xml, const char* parent, const char* tag, int value)
 }
 
 //***************************************************************************
+// 
+//***************************************************************************
+
+void statementrecording()
+{
+   int insert;
+
+   tell(0, "---------------------------------");
+
+   cDbTable* recordingListDb = new cDbTable(connection, "recordinglist");
+   if (recordingListDb->open() != success) return ;
+
+   recordingListDb->clear();
+
+#ifdef USEMD5   
+   md5Buf md5path;
+   createMd5("rec->FileName() dummy", md5path);
+   recordingListDb->setValue("MD5PATH", md5path);
+#else
+   recordingListDb->setValue("MD5PATH", "dummy");
+#endif
+
+   recordingListDb->setValue("START", 12121212);
+   
+   insert = !recordingListDb->find();
+   recordingListDb->clearChanged();
+
+   tell(0, "#1 %d changes", recordingListDb->getChanges());
+   
+   recordingListDb->setValue("PATH", "rec->FileName()");
+   recordingListDb->setValue("TITLE", "title");
+   recordingListDb->setValue("SHORTTEXT", "subTitle");
+   recordingListDb->setValue("DESCRIPTION", "description");
+
+   recordingListDb->setValue("DURATION", 120*60);
+   recordingListDb->setValue("EVENTID", 1212);
+   recordingListDb->setValue("CHANNELID", "xxxxxx");
+
+   tell(0, "#2 %d changes", recordingListDb->getChanges());
+   recordingListDb->setValue("FSK", yes);
+   tell(0, "#3 %d changes", recordingListDb->getChanges());
+
+   // don't toggle uuid if already set!
+   
+   if (recordingListDb->getValue("VDRUUID")->isNull())
+      recordingListDb->setValue("VDRUUID", "11111");
+   
+   if (insert || recordingListDb->getChanges())
+   {
+      tell(0, "storing '%s' due to %d changes ", insert ? "insert" : "update", recordingListDb->getChanges());
+      recordingListDb->store();
+   }
+   
+   recordingListDb->reset();
+
+   tell(0, "---------------------------------");
+
+   delete recordingListDb;
+}
+
+//***************************************************************************
+// 
+//***************************************************************************
+
+void statementTimer()
+{
+   cDbValue timerState;
+   cDbFieldDef timerStateDef("STATE", "state", cDBS::ffAscii, 100, cDBS::ftData);
+
+   cEpgConfig::loglevel = 0;
+
+   cDbTable* timerDb = new cDbTable(connection, "timers");
+   if (timerDb->open() != success) return ;
+
+   cDbTable* useeventsDb = new cDbTable(connection, "useevents");
+   if (useeventsDb->open() != success) return ;
+
+   // select t.*,
+   //       e.eventid, e.channelid, e.title, e.shorttext, e.shortdescription, e.category, e.genre, e.tipp
+   //    from timers t left outer join events e 
+   //       on (t.eventid = e.masterid and e.updflg in (...))
+   //    where 
+   //      t.state in (?)
+
+   timerState.setField(&timerStateDef);
+
+   cDbStatement* selectAllTimer = new cDbStatement(timerDb);
+   
+   selectAllTimer->build("select ");
+   selectAllTimer->setBindPrefix("t.");
+   selectAllTimer->bindAllOut();
+   selectAllTimer->setBindPrefix("e.");
+   selectAllTimer->bind(useeventsDb, "USEID", cDBS::bndOut, ", ");
+   selectAllTimer->bind(useeventsDb, "CHANNELID", cDBS::bndOut, ", ");
+   selectAllTimer->bind(useeventsDb, "TITLE", cDBS::bndOut, ", ");
+   selectAllTimer->bind(useeventsDb, "SHORTTEXT", cDBS::bndOut, ", ");
+   selectAllTimer->bind(useeventsDb, "SHORTDESCRIPTION", cDBS::bndOut, ", "); 
+   selectAllTimer->bind(useeventsDb, "CATEGORY", cDBS::bndOut, ", ");
+   selectAllTimer->bind(useeventsDb, "GENRE", cDBS::bndOut, ", ");
+   selectAllTimer->bind(useeventsDb, "TIPP", cDBS::bndOut, ", ");
+   selectAllTimer->clrBindPrefix();
+   selectAllTimer->build(" from %s t left outer join %s e", 
+                         timerDb->TableName(), "eventsviewplain");
+   selectAllTimer->build(" on (t.eventid = e.cnt_useid) and e.updflg in (%s)", Us::getVisible());
+
+   selectAllTimer->setBindPrefix("t.");
+   selectAllTimer->build(" where ");
+   selectAllTimer->bindInChar(0, "STATE", &timerState);
+
+   cEpgConfig::loglevel = 2;
+   selectAllTimer->prepare();
+
+   // ---------------------------------
+
+   timerDb->clear();
+   timerState.setValue("A,D,P");
+
+   tell(0, "---------------------------------");
+
+   for (int found = selectAllTimer->find(); found; found = selectAllTimer->fetch())
+   {
+      tell(0, "%ld) %s - %s", 
+           timerDb->getIntValue("ID"),
+           timerDb->getStrValue("STATE"),
+           timerDb->getStrValue("FILE"));
+   }
+
+   tell(0, "---------------------------------");
+
+   delete selectAllTimer;
+   delete timerDb;
+}
+
+//***************************************************************************
 // Main
 //***************************************************************************
 
@@ -460,18 +595,21 @@ int main(int argc, char** argv)
    cEpgConfig::logstdout = yes;
    cEpgConfig::loglevel = 2;
 
-   int timerId = getTimerIdOf(argv[1]);
-   char aux[10000+TB];
-   strcpy(aux, argv[1]);
+   if (argc > 1)
+   {
+      int timerId = getTimerIdOf(argv[1]);
+      char aux[10000+TB];
+      strcpy(aux, argv[1]);
+      
+      tell(0, "TimerId = %d", timerId);
+      
+      removeTag(aux, "timerid");
+      tell(0, "aux: '%s'", aux);
+      insertTag(aux, "epgd", "timerid", 677776);
+      tell(0, "aux: '%s'", aux);
 
-   tell(0, "TimerId = %d", timerId);
-
-   removeTag(aux, "timerid");
-   tell(0, "aux: '%s'", aux);
-   insertTag(aux, "epgd", "timerid", 677776);
-   tell(0, "aux: '%s'", aux);
-
-   return 0;
+      return 0;
+   }
 
    setlocale(LC_CTYPE, "");
    char* lang = setlocale(LC_CTYPE, 0);
@@ -490,9 +628,9 @@ int main(int argc, char** argv)
       tell(0, "Reseting locale for LC_CTYPE failed.");
    }
 
-   // read deictionary
+   // read dictionary
 
-   if (dbDict.in("epg.dat") != success)
+   if (dbDict.in("epg-demo.dat") != success)
    {
       tell(0, "Invalid dictionary configuration, aborting!");
       return 1;
@@ -506,7 +644,8 @@ int main(int argc, char** argv)
 
 //    tell(0, "duration was: '%s'", ms2Dur(2340).c_str());
 
-   chkStatement1();
+   statementTimer();
+   statementrecording();
    // chkStatement2();
    // chkStatement3();
    // chkStatement4();

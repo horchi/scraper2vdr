@@ -5,6 +5,8 @@
  *
  */
 
+#include <syslog.h>
+
 #include "config.h"
 
 //***************************************************************************
@@ -13,6 +15,8 @@
 
 int cEpgConfig::logstdout = no;
 int cEpgConfig::loglevel = 1;
+int cEpgConfig::logFacility = LOG_USER;
+const char* cEpgConfig::logName = "unknown";
 
 //***************************************************************************
 // Common EPG Service Configuration

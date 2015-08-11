@@ -53,6 +53,8 @@ const char* cDbService::formats[] =
 {
    "INT",
    "INT",
+   "BIGINT",
+   "BIGINT",
    "VARCHAR",
    "TEXT",
    "MEDIUMTEXT",
@@ -72,6 +74,8 @@ const char* cDbService::dictFormats[] =
 {
    "int",
    "uint",
+   "bigint",
+   "ubigint",
    "ascii",
    "text",
    "mtext",
@@ -165,7 +169,17 @@ cDbDict::cDbDict()
 
 cDbDict::~cDbDict()
 {
-   clear(); 
+   std::map<std::string, cDbTableDef*>::iterator t;
+
+   while ((t = tables.begin()) != tables.end())
+   {
+      if (t->second)
+         delete t->second;
+
+      tables.erase(t);
+   }
+
+   free(path);
 }
 
 //***************************************************************************
@@ -198,31 +212,6 @@ int cDbDict::init(cDbFieldDef*& field, const char* tname, const char* fname)
 
    return fail;
 }
-
-//***************************************************************************
-// clear/reset all values
-//***************************************************************************
-
-void cDbDict::clear()
-{
-   std::map<std::string, cDbTableDef*>::iterator t;
-
-   while ((t = tables.begin()) != tables.end())
-   {
-      if (t->second)
-         delete t->second;
-
-      tables.erase(t);
-   }
-
-   free(path);
-   
-   curTable = 0;
-   inside = no;
-   path = 0;
-   fieldFilter = 0;   // 0 -> filter off use all fields
-   fltFromNameFct = 0;
-}    
 
 //***************************************************************************
 // In
@@ -272,6 +261,31 @@ int cDbDict::in(const char* file, int filter)
 
    return success;
 }
+
+//***************************************************************************
+// Forget
+//***************************************************************************
+
+void cDbDict::forget()
+{
+   std::map<std::string, cDbTableDef*>::iterator t;
+
+   while ((t = tables.begin()) != tables.end())
+   {
+      if (t->second)
+         delete t->second;
+
+      tables.erase(t);
+   }
+
+   free(path);
+   
+   curTable = 0;
+   inside = no;
+   path = 0;
+   fieldFilter = 0;   // 0 -> filter off use all fields
+   fltFromNameFct = 0;
+}    
 
 //***************************************************************************
 // Show
@@ -406,7 +420,7 @@ int cDbDict::parseField(const char* line)
       switch (i)
       {
          case dtName:        f->name = strdup(token);         break;
-         case dtDescription: f->description = strdup(token);  break;
+         case dtDescription: f->setDescription(token);        break;
          case dtDbName:      f->dbname = strdup(token);       break;
          case dtFormat:      f->format = toDictFormat(token); break;
          case dtSize:        f->size = atoi(token);           break;

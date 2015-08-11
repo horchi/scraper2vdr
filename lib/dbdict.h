@@ -51,6 +51,8 @@ class cDbService
 
          ffInt,
          ffUInt,
+         ffBigInt,
+         ffUBigInt,
          ffAscii,      // -> VARCHAR
          ffText,
          ffMText,
@@ -122,6 +124,7 @@ class cDbFieldDef : public cDbService
          size = na;
          type = ftUnknown;
          description = 0;
+         dbdescription = 0;
          filter = 0xFFFF;
       }
 
@@ -134,23 +137,30 @@ class cDbFieldDef : public cDbService
          type = t;
          filter = flt;
          description = 0;
+         dbdescription = 0;
       }
 
-      ~cDbFieldDef()  { free(name); free(dbname); free(description); }
+      ~cDbFieldDef()  { free(name); free(dbname); free(description); free(dbdescription); }
       
-      int getIndex()               { return index; }
-      void setIndex(int newIndex)  { index = newIndex; }
-      const char* getName()        { return name; }
-      int hasName(const char* n)   { return strcasecmp(n, name) == 0; }
-      int hasDbName(const char* n) { return strcasecmp(n, dbname) == 0; }
-      const char* getDescription() { return description; } 
-      const char* getDbName()      { return dbname; }
-      int getSize()                { return size; }
-      FieldFormat getFormat()      { return format; }
-      int getType()                { return type; }
-      int getFilter()              { return filter; }
-      int filterMatch(int f)       { return !f || filter & f; }
-      int hasType(int types)       { return types & type; }
+      int getIndex()                 { return index; }
+      const char* getName()          { return name; }
+      int hasName(const char* n)     { return strcasecmp(n, name) == 0; }
+      int hasDbName(const char* n)   { return strcasecmp(n, dbname) == 0; }
+      const char* getDescription()   { return description; } 
+      const char* getDbDescription() { return dbdescription; } 
+      const char* getDbName()        { return dbname; }
+      int getSize()                  { return size; }
+      FieldFormat getFormat()        { return format; }
+      int getType()                  { return type; }
+      int getFilter()                { return filter; }
+      int filterMatch(int f)         { return !f || filter & f; }
+      int hasType(int types)         { return types & type; }
+
+      void setDescription(const char* desc)
+      {
+         description = strdup(desc);
+         dbdescription = strdup(strReplace("'", "\\'", description).c_str());
+      }
 
       const char* toColumnFormat(char* buf) // column type to be used for create/alter
       {
@@ -165,16 +175,18 @@ class cDbFieldDef : public cDbService
             {
                if (format == ffAscii)
                   size = 100;
-               else if (format == ffInt || format == ffUInt || format == ffFloat)
+               else if (format == ffInt || format == ffUInt || format == ffBigInt || format == ffUBigInt)
                   size = 11;
+               else if (format == ffFloat)
+                  size = 10;
             }
             
             if (format == ffFloat)
-               sprintf(eos(buf), "(%d,%d)", size/10, size%10);
+               sprintf(eos(buf), "(%d,%d)", size/10 + size%10, size%10); // 62 -> 8,2
             else if (format == ffInt || format == ffUInt || format == ffAscii)
                sprintf(eos(buf), "(%d)", size);
             
-            if (format == ffUInt)
+            if (format == ffUInt || format == ffUBigInt)
                sprintf(eos(buf), " unsigned");
          }
          
@@ -200,8 +212,7 @@ class cDbFieldDef : public cDbService
 
          sprintf(fType, "(%s)", toName((FieldType)type, tmp));
             
-         tell(0, "%3d %-20s %-25s %-17s %-20s (0x%04X) '%s'", 
-              index, name, dbname, 
+         tell(0, "%-20s %-25s %-17s %-20s (0x%04X) '%s'", name, dbname, 
               toColumnFormat(colFmt), fType, filter, description); 
       }
 
@@ -210,6 +221,7 @@ class cDbFieldDef : public cDbService
       char* name;
       char* dbname;
       char* description;
+      char* dbdescription;
       FieldFormat format;
       int size;
       int index;
@@ -240,7 +252,7 @@ class cDbIndexDef
 
       void show()
       {
-         std::string s;
+         std::string s = "";
 
          for (uint i = 0; i < dfields.size(); i++)
             s += dfields[i]->getName() + std::string(" ");
@@ -271,7 +283,7 @@ class cDbTableDef : public cDbService
 
       cDbTableDef(const char* n)       { name = strdup(n); }
 
-      ~cDbTableDef()
+      ~cDbTableDef()                
       { 
          for (uint i = 0; i < indices.size(); i++)
             delete indices[i];
@@ -309,37 +321,6 @@ class cDbTableDef : public cDbService
             tell(0, "Fatal: Field '%s.%s' doubly defined", getName(), f->getName());
       }
 
-      int removeField(const char* fname)
-      {
-         int found = no;
-         std::map<std::string, cDbFieldDef*, _casecmp_>::iterator f;
-
-         if ((f = dfields.find(fname)) == dfields.end())
-         {
-            tell(0, "Fatal: Missing definition of field '%s.%s' in dictionary!", name, fname);
-            return fail;
-         }
-
-         for (uint i = 0; i < _dfields.size(); i++)
-         {
-            if (_dfields[i]->hasName(fname))
-            {
-               _dfields.erase(_dfields.begin()+i);
-               found = yes;
-            }
-
-            if (found)
-               _dfields[i]->setIndex(_dfields[i]->getIndex()-1);
-         }
-
-         if (f->second)
-            delete f->second;
-         
-         dfields.erase(f);
-
-         return success;
-      }
-
       int indexCount()                    { return indices.size(); }
       cDbIndexDef* getIndex(int i)        { return indices[i]; }
       void addIndex(cDbIndexDef* i)       { indices.push_back(i); }
@@ -355,8 +336,6 @@ class cDbTableDef : public cDbService
             
             dfields.erase(f);
          }
-
-         _dfields.clear();
       }
 
       void show()
@@ -432,7 +411,7 @@ class cDbDict : public cDbService
       void show();
       int init(cDbFieldDef*& field, const char* tname, const char* fname);
       const char* getPath() { return path ? path : ""; }
-      void clear(); // clear/reset all values
+      void forget();
 
       std::map<std::string, cDbTableDef*>::iterator getFirstTableIterator() { return tables.begin(); }
       std::map<std::string, cDbTableDef*>::iterator getTableEndIterator()   { return tables.end(); }

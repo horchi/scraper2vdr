@@ -74,3 +74,12 @@ int toFieldFilter(const char* name)
 
    return ffAll;
 }
+
+//***************************************************************************
+// User Rights Check
+//***************************************************************************
+
+int hasUserMask(unsigned int rights, UserMask mask)
+{
+   return rights & mask;
+}

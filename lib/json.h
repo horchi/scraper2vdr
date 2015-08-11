@@ -12,7 +12,7 @@
 // Include
 //***************************************************************************
 
-#  ifdef USEJSON
+#ifdef USEJSON
 
 #include <jansson.h>
 
@@ -30,6 +30,6 @@ int addFieldToJson(json_t* obj, cDbValue* value, int ignoreEmpty = yes, const ch
 const char* getStringFromJson(json_t* obj, const char* name, const char* def = 0);
 int getIntFromJson(json_t* obj, const char* name, int def = na);
 
-#  endif // USEJSON
+#endif // USEJSON
 
 #endif // __JSON_H

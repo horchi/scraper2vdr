@@ -18,7 +18,10 @@ const char* charset = "utf-8";  // #TODO, move to configuration?
 int json2Data(json_t* obj, MemoryStruct* data, const char* encoding)
 {
    int status = success;
-   data->memory = json_dumps(obj, 0);     // well be freed by data dtor
+
+   // will be freed by data's dtor
+
+   data->memory = json_dumps(obj, JSON_PRESERVE_ORDER);
    data->size = strlen(data->memory);
    sprintf(data->contentType, "application/json; charset=%s", charset);
    
@@ -27,8 +30,6 @@ int json2Data(json_t* obj, MemoryStruct* data, const char* encoding)
    if (data->size && encoding && strstr(encoding, "gzip"))
       status = data->toGzip();
    
-   // json_t_to_file((char*)"last.json", obj);       // debug ...
-
    return status;
 }
 
@@ -39,13 +40,14 @@ int json2Data(json_t* obj, MemoryStruct* data, const char* encoding)
 int addFieldToJson(json_t* obj, cDbValue* value, int ignoreEmpty, const char* extName)
 {
    char* name;
-   cDBS::FieldFormat type = value->getField()->getFormat();
+
+   if (!value || !value->getField())
+      return fail;
 
    name = strdup(extName ? extName : value->getField()->getName());
-
    toCase(cLower, name);   // use always lower case names
 
-   switch (type)
+   switch (value->getField()->getFormat())
    {
       case cDBS::ffAscii:
       case cDBS::ffText:

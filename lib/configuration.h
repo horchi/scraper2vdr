@@ -23,7 +23,7 @@ class Configuration
 
       virtual int atConfigItem(const char* Name, const char* Value) = 0;
 
-      virtual int readConfig()
+      virtual int readConfig(const char* file = 0)
       {
          int count = 0;
          FILE* f;
@@ -32,9 +32,12 @@ class Configuration
          char* value;
          char* name;
          char* fileName;
-         
-         asprintf(&fileName, "%s/epgd.conf", confDir);
-         
+
+         if (!isEmpty(file))
+            asprintf(&fileName, "%s", file);
+         else
+            asprintf(&fileName, "%s/epgd.conf", confDir);
+
          if (access(fileName, F_OK) != 0)
          {
             fprintf(stderr, "Cannot access configuration file '%s'\n", fileName);
@@ -85,5 +88,4 @@ class Configuration
 };
 
 //***************************************************************************
-
 #endif //  __CONFIG_H

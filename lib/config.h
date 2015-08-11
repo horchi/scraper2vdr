@@ -20,11 +20,9 @@ struct cEpgConfig
       
       cEpgConfig();
 
-      int hasDbLoginChanged(cEpgConfig* old);
-
-      // config
-
       // database connection
+
+      int hasDbLoginChanged(cEpgConfig* old);
 
       char dbHost[100+TB];
       int dbPort;
@@ -41,6 +39,8 @@ struct cEpgConfig
 
       static int logstdout;
       static int loglevel;
+      static int logFacility;
+      static const char* logName;
 };
 
 #endif // __EPG_CONFIG_H 
