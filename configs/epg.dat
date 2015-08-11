@@ -39,11 +39,11 @@ Table events
    VPS                  ""                                                   vps                  Int         10 Data,
    CONTENTS             "Genre code like table 28 of ETSI EN 300 468"        contents             ASCII      100 Data epgd|httpd|epg2vdr,
    SHORTDESCRIPTION     ""                                                   shortdescription     Ascii     3000 Data,
-   ACTOR                ""                                                   actor                Ascii     3000 Data,
+   ACTOR                ""                                                   actor                Text      5000 Data,
    AUDIO                ""                                                   audio                Ascii       50 Data,
    CATEGORY             ""                                                   category             Ascii       50 Data,
    COUNTRY              ""                                                   country              Ascii       50 Data,
-   DIRECTOR             ""                                                   director             Ascii      250 Data,
+   DIRECTOR             ""                                                   director             Text      1000 Data,
    FLAGS                ""                                                   flags                Ascii      100 Data,
    GENRE                ""                                                   genre                Ascii      100 Data,
    INFO                 ""                                                   info                 Text     10000 Data,
@@ -267,6 +267,9 @@ Table vdrs
    PID                  ""  pid                  UInt         0 Data epgd|httpd|epg2vdr,
    SVDRP                ""  svdrp                UInt         0 Data epgd|httpd|epg2vdr,
    TUNERCOUNT           ""  tunercount           UInt         0 Data epgd|httpd|epg2vdr,
+   VIDEODIR             ""  videodir             Ascii      300 Data,
+   VIDEOTOTAL           ""  videototal           UInt         0 Data,
+   VIDEOFREE            ""  videofree            UInt         0 Data,
 }
 
 // ----------------------------------------------------------------
@@ -276,6 +279,22 @@ Table vdrs
 Index vdrs
 {
    state                ""  STATE,
+}
+
+// ----------------------------------------------------------------
+// Table Users
+// ----------------------------------------------------------------
+
+Table users
+{
+   USER                 ""                           user      Ascii   40 Primary,
+
+   INSSP                ""                           inssp     Int      0 Meta,
+   UPDSP                ""                           updsp     Int      0 Meta,
+
+   PASSWD               ""                           passwd    Ascii  100 Data,
+   ACTIVE               ""                           active    Int      1 Data,
+   RIGHTS               ""                           rights    UInt     0 Data,
 }
 
 // ----------------------------------------------------------------
@@ -407,10 +426,10 @@ Table useevents
    INFO                    ""                                               sub_info                      Text   10000 Data,
    MODERATOR               ""                                               sub_moderator                 Ascii    250 Data,
    GUEST                   ""                                               sub_guest                     Text    1000 Data,
-   ACTOR                   ""                                               sub_actor                     Ascii   3000 Data,
+   ACTOR                   ""                                               sub_actor                     Text    5000 Data,
    PRODUCER                ""                                               sub_producer                  Text    1000 Data,
    OTHER                   ""                                               sub_other                     Text    2000 Data,
-   DIRECTOR                ""                                               sub_director                  Ascii    250 Data,
+   DIRECTOR                ""                                               sub_director                  Text    1000 Data,
    SCREENPLAY              ""                                               sub_screenplay                Ascii    500 Data,
    CAMERA                  ""                                               sub_camera                    Text    1000 Data,
    MUSIC                   ""                                               sub_music                     Ascii    250 Data,
@@ -430,6 +449,7 @@ Table useevents
    EPISODENAME             ""                                               epi_episodename               Ascii    100 Data,
    EPISODESHORTNAME        ""                                               epi_shortname                 Ascii    100 Data,
    EPISODEPARTNAME         ""                                               epi_partname                  Ascii    300 Data,
+   EPISODELANG             ""                                               epi_lang                      Ascii     10 Data,
    EPISODEEXTRACOL1        ""                                               epi_extracol1                 Ascii    250 Data,
    EPISODEEXTRACOL2        ""                                               epi_extracol2                 Ascii    250 Data,
    EPISODEEXTRACOL3        ""                                               epi_extracol3                 Ascii    250 Data,
@@ -452,6 +472,42 @@ Index useevents
 }
 
 // ----------------------------------------------------------------
+// Table Recording List
+// ----------------------------------------------------------------
+
+Table recordinglist
+{
+   MD5PATH           ""            md5path          Ascii       40 Primary,
+   START             ""            start            UInt         0 Primary,
+
+   INSSP             ""            inssp            Int         10 Meta,
+   UPDSP             ""            updsp            Int         10 Meta,
+
+   VDRUUID           ""            vdruuid          Ascii       40 Data,
+   PATH              ""            path             Ascii     1000 Data,
+   TITLE             ""            title            Ascii      200 Data,
+   SHORTTEXT         ""            shorttext        Ascii      300 Data,
+   DESCRIPTION       ""            description      MText    25000 Data,
+   DURATION          ""            duration         UInt         0 Data,
+   FSK               ""            fsk              UInt         1 Data,
+
+   EVENTID           ""            eventid          UInt         0 Data,
+   CHANNELID         ""            channelid        Ascii       50 Data,
+
+   // scraper fields
+
+   SCRMOVIEID           ""         scrmovieid       UInt         0 Data,
+   SCRSERIESID          ""         scrseriesid      UInt         0 Data,
+   SCREPISODEID         ""         screpisodeid     UInt         0 Data,
+   SCRNEW               ""         scrnew           UInt         0 Data,
+   SCRSP                ""         scrsp            Int          0 Data,
+
+   MOVIEID              ""         movie_id         UInt         0 Data,
+   SERIESID             ""         series_id        UInt         0 Data,
+   EPISODEID            ""         episode_id       UInt         0 Data,
+}
+
+// ----------------------------------------------------------------
 // Table RecordingDirs
 // ----------------------------------------------------------------
 
@@ -470,38 +526,40 @@ Table recordingdirs
 
 Table timers
 {
-   ID                   ""                   id                   UInt         0 Primary|Autoinc,
-   VDRUUID              ""                   vdruuid              Ascii       40 Primary,
+   ID                   ""                                 id                   UInt         0 Primary|Autoinc,
+   VDRUUID              ""                                 vdruuid              Ascii       40 Primary,
 
-   INSSP                ""                   inssp                Int          0 Meta,
-   UPDSP                ""                   updsp                Int          0 Meta,
+   INSSP                ""                                 inssp                Int          0 Meta,
+   UPDSP                ""                                 updsp                Int          0 Meta,
 
-   EVENTID              ""                   eventid              UInt         0 Data,
-   CHANNELID            ""                   channelid            Ascii       50 Data,
+   EVENTID              ""                                 eventid              UInt         0 Data,
+   CHANNELID            ""                                 channelid            Ascii       50 Data,
 
-   SOURCE               ""                   source               Ascii       20 Data,  // osd, webif, epgd, ..
-   STATE                ""                   state                Ascii        1 Data,  // 'D' - deleted 
-   NAMINGMODE           ""                   namingmode           Int          0 Data,
-   ACTIVE               ""                   active               UInt         0 Data,
-   DAY                  ""                   day                  Int         10 Data,
-   WEEKDAYS             ""                   weekdays             Int         10 Data,
-   STARTTIME            ""                   starttime            Int         10 Data,
-   ENDTIME              ""                   endtime              Int         10 Data,
-   FILE                 ""                   file                 Ascii      512 Data,
-   DIRECTORY            ""                   directory            Ascii      512 Data,
+   SOURCE               ""                                 source               Ascii       20 Data,  // osd, webif, epgd, ..
+   STATE                "'D'eleted, 'R'unning, 'F'inished" state                Ascii        1 Data,
+   INFO                 "error reason if state is failed"  info                 Ascii      255 Data,
 
-   PRIORITY             ""                   priority             Int          0 Data,
-   LIFETIME             ""                   lifetime             Int          0 Data,
-   VPS                  ""                   vps                  Int          0 Data,
-   CHILDLOCK            ""                   childlock            Int          0 Data,
-   AUX                  ""                   aux                  Ascii     1000 Data,
+   NAMINGMODE           ""                                 namingmode           Int          0 Data,
+   ACTIVE               ""                                 active               UInt         0 Data,
+   DAY                  ""                                 day                  Int         10 Data,
+   WEEKDAYS             ""                                 weekdays             Int         10 Data,
+   STARTTIME            ""                                 starttime            Int         10 Data,
+   ENDTIME              ""                                 endtime              Int         10 Data,
+   FILE                 ""                                 file                 Ascii      512 Data,
+   DIRECTORY            ""                                 directory            Ascii      512 Data,
 
-   AUTOTIMERID          "id of autotimer"    autotimerid          UInt         0 Data,
-   AUTOTIMERINSSP       ""                   autotimerinssp       Int          0 Meta,
+   PRIORITY             ""                                 priority             Int          0 Data,
+   LIFETIME             ""                                 lifetime             Int          0 Data,
+   VPS                  ""                                 vps                  Int          0 Data,
+   CHILDLOCK            ""                                 childlock            Int          0 Data,
+   AUX                  ""                                 aux                  Ascii     1000 Data,
+
+   AUTOTIMERID          "id of autotimer"                  autotimerid          UInt         0 Data,
+   AUTOTIMERINSSP       ""                                 autotimerinssp       Int          0 Meta,
 
    // just to update the done state by the plugin !!
 
-   DONEID               "id of done entry"       doneid               UInt         0 Data,
+   DONEID               "id of done entry"                 doneid               UInt         0 Data,
 }
 
 // ----------------------------------------------------------------
@@ -530,6 +588,7 @@ Table timerdistribution
    STATE                ""                                       state                Ascii        1 Data,   // D -> to delete
    NAMINGMODE           ""                                       namingmode           Int          0 Data,
    ASSUMED              "N - no (pending), Y - yes, F - failed"  assumed              Ascii        1 Data,
+   REASON               ""                                       reason               Ascii      250 Data,
    VDRUUID              ""                                       vdruuid              Ascii       40 Data,
    CHANNELID            ""                                       channelid            Ascii       50 Data,
    EVENTID              ""                                       eventid              UInt         0 Data,
@@ -609,6 +668,8 @@ Table timersdone
 
    STATE                "Q requested, C created, R recorded, F Failed"  state                Ascii        1 Data,
 
+   TIMERID              "not filled completely in all cases yet "       timerid              UInt         0 Data,
+
    // to compare 
 
    TITLE                ""                                    title                Ascii      200 Data,
@@ -618,10 +679,10 @@ Table timersdone
    LONGDESCRIPTION      ""                                    longdescription      MText    25000 Data,
    COMPLONGDESCRIPTION  ""                                    complongdescription  MText    25000 Data,
 
-   EPISODECOMPNAME      ""                                    episodecompname      Ascii      100 Data,
-   EPISODECOMPSHORTNAME ""                                    episodecompshortname Ascii      100 Data,
-   EPISODECOMPPARTNAME  ""                                    episodecomppartname  Ascii      200 Data,
-   EPISODELANG          ""                                    episodelang          Ascii       10 Data,
+   EPISODECOMPNAME      ""                                    episodecompname      Ascii      100 Data epgd|httpd|epg2vdr,
+   EPISODECOMPSHORTNAME ""                                    episodecompshortname Ascii      100 Data epgd|httpd|epg2vdr,
+   EPISODECOMPPARTNAME  ""                                    episodecomppartname  Ascii      200 Data epgd|httpd|epg2vdr,
+   EPISODELANG          ""                                    episodelang          Ascii       10 Data epgd|httpd|epg2vdr,
 
    // just for info
 
@@ -642,6 +703,9 @@ Index TimersDone
    checkdoubles         ""  COMPTITLE, COMPSHORTTEXT
 }
 
+// ----------------------------------------------------------------
+// SCRAPER stuff --->
+// ----------------------------------------------------------------
 // ----------------------------------------------------------------
 // Table Series
 // ----------------------------------------------------------------
@@ -851,7 +915,7 @@ Index movie_media
 }
 
 // ----------------------------------------------------------------
-// Table Recordings
+// Table Recordings (used from scraper)
 // ----------------------------------------------------------------
 
 Table recordings
@@ -860,11 +924,12 @@ Table recordings
    RECPATH              ""  rec_path             Ascii      200 Primary,
    RECSTART             ""  rec_start            UInt         0 Primary,
 
-   INSSP                ""  inssp                Int         10 Meta epgd|httpd|epg2vdr,
-   UPDSP                ""  updsp                Int         10 Meta epgd|httpd|epg2vdr,
+   INSSP                ""  inssp                Int         10 Meta epgd|httpd,
+   UPDSP                ""  updsp                Int         10 Meta epgd|httpd,
 
    EVENTID              ""  event_id             UInt         0 Data,
    CHANNELID            ""  channel_id           Ascii       50 Data,
+
    SCRAPINFOMOVIEID     ""  scrapinfo_movie_id   UInt         0 Data,
    SCRAPINFOSERIESID    ""  scrapinfo_series_id  UInt         0 Data,
    SCRAPINFOEPISODEID   ""  scrapinfo_episode_id UInt         0 Data,
@@ -874,6 +939,7 @@ Table recordings
    RECTITLE             ""  rec_title            Ascii      200 Data,
    RECSUBTITLE          ""  rec_subtitle         Ascii      500 Data,
    RECDURATION          ""  rec_duration         UInt         0 Data,
+
    MOVIEID              ""  movie_id             UInt         0 Data,
    SERIESID             ""  series_id            UInt         0 Data,
    EPISODEID            ""  episode_id           UInt         0 Data,

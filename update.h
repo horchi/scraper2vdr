@@ -35,6 +35,7 @@ class cUpdate : public cThread  {
         cDbTable* tMovieActors;
         cDbTable* tMovieMedia;
         cDbTable* tRecordings;
+        cDbTable* tRecordingList;
         cFileDateManager fileDateManager;
         int lastScrap;
         long MaxScrspSeries; // max scrsp of known events/recordings for series

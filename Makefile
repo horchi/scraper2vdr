@@ -55,7 +55,7 @@ SOFILE = libvdr-$(PLUGIN).so
 INCLUDES += $(shell mysql_config --include)
 
 DEFINES += -DPLUGIN_NAME_I18N='"$(PLUGIN)"' -DLOG_PREFIX='"$(PLUGIN): "'
-DEFINES += -DVDR_PLUGIN -DUSEUUID
+DEFINES += -DVDR_PLUGIN -DUSEUUID -DUSEMD5
 
 ifeq ($(IMAGELIB), imagemagick)
 	INCLUDES += $(shell pkg-config --cflags Magick++)

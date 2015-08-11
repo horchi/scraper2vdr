@@ -26,6 +26,7 @@ cUpdate::cUpdate(cScrapManager *manager) : cThread("update thread started", true
     tMovieActors = NULL;
     tMovieMedia = NULL;
     tRecordings = NULL;
+    tRecordingList = NULL;
 
     selectReadScrapedEventsInit = 0;
     selectReadScrapedEvents = 0;
@@ -170,6 +171,9 @@ int cUpdate::initDb() {
     
     tRecordings = new cDbTable(connection, "recordings");
     if (tRecordings->open() != success) return fail;
+
+    tRecordingList = new cDbTable(connection, "recordinglist");
+    if (tRecordingList->open() != success) return fail;
 
     // try to create temp. episode cache table
 
@@ -793,17 +797,18 @@ int cUpdate::exitDb() {
     delete selectMovieMediaFast;        selectMovieMediaFast = 0;
     delete selectMovieImage;            selectMovieImage = 0;
 
-    delete vdrDb;         vdrDb = 0;
-    delete tEvents;       tEvents = 0;
-    delete tSeries;       tSeries = 0;
-    delete tEpisodes;     tEpisodes = 0;
-    delete tSeriesMedia;  tSeriesMedia = 0;
-    delete tSeriesActors; tSeriesActors = 0;
-    delete tMovies;       tMovies = 0;
-    delete tMovieActor;   tMovieActor = 0;
-    delete tMovieActors;  tMovieActors = 0;
-    delete tMovieMedia;   tMovieMedia = 0;
-    delete tRecordings;   tRecordings = 0;
+    delete vdrDb;          vdrDb = 0;
+    delete tEvents;        tEvents = 0;
+    delete tSeries;        tSeries = 0;
+    delete tEpisodes;      tEpisodes = 0;
+    delete tSeriesMedia;   tSeriesMedia = 0;
+    delete tSeriesActors;  tSeriesActors = 0;
+    delete tMovies;        tMovies = 0;
+    delete tMovieActor;    tMovieActor = 0;
+    delete tMovieActors;   tMovieActors = 0;
+    delete tMovieMedia;    tMovieMedia = 0;
+    delete tRecordings;    tRecordings = 0;
+    delete tRecordingList; tRecordingList = 0;
 
     // try to delete temp. episode cache table
     if (dbConnected())
@@ -1803,6 +1808,7 @@ int cUpdate::ScanVideoDir(void) {
                     subTitle = (recInfo->ShortText())?(recInfo->ShortText()):"";
                 }
             }
+
             tRecordings->clear();
             tRecordings->setValue("UUID", scraper2VdrConfig.uuid);
             tRecordings->setValue("RECPATH", recPath.c_str());
@@ -1818,6 +1824,28 @@ int cUpdate::ScanVideoDir(void) {
             tRecordings->setValue("RECSUBTITLE", subTitle.c_str());
             tRecordings->setValue("RECDURATION", rec->LengthInSeconds()/60);
             tRecordings->store();
+
+            // update also recordinglist table for epghttpd
+
+            md5Buf md5path;
+            createMd5(rec->FileName(), md5path);
+            tRecordingList->clear();
+            tRecordingList->setValue("MD5PATH", md5path);
+            tRecordingList->setValue("START", recStart);
+
+            if (tRecordingList->find())
+            {
+               tRecordingList->clearChanged();
+               tRecordingList->setValue("SCRMOVIEID", scrapInfoMovieID);
+               tRecordingList->setValue("SCRSERIESID", scrapInfoSeriesID);
+               tRecordingList->setValue("SCREPISODEID", scrapInfoEpisodeID);
+               tRecordingList->setValue("SCRNEW", 1);
+
+               if (tRecordingList->getChanges())
+                  tRecordingList->update();
+            }
+
+            tRecordingList->reset();
         }
     }
     return newRecs;
@@ -1839,6 +1867,30 @@ int cUpdate::ScanVideoDirScrapInfo(void) {
             tRecordings->setValue("SCRAPINFOSERIESID", scrapInfoSeriesID);
             tRecordings->setValue("SCRAPINFOEPISODEID", scrapInfoEpisodeID);
             tRecordings->update();
+
+            // update also recordinglist table for epghttpd
+            
+            md5Buf md5path;
+            createMd5(rec->FileName(), md5path);
+            tRecordingList->clear();
+            tRecordingList->setValue("MD5PATH", md5path);
+            tRecordingList->setValue("START", recStart);
+            
+            if (tRecordingList->find())
+            {
+               tRecordingList->clearChanged();
+               tRecordingList->setValue("SCRMOVIEID", scrapInfoMovieID);
+               tRecordingList->setValue("SCRSERIESID", scrapInfoSeriesID);
+               tRecordingList->setValue("SCREPISODEID", scrapInfoEpisodeID);
+               tRecordingList->setValue("SCRNEW", 1);
+
+               if (tRecordingList->getChanges())
+                  tRecordingList->update();
+            }
+
+            tRecordingList->reset();
+
+
             numUpdated++;
         }
     }
