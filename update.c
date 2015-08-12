@@ -1869,13 +1869,13 @@ int cUpdate::ScanVideoDirScrapInfo(void) {
             tRecordings->update();
 
             // update also recordinglist table for epghttpd
-            
+
             md5Buf md5path;
             createMd5(rec->FileName(), md5path);
             tRecordingList->clear();
             tRecordingList->setValue("MD5PATH", md5path);
             tRecordingList->setValue("START", recStart);
-            
+
             if (tRecordingList->find())
             {
                tRecordingList->clearChanged();
@@ -1889,7 +1889,6 @@ int cUpdate::ScanVideoDirScrapInfo(void) {
             }
 
             tRecordingList->reset();
-
 
             numUpdated++;
         }

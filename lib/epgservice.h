@@ -97,28 +97,33 @@ enum TimerDoneState
 enum UserMask
 {
    umNone            = 0x0,
-   umAll             = 0xFFFFFFFF,
 
-   umConfig          = 0x1,
-   umConfigEdit      = 0x2,
-   umConfigUsers     = 0x4,
+   umNologin         = 0x1,   // the right without a session
 
-   umFree3           = 0x8,
+   umConfig          = 0x2,
+   umConfigEdit      = 0x4,
+   umConfigUsers     = 0x8,
 
-   umTimer           = 0x10,
-   umTimerEdit       = 0x20,
-   umSearchTimer     = 0x40,
-   umSearchTimerEdit = 0x80,
+   umFree1           = 0x10,
+   umFree2           = 0x20,
 
-   umFree5           = 0x100,
+   umTimer           = 0x40,
+   umTimerEdit       = 0x80,
+   umSearchTimer     = 0x100,
+   umSearchTimerEdit = 0x200,
 
-   umFsk             = 0x200,
+   umFree3           = 0x400,
+   umFree4           = 0x800,
 
-   umFree6           = 0x400,
-   umFree7           = 0x800,
+   umFsk             = 0x1000,
 
-   umRecordings      = 0x1000,
-   umRecordingsEdit  = 0x2000
+   umFree5           = 0x2000,
+   umFree6           = 0x4000,
+
+   umRecordings      = 0x8000,
+   umRecordingsEdit  = 0x10000,
+
+   umAll             = 0xFFFFFFFF & ~umNologin
 };
 
 int hasUserMask(unsigned int rights, UserMask mask);
