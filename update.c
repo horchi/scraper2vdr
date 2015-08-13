@@ -122,26 +122,6 @@ int cUpdate::initDb() {
     vdrDb = new cDbTable(connection, "vdrs");
     if (vdrDb->open(yes) != success) return fail;
 
-    bool recordingScrSPExist = true;
-/*
-  // REMOVED due to http branch porting!
-
-    // Check if the column scrsp exists in recordings table
-
-    cDbTableDef* recordingsDef = dbDict.getTable("recordings");
-    if (recordingsDef) {
-        const char* select = "select max(%s) from %s";
-        if (connection->query(select, recordingsDef->getField("SCRSP")->getDbName(), recordingsDef->getName()) != success) {
-            recordingScrSPExist = false;
-        }
-        connection->queryReset();
-        if (!recordingScrSPExist) {
-            scrspRemoved = true; // sign that we have removed scrsp column, so dbdect get reloaded on next initDb
-            recordingsDef->removeField("SCRSP"); // remove scrsp field from recordings table definition to be compatible with old epgd table
-            tell(0,"ATTENTION. Old version of epgd database without recordings.scrsp field detected. Update to newer version of epgd is suggested to obtain full optimized refresh handling (please do not forget to alter tables after update!)");
-        }    
-    }    
-*/    
     tEvents = new cDbTable(connection, "events");
     if (tEvents->open() != success) return fail;
 
@@ -376,20 +356,11 @@ int cUpdate::initDb() {
                                 tEvents->TableName(),
                                 tEvents->getField("SCRSERIESID")->getDbName());
     selectReadSeriesInit->build(" union all ");
-    if (recordingScrSPExist) {
-        selectReadSeriesInit->build("select %s, %s, %s from %s where (",
-                                    tRecordings->getField("SERIESID")->getDbName(),
-                                    tRecordings->getField("EPISODEID")->getDbName(),
-                                    tEvents->getField("SCRSP")->getDbName(),
-                                    tRecordings->TableName());
-    } else {
-        // use dummy value for scrsp
-        selectReadSeriesInit->build("select %s, %s, (0) as %s from %s where (",
-                                    tRecordings->getField("SERIESID")->getDbName(),
-                                    tRecordings->getField("EPISODEID")->getDbName(),
-                                    tEvents->getField("SCRSP")->getDbName(),
-                                    tRecordings->TableName());
-    }    
+    selectReadSeriesInit->build("select %s, %s, %s from %s where (",
+                                tRecordings->getField("SERIESID")->getDbName(),
+                                tRecordings->getField("EPISODEID")->getDbName(),
+                                tEvents->getField("SCRSP")->getDbName(),
+                                tRecordings->TableName());
     selectReadSeriesInit->bind(&vdr_uuid, cDBS::bndIn | cDBS::bndSet);
     selectReadSeriesInit->build(") and (%s > 0)",
                                 tRecordings->getField("SERIESID")->getDbName());
@@ -463,27 +434,15 @@ int cUpdate::initDb() {
                                      tEvents->getField("SCRSERIESID")->getDbName());
     selectReadSeriesLastScrsp->bindCmp(0, &event_scrsp, ">");
     selectReadSeriesLastScrsp->build(") union all ");
-    if (recordingScrSPExist) {
-        selectReadSeriesLastScrsp->build("select %s, %s, %s from %s where (",
-                                         tRecordings->getField("SERIESID")->getDbName(),
-                                         tRecordings->getField("EPISODEID")->getDbName(),
-                                         tEvents->getField("SCRSP")->getDbName(),
-                                         tRecordings->TableName());
-        selectReadSeriesLastScrsp->bind(&vdr_uuid, cDBS::bndIn | cDBS::bndSet);
-        selectReadSeriesLastScrsp->build(") and (%s > 0) and (",
-                                         tRecordings->getField("SERIESID")->getDbName());
-        selectReadSeriesLastScrsp->bindCmp(0, &event_scrsp, ">");
-    } else {
-        // use dummy value for scrsp
-        selectReadSeriesLastScrsp->build("select %s, %s, (0) as %s from %s where (",
-                                         tRecordings->getField("SERIESID")->getDbName(),
-                                         tRecordings->getField("EPISODEID")->getDbName(),
-                                         tEvents->getField("SCRSP")->getDbName(),
-                                         tRecordings->TableName());
-        selectReadSeriesLastScrsp->bind(&vdr_uuid, cDBS::bndIn | cDBS::bndSet);
-        selectReadSeriesLastScrsp->build(") and (%s > 0",
-                                         tRecordings->getField("SERIESID")->getDbName());
-    }    
+    selectReadSeriesLastScrsp->build("select %s, %s, %s from %s where (",
+                                     tRecordings->getField("SERIESID")->getDbName(),
+                                     tRecordings->getField("EPISODEID")->getDbName(),
+                                     tEvents->getField("SCRSP")->getDbName(),
+                                     tRecordings->TableName());
+    selectReadSeriesLastScrsp->bind(&vdr_uuid, cDBS::bndIn | cDBS::bndSet);
+    selectReadSeriesLastScrsp->build(") and (%s > 0) and (",
+                                     tRecordings->getField("SERIESID")->getDbName());
+    selectReadSeriesLastScrsp->bindCmp(0, &event_scrsp, ">");
     selectReadSeriesLastScrsp->build(")) E group by %s,%s) C ",
                                      tSeries->getField("SERIESID")->getDbName(),
                                      tEpisodes->getField("EPISODEID")->getDbName());
@@ -638,18 +597,10 @@ int cUpdate::initDb() {
                                 tEvents->TableName(),
                                 tEvents->getField("SCRMOVIEID")->getDbName());
     selectReadMoviesInit->build(" union all ");
-    if (recordingScrSPExist) {
-        selectReadMoviesInit->build("select %s, %s from %s where (",
-                                    tRecordings->getField("MOVIEID")->getDbName(),
-                                    tEvents->getField("SCRSP")->getDbName(),
-                                    tRecordings->TableName());
-    } else {
-        // use dummy value for scrsp
-        selectReadMoviesInit->build("select %s, (0) as %s from %s where (",
-                                    tRecordings->getField("MOVIEID")->getDbName(),
-                                    tEvents->getField("SCRSP")->getDbName(),
-                                    tRecordings->TableName());
-    }    
+    selectReadMoviesInit->build("select %s, %s from %s where (",
+                                tRecordings->getField("MOVIEID")->getDbName(),
+                                tEvents->getField("SCRSP")->getDbName(),
+                                tRecordings->TableName());
     selectReadMoviesInit->bind(&vdr_uuid, cDBS::bndIn | cDBS::bndSet);
     selectReadMoviesInit->build(") and (%s > 0)",
                                 tRecordings->getField("MOVIEID")->getDbName());
@@ -704,25 +655,14 @@ int cUpdate::initDb() {
                                      tEvents->getField("SCRMOVIEID")->getDbName());
     selectReadMoviesLastScrsp->bindCmp(0, &event_scrsp, ">");
     selectReadMoviesLastScrsp->build(") union all ");
-    if (recordingScrSPExist) {
-        selectReadMoviesLastScrsp->build("select %s, %s from %s where (",
-                                         tRecordings->getField("MOVIEID")->getDbName(),
-                                         tEvents->getField("SCRSP")->getDbName(),
-                                         tRecordings->TableName());
-        selectReadMoviesLastScrsp->bind(&vdr_uuid, cDBS::bndIn | cDBS::bndSet);
-        selectReadMoviesLastScrsp->build(") and (%s > 0) and (",
-                                         tRecordings->getField("MOVIEID")->getDbName());
-        selectReadMoviesLastScrsp->bindCmp(0, &event_scrsp, ">");
-    } else {
-        // use dummy value for scrsp
-        selectReadMoviesLastScrsp->build("select %s, (0) as %s from %s where (",
-                                         tRecordings->getField("MOVIEID")->getDbName(),
-                                         tEvents->getField("SCRSP")->getDbName(),
-                                         tRecordings->TableName());
-        selectReadMoviesLastScrsp->bind(&vdr_uuid, cDBS::bndIn | cDBS::bndSet);
-        selectReadMoviesLastScrsp->build(") and (%s > 0",
-                                         tRecordings->getField("MOVIEID")->getDbName());
-    }    
+    selectReadMoviesLastScrsp->build("select %s, %s from %s where (",
+                                     tRecordings->getField("MOVIEID")->getDbName(),
+                                     tEvents->getField("SCRSP")->getDbName(),
+                                     tRecordings->TableName());
+    selectReadMoviesLastScrsp->bind(&vdr_uuid, cDBS::bndIn | cDBS::bndSet);
+    selectReadMoviesLastScrsp->build(") and (%s > 0) and (",
+                                     tRecordings->getField("MOVIEID")->getDbName());
+    selectReadMoviesLastScrsp->bindCmp(0, &event_scrsp, ">");
     selectReadMoviesLastScrsp->build(")) C group by %s) B on (A.%s = B.%s) order by A.%s",
                                      tRecordings->getField("MOVIEID")->getDbName(),
                                      tRecordings->getField("MOVIEID")->getDbName(),
