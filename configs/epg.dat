@@ -477,37 +477,37 @@ Index useevents
 
 Table recordinglist
 {
-   MD5PATH           ""            md5path          Ascii       40 Primary,
-   START             ""            start            UInt         0 Primary,
+   MD5PATH              ""            md5path          Ascii       40 Primary,
+   START                ""            start            UInt         0 Primary,
 
-   INSSP             ""            inssp            Int         10 Meta,
-   UPDSP             ""            updsp            Int         10 Meta,
+   INSSP                ""            inssp            Int         10 Meta,
+   UPDSP                ""            updsp            Int         10 Meta,
 
-   VDRUUID           ""            vdruuid          Ascii       40 Data,
-   PATH              ""            path             Ascii     1000 Data,
-   TITLE             ""            title            Ascii      200 Data,
-   SHORTTEXT         ""            shorttext        Ascii      300 Data,
-   DESCRIPTION       ""            description      MText    25000 Data,
-   DURATION          ""            duration         UInt         0 Data,
-   FSK               ""            fsk              UInt         1 Data,
+   VDRUUID              ""            vdruuid          Ascii       40 Data,
+   PATH                 ""            path             Ascii     1000 Data,
+   TITLE                ""            title            Ascii      200 Data,
+   SHORTTEXT            ""            shorttext        Ascii      300 Data,
+   DESCRIPTION          ""            description      MText    25000 Data,
+   DURATION             ""            duration         UInt         0 Data,
+   FSK                  ""            fsk              UInt         1 Data,
 
-   EVENTID           ""            eventid          UInt         0 Data,
-   CHANNELID         ""            channelid        Ascii       50 Data,
+   EVENTID              ""            eventid          UInt         0 Data,
+   CHANNELID            ""            channelid        Ascii       50 Data,
 
-   STATE             ""            state            Ascii        1 Data,
-   JOB               ""            job              Ascii        1 Data,
+   STATE                ""            state            Ascii        1 Data,
+   JOB                  ""            job              Ascii        1 Data,
 
    // scraper fields
 
-   SCRMOVIEID           ""         scrmovieid       UInt         0 Data,
-   SCRSERIESID          ""         scrseriesid      UInt         0 Data,
-   SCREPISODEID         ""         screpisodeid     UInt         0 Data,
-   SCRNEW               ""         scrnew           UInt         0 Data,
-   SCRSP                ""         scrsp            Int          0 Data,
+   SCRMOVIEID           ""            scrmovieid       UInt         0 Data,
+   SCRSERIESID          ""            scrseriesid      UInt         0 Data,
+   SCREPISODEID         ""            screpisodeid     UInt         0 Data,
+   SCRNEW               ""            scrnew           UInt         0 Data,
+   SCRSP                ""            scrsp            Int          0 Data,
 
-   MOVIEID              ""         movie_id         UInt         0 Data,
-   SERIESID             ""         series_id        UInt         0 Data,
-   EPISODEID            ""         episode_id       UInt         0 Data,
+   MOVIEID              ""            movieid          UInt         0 Data,
+   SERIESID             ""            seriesid         UInt         0 Data,
+   EPISODEID            ""            episodeid        UInt         0 Data,
 }
 
 // ----------------------------------------------------------------
@@ -936,6 +936,7 @@ Table recordings
    SCRAPINFOMOVIEID     ""  scrapinfo_movie_id   UInt         0 Data,
    SCRAPINFOSERIESID    ""  scrapinfo_series_id  UInt         0 Data,
    SCRAPINFOEPISODEID   ""  scrapinfo_episode_id UInt         0 Data,
+
    SCRAPNEW             ""  scrap_new            UInt         0 Data,
    SCRSP                ""  scrsp                Int          0 Data,
 
