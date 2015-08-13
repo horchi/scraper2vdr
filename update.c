@@ -143,7 +143,7 @@ int cUpdate::initDb() {
     }    
 */    
     tEvents = new cDbTable(connection, "events");
-    if (tEvents->open(yes) != success) return fail;
+    if (tEvents->open() != success) return fail;
 
     tSeries = new cDbTable(connection, "series");
     if (tSeries->open() != success) return fail;
