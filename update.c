@@ -120,7 +120,7 @@ int cUpdate::initDb() {
     }    
     
     vdrDb = new cDbTable(connection, "vdrs");
-    if (vdrDb->open() != success) return fail;
+    if (vdrDb->open(yes) != success) return fail;
 
     bool recordingScrSPExist = true;
 /*
@@ -143,7 +143,7 @@ int cUpdate::initDb() {
     }    
 */    
     tEvents = new cDbTable(connection, "events");
-    if (tEvents->open() != success) return fail;
+    if (tEvents->open(yes) != success) return fail;
 
     tSeries = new cDbTable(connection, "series");
     if (tSeries->open() != success) return fail;
@@ -170,10 +170,10 @@ int cUpdate::initDb() {
     if (tMovieMedia->open() != success) return fail;
     
     tRecordings = new cDbTable(connection, "recordings");
-    if (tRecordings->open() != success) return fail;
+    if (tRecordings->open(yes) != success) return fail;
 
     tRecordingList = new cDbTable(connection, "recordinglist");
-    if (tRecordingList->open() != success) return fail;
+    if (tRecordingList->open(yes) != success) return fail;
 
     // try to create temp. episode cache table
 
