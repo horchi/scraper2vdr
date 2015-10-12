@@ -1719,7 +1719,21 @@ int cUpdate::ReadRecordings(void) {
 
 int cUpdate::ScanVideoDir(void) {
     int newRecs = 0;
-    for (cRecording *rec = Recordings.First(); rec; rec = Recordings.Next(rec)) {
+
+   // --------------------------
+   // get recordings lock
+   
+#if defined (APIVERSNUM) && (APIVERSNUM >= 20301)
+   cRecordingsLock recordingsLock(false);
+   const cRecordings* recordings = recordingsLock.Recordings();
+#else
+   const cRecordings* recordings = &Recordings;
+#endif
+
+   // --------
+   // iterate 
+
+    for (const cRecording *rec = recordings->First(); rec; rec = recordings->Next(rec)) {
         string recPath = getRecPath(rec);
         int recStart = rec->Start();
         if (!scrapManager->RecordingExists(recStart, recPath)) {
@@ -1793,7 +1807,21 @@ int cUpdate::ScanVideoDir(void) {
 
 int cUpdate::ScanVideoDirScrapInfo(void) {
     int numUpdated = 0;
-    for (cRecording *rec = Recordings.First(); rec; rec = Recordings.Next(rec)) {
+
+   // --------------------------
+   // get recordings lock
+   
+#if defined (APIVERSNUM) && (APIVERSNUM >= 20301)
+   cRecordingsLock recordingsLock(false);
+   const cRecordings* recordings = recordingsLock.Recordings();
+#else
+   const cRecordings* recordings = &Recordings;
+#endif
+
+   // --------
+   // iterate 
+
+    for (const cRecording *rec = recordings->First(); rec; rec = recordings->Next(rec)) {
         int recStart = rec->Start();
         string recPath = getRecPath(rec);
         /* bool recExists = */ LoadRecording(recStart, recPath);  
@@ -2006,6 +2034,19 @@ int cUpdate::CleanupMovies(void) {
 int cUpdate::CleanupRecordings(void) 
 {
    // delete all not anymore existing recordings in database
+
+   // --------------------------
+   // get recordings lock
+   
+#if defined (APIVERSNUM) && (APIVERSNUM >= 20301)
+   cRecordingsLock recordingsLock(false);
+   const cRecordings* recordings = recordingsLock.Recordings();
+#else
+   cRecordings* recordings = &Recordings;
+#endif
+
+   // --------
+   // iterate 
    
    tRecordings->clear();
    tRecordings->setValue("UUID", scraper2VdrConfig.uuid);
@@ -2016,7 +2057,7 @@ int cUpdate::CleanupRecordings(void)
       int recStart = tRecordings->getIntValue("RECSTART");
       const char* recPath = tRecordings->getStrValue("RECPATH");
       
-      if (!Recordings.GetByName(recPath)) 
+      if (!recordings->GetByName(recPath)) 
       {
          char escapedPath[2*strlen(recPath) + 1];
 
@@ -2211,9 +2252,22 @@ void cUpdate::Action()
 
         if ((init || forceVideoDirUpdate || (time(0) - lastScanNewRec > scanNewRecFreq)) && Running()) 
         {
+           // ---------------------------------------
+           // check if any recording has changed ...
+           
+#if defined (APIVERSNUM) && (APIVERSNUM >= 20301)
+           static cStateKey* recordingsKey = new cStateKey();
+           cRecordings* recordings = cRecordings::GetRecordingsWrite(*recordingsKey, 500/*ms*/);
+           int recStateChanged = recordings != 0;
+           
+           if (recordings)
+              recordingsKey->Remove();
+#else
            static int recState = 0;
-
-           if (Recordings.StateChanged(recState)) 
+           int recStateChanged = Recordings.StateChanged(recState);
+#endif
+           
+           if (recStateChanged)
            {
               tell(1, "Searching for new recordings because of Recordings State Change...");
               worked++;

@@ -88,3 +88,6 @@ Version 0.1.13 (horchi)
 - fixed format string handling at call of deleteWhere
 - added format string to deleteWhere to avoid buggy format strings
 - update table recordinglist for use by epghttpd (maybe even for later replacement of recordings table)
+
+Version 0.1.14 (horchi)
+- porting to vdr 2.3.1

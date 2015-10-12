@@ -407,74 +407,117 @@ bool cScrapManager::MovieInUse(int movieId) {
 	return false;
 }
 
-void cScrapManager::DumpSeries(void) {
+void cScrapManager::DumpSeries(void) 
+{
 	int numSeries = 0;
 	map<sEventsKey, sEventsValue>::iterator it;
-	for (it = events.begin(); it != events.end(); it++) {
+
+	for (it = events.begin(); it != events.end(); it++) 
+   {
 		sEventsKey key = it->first;
 		sEventsValue ev = it->second;
-		if (ev.seriesId > 0) {
-			const cEvent *event = NULL;
-			const cChannel *c = NULL;
-			cSchedulesLock lock;
-			cSchedules *s = (cSchedules *)cSchedules::Schedules(lock);
-			if (s) {
-				tChannelID cID = tChannelID::FromString(key.channelId.c_str());
-				c = Channels.GetByChannelID(cID);
-				const cSchedule *schedule = s->GetSchedule(cID);
-				if (schedule) {
+
+		if (ev.seriesId > 0) 
+      {
+			const cEvent* event = NULL;
+			const cChannel* c = NULL;
+         const cSchedules* schedules = NULL;
+         tChannelID cID = tChannelID::FromString(key.channelId.c_str());
+
+#if defined (APIVERSNUM) && (APIVERSNUM >= 20301)
+         LOCK_CHANNELS_READ;
+         LOCK_SCHEDULES_READ;
+
+         c = Channels->GetByChannelID(cID);
+         schedules = Schedules;
+#else
+         cSchedulesLock schedulesLock(true);
+         schedules = (cSchedules*)cSchedules::Schedules(schedulesLock);
+         c = Channels.GetByChannelID(cID);
+#endif
+         
+			if (schedules) 
+         {
+				const cSchedule *schedule = schedules->GetSchedule(cID);
+            
+				if (schedule)
 					event = schedule->GetEvent(key.eventId);
-				}
 			}
-			if (event) {
+         
+			if (event)
 				tell(0, "series (tvdbID %d, episodeId %d), Event (EventID %d): %s, %s: %s (%s)", ev.seriesId, 
-																							     ev.episodeId, 
-																							     key.eventId, 
-																							     *event->GetDateString(), 
-																							     *event->GetTimeString(), 
-																							     event->Title(),
-																							     c?(c->Name()):"unknown channel");
-			} else {
-				tell(0, "series (tvdbID %d, episodeId %d), Event (EventID %d): No VDR Event found", ev.seriesId, ev.episodeId, key.eventId);
-			}
+                 ev.episodeId, 
+                 key.eventId, 
+                 *event->GetDateString(), 
+                 *event->GetTimeString(), 
+                 event->Title(),
+                 c?(c->Name()) : "unknown channel");
+         else
+				tell(0, "series (tvdbID %d, episodeId %d), Event (EventID %d): No VDR Event found", 
+                 ev.seriesId, ev.episodeId, key.eventId);
+
 			numSeries++;
 		}
 	}
+
 	tell(0, "Keeping %d series in memory", numSeries);
 }
 
-void cScrapManager::DumpMovies(void) {
+void cScrapManager::DumpMovies(void) 
+{
 	int numMovies = 0;
 	map<sEventsKey, sEventsValue>::iterator it;
-	for (it = events.begin(); it != events.end(); it++) {
+
+	for (it = events.begin(); it != events.end(); it++) 
+   {
 		sEventsKey key = it->first;
 		sEventsValue ev = it->second;
-		if (ev.movieId > 0) {
+
+		if (ev.movieId > 0) 
+      {
 			const cEvent *event = NULL;
 			const cChannel *c = NULL;
-			cSchedulesLock lock;
-			cSchedules *s = (cSchedules *)cSchedules::Schedules(lock);
-			if (s) {
-				tChannelID cID = tChannelID::FromString(key.channelId.c_str());
-				c = Channels.GetByChannelID(cID);
-				const cSchedule *schedule = s->GetSchedule(cID);
-				if (schedule) {
+         const cSchedules* schedules = NULL;
+         tChannelID cID = tChannelID::FromString(key.channelId.c_str());
+
+#if defined (APIVERSNUM) && (APIVERSNUM >= 20301)
+         LOCK_CHANNELS_READ;
+         LOCK_SCHEDULES_READ;
+
+         c = Channels->GetByChannelID(cID);
+         schedules = Schedules;
+#else
+         cSchedulesLock schedulesLock(true);
+         schedules = (cSchedules*)cSchedules::Schedules(schedulesLock);
+         c = Channels.GetByChannelID(cID);
+#endif
+         
+			if (schedules) 
+         {
+				const cSchedule *schedule = schedules->GetSchedule(cID);
+
+				if (schedule)
 					event = schedule->GetEvent(key.eventId);
-				}
 			}
-			if (event) {
+
+			if (event) 
+         {
 				tell(0, "movie (moviedbId %d), Event (EventID %d): %s, %s: %s (%s)", ev.movieId, 
 																					 key.eventId, 
 																					 *event->GetDateString(), 
 																					 *event->GetTimeString(), 
 																					 event->Title(),
 																					 c?(c->Name()):"unknown channel");
-			} else {
+			} 
+         else 
+         {
 				tell(0, "movie (moviedbId %d), Event (EventID %d): No VDR Event found", ev.movieId, key.eventId);
 			}
+
 			numMovies++;
 		}
 	}
+
 	tell(0, "Keeping %d movies in memory", numMovies);
 }
 
