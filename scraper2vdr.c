@@ -127,7 +127,6 @@ bool cPluginScraper2vdr::ProcessArgs(int argc, char *argv[]) {
 }
 
 bool cPluginScraper2vdr::Initialize(void) {
-    scraper2VdrConfig.SetUuid(this);
     scraper2VdrConfig.SetDefaultImageDir();
     scrapManager = new cScrapManager();
     update = new cUpdate(scrapManager);

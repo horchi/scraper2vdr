@@ -105,9 +105,10 @@ cUpdate::~cUpdate() {
 // global field definitions
 
 cDbFieldDef imageSizeDef("MEDIACONTENT", "media_content", cDBS::ffUInt, 0, cDBS::ftData);
-cDbFieldDef uuIDDef("UUID", "uuid", cDBS::ffAscii, 40, cDBS::ftData);
+cDbFieldDef uuIDDef("VDRUUID", "vdruuid", cDBS::ffAscii, 40, cDBS::ftData);
 
-int cUpdate::initDb() {
+int cUpdate::initDb() 
+{
     int status = success;
 
     if (!connection)
@@ -253,7 +254,7 @@ int cUpdate::initDb() {
     selectRecordings->bind("SERIESID", cDBS::bndOut, ", ");
     selectRecordings->bind("EPISODEID", cDBS::bndOut, ", ");
     selectRecordings->build(" from %s where ", tRecordings->TableName());
-    selectRecordings->bind("UUID", cDBS::bndIn | cDBS::bndSet);
+    selectRecordings->bind("VDRUUID", cDBS::bndIn | cDBS::bndSet);
     selectRecordings->build(" and %s = 0", tRecordings->getField("SCRAPNEW")->getDbName());
     status += selectRecordings->prepare();
     
@@ -264,7 +265,7 @@ int cUpdate::initDb() {
     selectCleanupRecordings->bind("RECPATH", cDBS::bndOut);
     selectCleanupRecordings->bind("RECSTART", cDBS::bndOut, ", ");
     selectCleanupRecordings->build(" from %s where ", tRecordings->TableName());
-    selectCleanupRecordings->bind("UUID", cDBS::bndIn | cDBS::bndSet);
+    selectCleanupRecordings->bind("VDRUUID", cDBS::bndIn | cDBS::bndSet);
     status += selectCleanupRecordings->prepare();
 
     // clear temp episode cache table
@@ -279,7 +280,7 @@ int cUpdate::initDb() {
                (select scrseriesepisode from epg2vdr.events where (scrseriesepisode > 0) and (scrseriesid = SeriesID)
                 union all 
                 select episode_id as scrseriesepisode from epg2vdr.recordings 
-                where (episode_id > 0) and (series_id = SeriesID) and (uuid = UUID)) A */
+                where (episode_id > 0) and (series_id = SeriesID) and (uuid = VDRUUID)) A */
     
     fillTempEpisodeTable = new cDbStatement(connection);
     fillTempEpisodeTable->build("insert into %s select distinct A.%s as %s from ",
@@ -693,7 +694,7 @@ int cUpdate::initDb() {
     selectMovieImage->bind("ACTORID", cDBS::bndIn | cDBS::bndSet, " and ");
     selectMovieImage->bind("MEDIATYPE", cDBS::bndIn | cDBS::bndSet, " and ");
     status += selectMovieImage->prepare();
-    
+
     return status;
 }
 
@@ -804,7 +805,7 @@ int cUpdate::CheckConnection(bool init, int& timeout) {
 bool cUpdate::CheckEpgdBusy(void) {
     int busy = false;
     vdrDb->clear();
-    vdrDb->setValue("UUID", EPGDNAME);
+    vdrDb->setValue("VDRUUID", EPGDNAME);
 
     if (vdrDb->find()) {
         cEpgdState::State epgdState = cEpgdState::toState(vdrDb->getStrValue("STATE"));
@@ -815,6 +816,38 @@ bool cUpdate::CheckEpgdBusy(void) {
 
     vdrDb->reset();
     return busy;
+}
+
+//***************************************************************************
+// Init Uuid
+//***************************************************************************
+
+int cUpdate::initUuid(int timeout)
+{
+   if (isEmpty(scraper2VdrConfig.uuid))
+   {
+      Epg2vdr_UUID_v1_0 req;
+      
+      cPlugin* epg2vdrPlugin = cPluginManager::GetPlugin("epg2vdr");
+      int epg2vdrPluginUuidService = (epg2vdrPlugin && epg2vdrPlugin->Service(EPG2VDR_UUID_SERVICE, 0));
+      
+      if (!epg2vdrPluginUuidService)
+      {
+         tell(0, "Warning: Can't find epg2vdr to query uuid, retrying in %d seconds", timeout);
+         return fail;
+      }
+
+      req.uuid = 0;
+
+      if (!epg2vdrPlugin->Service(EPG2VDR_UUID_SERVICE, &req))
+         return fail;
+      
+      tell(0, "Got UUID '%s' by epg2vdr", req.uuid);
+      
+      sstrcpy(scraper2VdrConfig.uuid, req.uuid, sizeUuid);
+   }
+   
+   return done;
 }
 
 int cUpdate::ReadScrapedEvents(void) {
@@ -1700,7 +1733,7 @@ bool cUpdate::ReadMovieImageFast(int movieId, int actorId, int mediaType, cMovie
 
 int cUpdate::ReadRecordings(void) {
     tRecordings->clear();
-    tRecordings->setValue("UUID", scraper2VdrConfig.uuid);
+    tRecordings->setValue("VDRUUID", scraper2VdrConfig.uuid);
     int numRecs = 0;
     for (int res = selectRecordings->find(); res; res = selectRecordings->fetch()) {
         int recStart = tRecordings->getIntValue("RECSTART");
@@ -1764,7 +1797,7 @@ int cUpdate::ScanVideoDir(void) {
             }
 
             tRecordings->clear();
-            tRecordings->setValue("UUID", scraper2VdrConfig.uuid);
+            tRecordings->setValue("VDRUUID", scraper2VdrConfig.uuid);
             tRecordings->setValue("RECPATH", recPath.c_str());
             tRecordings->setValue("RECSTART", recStart);
             
@@ -1866,7 +1899,7 @@ int cUpdate::ScanVideoDirScrapInfo(void) {
 
 bool cUpdate::LoadRecording(int recStart, string recPath) {
     tRecordings->clear();
-    tRecordings->setValue("UUID", scraper2VdrConfig.uuid);
+    tRecordings->setValue("VDRUUID", scraper2VdrConfig.uuid);
     tRecordings->setValue("RECSTART", recStart);
     tRecordings->setValue("RECPATH", recPath.c_str());
     int found = tRecordings->find();
@@ -2049,7 +2082,7 @@ int cUpdate::CleanupRecordings(void)
    // iterate 
    
    tRecordings->clear();
-   tRecordings->setValue("UUID", scraper2VdrConfig.uuid);
+   tRecordings->setValue("VDRUUID", scraper2VdrConfig.uuid);
    int numRecsDeleted = 0;
    
    for (int res = selectCleanupRecordings->find(); res; res = selectCleanupRecordings->fetch()) 
@@ -2128,6 +2161,7 @@ void cUpdate::Action()
 
     int worked = no;
     int sleep = 60;
+    int initSleep = 10;
     int scanFreq = 60 * 2;
     int scanNewRecFreq = 60 * 5;
     int scanNewRecDBFreq = 60 * 5;
@@ -2154,12 +2188,19 @@ void cUpdate::Action()
     {
         int reconnectTimeout; // set by checkConnection
 
-        waitCondition.TimedWait(mutex, init ? sleep*500 : sleep*1000);
+        waitCondition.TimedWait(mutex, init ? initSleep*1000 : sleep*1000);
+
+        // at first init the uuid 
+        //  - read uuid from vdrs table to use the same than the epg2vdr plugin
+
+        if (isEmpty(scraper2VdrConfig.uuid))
+           initUuid(initSleep);
 
         if (CheckConnection(init, reconnectTimeout) != success) 
            continue;
 
-        // auch beim init auf den epgd warten, wenn der gerade busy ist müssen die sich User etwas gedulden ;) 
+        // auch beim init auf den epgd warten, wenn der gerade busy 
+        // ist müssen die sich User etwas gedulden ;) 
 
         if (CheckEpgdBusy())
         {

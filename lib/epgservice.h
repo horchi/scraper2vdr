@@ -211,4 +211,15 @@ class cUpdateState
 
 typedef cUpdateState Us;
 
+//***************************************************************************
+// EPG Services
+//***************************************************************************
+
+#define EPG2VDR_UUID_SERVICE	"epg2vdr-UuidService-v1.0"
+
+struct Epg2vdr_UUID_v1_0
+{
+   const char* uuid;
+};
+
 #endif // __EPGSERVICE_H

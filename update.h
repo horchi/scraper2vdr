@@ -88,6 +88,8 @@ class cUpdate : public cThread  {
         int CleanupSeries(void);
         int CleanupMovies(void);
         int CleanupRecordings(void);
+        // ...
+        int initUuid(int timeout);
 
       // statements
 
