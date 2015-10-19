@@ -805,7 +805,7 @@ int cUpdate::CheckConnection(bool init, int& timeout) {
 bool cUpdate::CheckEpgdBusy(void) {
     int busy = false;
     vdrDb->clear();
-    vdrDb->setValue("VDRUUID", EPGDNAME);
+    vdrDb->setValue("UUID", EPGDNAME);
 
     if (vdrDb->find()) {
         cEpgdState::State epgdState = cEpgdState::toState(vdrDb->getStrValue("STATE"));
