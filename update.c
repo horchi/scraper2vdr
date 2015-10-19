@@ -2196,6 +2196,9 @@ void cUpdate::Action()
         if (isEmpty(scraper2VdrConfig.uuid))
            initUuid(initSleep);
 
+        if (isEmpty(scraper2VdrConfig.uuid))
+           continue;
+
         if (CheckConnection(init, reconnectTimeout) != success) 
            continue;
 
