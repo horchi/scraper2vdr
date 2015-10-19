@@ -1785,14 +1785,14 @@ int cUpdate::ScanVideoDir(void) {
             createMd5(rec->FileName(), md5path);
             tRecordingList->clear();
             tRecordingList->setValue("MD5PATH", md5path);
-            tRecordingList->setValue("START", recStart);
+            tRecordingList->setValue("STARTTIME", recStart);
 
             if (tRecordingList->find())
             {
                tRecordingList->clearChanged();
-               tRecordingList->setValue("SCRMOVIEID", scrapInfoMovieID);
-               tRecordingList->setValue("SCRSERIESID", scrapInfoSeriesID);
-               tRecordingList->setValue("SCREPISODEID", scrapInfoEpisodeID);
+               tRecordingList->setValue("SCRINFOMOVIEID", scrapInfoMovieID);
+               tRecordingList->setValue("SCRINFOSERIESID", scrapInfoSeriesID);
+               tRecordingList->setValue("SCRINFOEPISODEID", scrapInfoEpisodeID);
                tRecordingList->setValue("SCRNEW", 1);
 
                if (tRecordingList->getChanges())
@@ -1847,9 +1847,9 @@ int cUpdate::ScanVideoDirScrapInfo(void) {
             if (tRecordingList->find())
             {
                tRecordingList->clearChanged();
-               tRecordingList->setValue("SCRMOVIEID", scrapInfoMovieID);
-               tRecordingList->setValue("SCRSERIESID", scrapInfoSeriesID);
-               tRecordingList->setValue("SCREPISODEID", scrapInfoEpisodeID);
+               tRecordingList->setValue("SCRINFOMOVIEID", scrapInfoMovieID);
+               tRecordingList->setValue("SCRINFOSERIESID", scrapInfoSeriesID);
+               tRecordingList->setValue("SCRINFOEPISODEID", scrapInfoEpisodeID);
                tRecordingList->setValue("SCRNEW", 1);
 
                if (tRecordingList->getChanges())
