@@ -931,7 +931,7 @@ Index movie_media
 
 Table recordings
 {
-   VDRUUID              ""  vdruuid              Ascii       40 Primary,
+   VDRUUID              ""  uuid                 Ascii       40 Primary,
    RECPATH              ""  rec_path             Ascii      200 Primary,
    RECSTART             ""  rec_start            UInt         0 Primary,
 
