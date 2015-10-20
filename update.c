@@ -833,7 +833,7 @@ int cUpdate::initUuid(int timeout)
       
       if (!epg2vdrPluginUuidService)
       {
-         tell(0, "Warning: Can't find '%s' to query uuid, retrying in %d seconds", 
+         tell(0, "Warning: Can't find %s to query uuid, retrying in %d seconds", 
               epg2vdrPlugin ? "service " EPG2VDR_UUID_SERVICE : "plugin epg2vdr", timeout);
          return fail;
       }
