@@ -105,7 +105,7 @@ cUpdate::~cUpdate() {
 // global field definitions
 
 cDbFieldDef imageSizeDef("MEDIACONTENT", "media_content", cDBS::ffUInt, 0, cDBS::ftData);
-cDbFieldDef uuIDDef("VDRUUID", "vdruuid", cDBS::ffAscii, 40, cDBS::ftData);
+cDbFieldDef uuIDDef("VDRUUID", "uuid", cDBS::ffAscii, 40, cDBS::ftData);
 
 int cUpdate::initDb() 
 {
