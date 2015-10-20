@@ -963,7 +963,7 @@ Table recordings
 
 Index recordings
 {
-   uuid                 ""  UUID,
+   vdruuid              ""  VDRUUID,
    rec_path             ""  RECPATH,
    rec_start            ""  RECSTART,
    scrap_new            ""  SCRAPNEW,
