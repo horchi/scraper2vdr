@@ -229,7 +229,7 @@ struct Epg2vdr_UUID_v1_0
    const char* uuid;
 };
 
-#define MYSQL_INIT_EXIT "Mysql_Init_Exit-v1.0"
+#define MYSQL_INIT_EXIT	"Mysql_Init_Exit-v1.0"
 
 enum MysqlInitExitAction
 {

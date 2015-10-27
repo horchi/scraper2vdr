@@ -943,6 +943,13 @@ class cDbConnection
          {
             tell(1, "Info: Released the last usage of mysql_lib, calling mysql_library_end() now");
             mysql_library_end();
+
+            free(dbHost);
+            free(dbUser);
+            free(dbPass);
+            free(dbName);
+            free(encoding);
+            free(confPath);
          }
          else
          {
@@ -950,13 +957,6 @@ class cDbConnection
          }
 
          initMutex.Unlock();
-
-         free(dbHost);
-         free(dbUser);
-         free(dbPass);
-         free(dbName);
-         free(encoding);
-         free(confPath);
 
          return done;
       }

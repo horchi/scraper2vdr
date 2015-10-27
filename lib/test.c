@@ -27,16 +27,18 @@ const char* logPrefix = "";
 
 void initConnection()
 {
-   cDbConnection::init(0x3db00011);
+   cDbConnection::init();
 
-   cDbConnection::setEncoding("utf8");
    // cDbConnection::setHost("192.168.200.101");
    cDbConnection::setHost("localhost");
    cDbConnection::setPort(3306);
+
    cDbConnection::setName("epg2vdr");
    cDbConnection::setUser("epg2vdr");
    cDbConnection::setPass("epg");
+
    cDbConnection::setConfPath("/etc/epgd/");
+   cDbConnection::setEncoding("utf8");
 
    connection = new cDbConnection();
 }

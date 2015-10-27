@@ -20,16 +20,17 @@ const char* logPrefix = "";
 
 void initConnection()
 {
-   cDbConnection::init(0x3db00012);
+   cDbConnection::init();
 
-   cDbConnection::setEncoding("utf8");
    cDbConnection::setHost("localhost");
-
+   // cDbConnection::setHost("192.168.200.101");
    cDbConnection::setPort(3306);
    cDbConnection::setName("epg2vdr");
    cDbConnection::setUser("epg2vdr");
    cDbConnection::setPass("epg");
+
    cDbConnection::setConfPath("/etc/epgd/");
+   cDbConnection::setEncoding("utf8");
 
    connection = new cDbConnection();
 }
@@ -301,6 +302,52 @@ int insertDemo()
 }
 
 //***************************************************************************
+// 
+//***************************************************************************
+
+int updateRecordingDirectory()
+{
+   int ins = 0;
+   // char* dir = strdup("more~Marvel's Agents of S.H.I.E.L.D.~xxx.ts");
+   char* dir = strdup("aaaaa~bbbbbb~ccccc.ts");
+   char* pos = strrchr(dir, '~');
+
+   cDbTable* recordingDirDb = new cDbTable(connection, "recordingdirs");
+   if (recordingDirDb->open() != success) return fail;
+   
+   if (pos)
+   {
+      *pos = 0;
+      
+      for (int level = 0; level < 3; level++)
+      {
+         recordingDirDb->clear();
+
+         recordingDirDb->setValue("VDRUUID", "foobar");
+         recordingDirDb->setValue("DIRECTORY", dir);
+         
+         if (!recordingDirDb->find())
+         {
+            ins++;
+            recordingDirDb->store();
+         }
+         
+         recordingDirDb->reset();
+         
+         char* pos = strrchr(dir, '~');
+         if (pos) *pos=0;
+      }
+   }
+   
+   tell(0, "inserted %d directories", ins);
+
+   delete recordingDirDb;
+   free(dir);
+
+   return ins;
+}
+
+//***************************************************************************
 // Main
 //***************************************************************************
 
@@ -324,9 +371,7 @@ int main(int argc, char** argv)
       return 1;
    }
 
-   dbDict.show();
-
-   return 0;
+   // dbDict.show();
 
    initConnection();
 
@@ -335,6 +380,12 @@ int main(int argc, char** argv)
    // insertDemo();
 
    tell(0, "uuid: '%s'", getUniqueId());
+
+   tell(0, "- - - - - - - - - - - - - - - - - ");
+   
+   updateRecordingDirectory();
+
+   tell(0, "- - - - - - - - - - - - - - - - - ");
 
    exitConnection();
 

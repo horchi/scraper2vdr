@@ -1366,13 +1366,13 @@ LogDuration::LogDuration(const char* aMessage, int aLogLevel)
 LogDuration::~LogDuration()
 {
    tell(logLevel, "duration '%s' was (%ldms)",
-        message, cMyTimeMs::Now() - durationStart);
+        message, (long)(cMyTimeMs::Now() - durationStart));
 }
 
 void LogDuration::show(const char* label)
 {
    tell(logLevel, "elapsed '%s' at '%s' was (%ldms)",
-        message, label, cMyTimeMs::Now() - durationStart);
+        message, label, (long)(cMyTimeMs::Now() - durationStart));
 }
 
 //***************************************************************************
