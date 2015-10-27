@@ -13,7 +13,9 @@
 #include "tools.h"
 #include "update.h"
 
-cUpdate::cUpdate(cScrapManager *manager) : cThread("update thread started", true) {
+cUpdate::cUpdate(cScrapManager *manager) 
+   : cThread("scraper2vdr-update", true) 
+{
     connection = NULL;
     vdrDb = NULL;
     tEvents = NULL;
@@ -2163,7 +2165,6 @@ bool cUpdate::GetUsedImageSize(int originalWidth, int originalHeight, bool isPos
 
 void cUpdate::Action() 
 {
-    tell(0, "Update thread started (pid=%d)", getpid());
     mutex.Lock();
     loopActive = yes;
 
