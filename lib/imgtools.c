@@ -75,7 +75,7 @@ int fromJpeg(Imlib_Image& image, unsigned char* buffer, int size)
 
 long toJpeg(Imlib_Image image, MemoryStruct* data, int quality)
 {
-   struct jpeg_compress_struct cinfo = { 0 };
+   struct jpeg_compress_struct cinfo;
    struct jpeg_error_mgr jerr;
    DATA32* ptr;
    DATA8* buf;

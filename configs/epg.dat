@@ -497,6 +497,7 @@ Table recordinglist
    CHANNELID            ""            channelid        Ascii       50 Data,
 
    STATE                ""            state            Ascii        1 Data,
+   INUSE                ""            inuse            UInt         1 Data,
    JOB                  ""            job              Ascii        1 Data,
 
    // scraper fields
@@ -931,12 +932,12 @@ Index movie_media
 
 Table recordings
 {
-   VDRUUID              ""  uuid                 Ascii       40 Primary,
+   VDRUUID              ""  vdruuid              Ascii       40 Primary,
    RECPATH              ""  rec_path             Ascii      200 Primary,
    RECSTART             ""  rec_start            UInt         0 Primary,
 
-   INSSP                ""  inssp                Int         10 Meta,
-   UPDSP                ""  updsp                Int         10 Meta,
+   INSSP                ""  inssp                Int         10 Meta epgd|httpd,
+   UPDSP                ""  updsp                Int         10 Meta epgd|httpd,
 
    EVENTID              ""  event_id             UInt         0 Data,
    CHANNELID            ""  channel_id           Ascii       50 Data,

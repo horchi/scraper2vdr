@@ -103,7 +103,7 @@ cDbService::TypeDef cDbService::types[] =
    { ftAutoinc, "autoinc" },
    { ftDef0,    "def0" },
 
-   { ftUnknown }
+   { ftUnknown, "" }
 };
 
 int cDbService::toType(const char* theTypes)

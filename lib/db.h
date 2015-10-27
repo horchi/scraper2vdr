@@ -448,7 +448,8 @@ class cDbStatement : public cDbService
                   const char* comp, const char* delim = 0);
       int bindText(const char* text, cDbValue* value, 
                    const char* comp, const char* delim = 0);
-      
+      int bindTextFree(const char* text, cDbValue* value, const char* delim);
+
       int bindInChar(const char* ctable, const char* fname, 
                      cDbValue* value = 0, const char* delim = 0);
 
@@ -653,7 +654,7 @@ class cDbConnection
          close();
       }
 
-      int isConnected() { return getMySql() > 0; }
+      int isConnected() { return getMySql() != 0; }
 
       int attachConnection()
       { 
@@ -935,9 +936,9 @@ class cDbConnection
 
       static int exit()
       {
-         initThreads--;
-
          initMutex.Lock();
+
+         initThreads--;
 
          if (!initThreads)
          {

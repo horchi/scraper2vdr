@@ -373,6 +373,23 @@ int cDbStatement::bindText(const char* text, cDbValue* value,
    return success;
 }
 
+int cDbStatement::bindTextFree(const char* text, cDbValue* value, const char* delim)
+{
+   if (!value)
+   {
+      buildErrors++;
+      return fail;
+   }
+
+   if (delim) build("%s", delim);
+
+   build("%s", text);
+
+   appendBinding(value, bndIn);
+
+   return success;
+}
+
 //***************************************************************************
 // Bind In Char   - like <field> in ('A','B','C')
 //***************************************************************************
