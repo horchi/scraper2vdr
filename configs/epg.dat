@@ -935,8 +935,8 @@ Table recordings
    RECPATH              ""  rec_path             Ascii      200 Primary,
    RECSTART             ""  rec_start            UInt         0 Primary,
 
-   INSSP                ""  inssp                Int         10 Meta epgd|httpd,
-   UPDSP                ""  updsp                Int         10 Meta epgd|httpd,
+   INSSP                ""  inssp                Int         10 Meta,
+   UPDSP                ""  updsp                Int         10 Meta,
 
    EVENTID              ""  event_id             UInt         0 Data,
    CHANNELID            ""  channel_id           Ascii       50 Data,
@@ -963,7 +963,7 @@ Table recordings
 
 Index recordings
 {
-   uuid                 ""  UUID,
+   vdruuid              ""  VDRUUID,
    rec_path             ""  RECPATH,
    rec_start            ""  RECSTART,
    scrap_new            ""  SCRAPNEW,

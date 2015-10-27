@@ -1771,10 +1771,13 @@ int cUpdate::ScanVideoDir(void) {
    // --------
    // iterate 
 
-    for (const cRecording *rec = recordings->First(); rec; rec = recordings->Next(rec)) {
+    for (const cRecording *rec = recordings->First(); rec; rec = recordings->Next(rec)) 
+    {
         string recPath = getRecPath(rec);
         int recStart = rec->Start();
-        if (!scrapManager->RecordingExists(recStart, recPath)) {
+
+        if (!scrapManager->RecordingExists(recStart, recPath)) 
+        {
             newRecs++;
             int scrapInfoMovieID = 0;
             int scrapInfoSeriesID = 0;        
