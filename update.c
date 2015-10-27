@@ -841,7 +841,11 @@ int cUpdate::initUuid(int timeout)
       req.uuid = 0;
 
       if (!epg2vdrPlugin->Service(EPG2VDR_UUID_SERVICE, &req))
+      {
+         tell(0, "Error: Call of service '%s' failed, retrying in %d seconds", 
+              EPG2VDR_UUID_SERVICE, timeout);
          return fail;
+      }
       
       tell(0, "Got UUID '%s' by epg2vdr", req.uuid);
       

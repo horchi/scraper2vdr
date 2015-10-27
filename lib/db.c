@@ -580,7 +580,7 @@ void cDbStatement::showStat()
 }
 
 //***************************************************************************
-// Class cDbTable
+// cDbConnection statics
 //***************************************************************************
 
 char* cDbConnection::confPath = 0;
@@ -590,7 +590,12 @@ int   cDbConnection::dbPort = 3306;
 char* cDbConnection::dbUser = 0;
 char* cDbConnection::dbPass = 0;
 char* cDbConnection::dbName = 0;
-Sem*  cDbConnection::sem = 0;
+int   cDbConnection::initThreads = 0;
+cMyMutex cDbConnection::initMutex;
+
+//***************************************************************************
+// Class cDbTable
+//***************************************************************************
 
 //***************************************************************************
 // Object

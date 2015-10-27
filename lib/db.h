@@ -906,51 +906,50 @@ class cDbConnection
       // -----------------------------------------------------------
       // init() and exit() must exactly called 'once' per process
 
-      static int init(key_t semKey = 0)
+      static int init()
       {
-         if (semKey && !sem)
-            sem = new Sem(semKey);
+         int status = success;
 
-         if (!sem || sem->check() == success)
+         initMutex.Lock();
+
+         if (!initThreads)
          {
-            // call only once per process
-
-            if (sem)
-               tell(1, "Info: Calling mysql_library_init()");
+            tell(1, "Info: Calling mysql_library_init()");
 
             if (mysql_library_init(0, 0, 0)) 
             {
                tell(0, "Error: mysql_library_init() failed");
-               return fail;
+               status = fail;
             }
          }
-         else if (sem)
+         else 
          {
             tell(1, "Info: Skipping calling mysql_library_init(), it's already done!");
          }
-
-         if (sem)
-            sem->inc();
          
-         return success;
+         initThreads++;
+         initMutex.Unlock();
+
+         return status;
       }
 
       static int exit()
       {
-         mysql_thread_end();
+         initThreads--;
 
-         if (sem)
-            sem->dec();
-         
-         if (!sem || sem->check() == success)
+         initMutex.Lock();
+
+         if (!initThreads)
          {
             tell(1, "Info: Released the last usage of mysql_lib, calling mysql_library_end() now");
             mysql_library_end();
          }
-         else if (sem)
+         else
          {
             tell(1, "Info: The mysql_lib is still in use, skipping mysql_library_end() call");
          }
+
+         initMutex.Unlock();
 
          free(dbHost);
          free(dbUser);
@@ -971,7 +970,8 @@ class cDbConnection
       int inTact;
       int connectDropped;
 
-      static Sem* sem;
+      static cMyMutex initMutex;
+      static int initThreads;
 
       static char* encoding;
       static char* confPath;

@@ -26,6 +26,7 @@ static const char *MAINMENUENTRY  = "Scraper2Vdr";
 
 class cPluginScraper2vdr : public cPlugin {
 private:
+    int initExitDbConnection(MysqlInitExitAction action);
     cScrapManager *scrapManager;
     cUpdate *update;
 public:
