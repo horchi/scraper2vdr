@@ -1825,7 +1825,18 @@ int cUpdate::ScanVideoDir(void) {
             // update also recordinglist table for epghttpd
 
             md5Buf md5path;
-            createMd5(rec->FileName(), md5path);
+
+#if APIVERSNUM > 20103
+            const char* videoBasePath = cVideoDirectory::Name();
+#else
+            const char* videoBasePath = VideoDirectory;
+#endif
+
+            if (strncmp(rec->FileName(), videoBasePath, strlen(videoBasePath)) == 0)
+               createMd5(rec->FileName()+strlen(videoBasePath), md5path);
+            else
+               createMd5(rec->FileName(), md5path);
+
             tRecordingList->clear();
             tRecordingList->setValue("MD5PATH", md5path);
             tRecordingList->setValue("STARTTIME", recStart);
@@ -1882,7 +1893,17 @@ int cUpdate::ScanVideoDirScrapInfo(void) {
             // update also recordinglist table for epghttpd
 
             md5Buf md5path;
-            createMd5(rec->FileName(), md5path);
+#if APIVERSNUM > 20103
+            const char* videoBasePath = cVideoDirectory::Name();
+#else
+            const char* videoBasePath = VideoDirectory;
+#endif
+
+            if (strncmp(rec->FileName(), videoBasePath, strlen(videoBasePath)) == 0)
+               createMd5(rec->FileName()+strlen(videoBasePath), md5path);
+            else
+               createMd5(rec->FileName(), md5path);
+
             tRecordingList->clear();
             tRecordingList->setValue("MD5PATH", md5path);
             tRecordingList->setValue("START", recStart);
