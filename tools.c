@@ -9,6 +9,7 @@
 #include <locale>
 #include <Magick++.h>
 #include <vdr/plugin.h>
+#include <vdr/videodir.h>
 #include "lib/common.h"
 #include "tools.h"
 
@@ -132,12 +133,34 @@ string replaceString(string content, string search, string repl) {
     return content;
 }
 
-string getRecPath(const cRecording *rec) {
+string getRecPath(const cRecording *rec) 
+{
+    int pathOffset = 0;
+
     if (!rec)
-        return "";
-    string recPath = rec->FileName();
+       return "";
+    
+#if APIVERSNUM > 20103
+    const char* videoBasePath = cVideoDirectory::Name();
+#else
+    const char* videoBasePath = VideoDirectory;
+#endif
+    
+    if (strncmp(rec->FileName(), videoBasePath, strlen(videoBasePath)) == 0)
+    {
+       pathOffset = strlen(videoBasePath);
+       
+       if (*(rec->FileName()+pathOffset) == '/')
+          pathOffset++;
+    }
+
+    string recPath = rec->FileName()+pathOffset;
+
+    // gute Idee das Relevante hinten abzuschneiden?
+
     if (recPath.size() > 200)
         recPath = recPath.substr(0, 199);
+
     return recPath;
 }
 
