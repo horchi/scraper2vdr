@@ -95,3 +95,6 @@ Version 0.1.14 (horchi)
 Version 0.1.15 (horchi)
 - started http branch
 
+Version 0.1.16 (horchi)
+- changed recording path (now without base path)
+- added service to register mysql_lib_init
