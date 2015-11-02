@@ -851,7 +851,7 @@ int cUpdate::initUuid(int timeout)
       
       tell(0, "Got UUID '%s' by epg2vdr", req.uuid);
       
-      sstrcpy(scraper2VdrConfig.uuid, req.uuid, sizeUuid);
+      sstrcpy(scraper2VdrConfig.uuid, req.uuid, sizeUuid+TB);
    }
    
    return done;
