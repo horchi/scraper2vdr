@@ -1837,7 +1837,7 @@ int cUpdate::ScanVideoDir(void) {
             {
                pathOffset = strlen(videoBasePath);
                
-               if (*rec->FileName()+pathOffset == '/')
+               if (*(rec->FileName()+pathOffset) == '/')
                   pathOffset++;
             }
 
