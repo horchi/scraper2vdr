@@ -72,6 +72,13 @@ enum TimerNamingMode
 
 };
 
+enum RecordingState
+{
+   rsFinished  = 'F',
+   rsRecording = 'R',
+   rsDeleted   = 'D'
+};
+
 enum TimerState
 {
    tsPending  = 'P',
@@ -220,6 +227,19 @@ typedef cUpdateState Us;
 struct Epg2vdr_UUID_v1_0
 {
    const char* uuid;
+};
+
+#define MYSQL_INIT_EXIT	"Mysql_Init_Exit-v1.0"
+
+enum MysqlInitExitAction
+{
+   mieaInit = 0,
+   mieaExit = 1
+};
+
+struct Mysql_Init_Exit_v1_0
+{
+   MysqlInitExitAction action;
 };
 
 #endif // __EPGSERVICE_H

@@ -13,7 +13,9 @@
 #include "tools.h"
 #include "update.h"
 
-cUpdate::cUpdate(cScrapManager *manager) : cThread("update thread started", true) {
+cUpdate::cUpdate(cScrapManager *manager) 
+   : cThread("scraper2vdr-update", true) 
+{
     connection = NULL;
     vdrDb = NULL;
     tEvents = NULL;
@@ -841,11 +843,15 @@ int cUpdate::initUuid(int timeout)
       req.uuid = 0;
 
       if (!epg2vdrPlugin->Service(EPG2VDR_UUID_SERVICE, &req))
+      {
+         tell(0, "Error: Call of service '%s' failed, retrying in %d seconds", 
+              EPG2VDR_UUID_SERVICE, timeout);
          return fail;
+      }
       
       tell(0, "Got UUID '%s' by epg2vdr", req.uuid);
       
-      sstrcpy(scraper2VdrConfig.uuid, req.uuid, sizeUuid);
+      sstrcpy(scraper2VdrConfig.uuid, req.uuid, sizeUuid+TB);
    }
    
    return done;
@@ -1819,7 +1825,24 @@ int cUpdate::ScanVideoDir(void) {
             // update also recordinglist table for epghttpd
 
             md5Buf md5path;
-            createMd5(rec->FileName(), md5path);
+            int pathOffset = 0;
+
+#if APIVERSNUM > 20103
+            const char* videoBasePath = cVideoDirectory::Name();
+#else
+            const char* videoBasePath = VideoDirectory;
+#endif
+
+            if (strncmp(rec->FileName(), videoBasePath, strlen(videoBasePath)) == 0)
+            {
+               pathOffset = strlen(videoBasePath);
+               
+               if (*(rec->FileName()+pathOffset) == '/')
+                  pathOffset++;
+            }
+
+            createMd5(rec->FileName()+pathOffset, md5path);
+
             tRecordingList->clear();
             tRecordingList->setValue("MD5PATH", md5path);
             tRecordingList->setValue("STARTTIME", recStart);
@@ -1876,7 +1899,17 @@ int cUpdate::ScanVideoDirScrapInfo(void) {
             // update also recordinglist table for epghttpd
 
             md5Buf md5path;
-            createMd5(rec->FileName(), md5path);
+#if APIVERSNUM > 20103
+            const char* videoBasePath = cVideoDirectory::Name();
+#else
+            const char* videoBasePath = VideoDirectory;
+#endif
+
+            if (strncmp(rec->FileName(), videoBasePath, strlen(videoBasePath)) == 0)
+               createMd5(rec->FileName()+strlen(videoBasePath), md5path);
+            else
+               createMd5(rec->FileName(), md5path);
+
             tRecordingList->clear();
             tRecordingList->setValue("MD5PATH", md5path);
             tRecordingList->setValue("START", recStart);
@@ -2159,7 +2192,6 @@ bool cUpdate::GetUsedImageSize(int originalWidth, int originalHeight, bool isPos
 
 void cUpdate::Action() 
 {
-    tell(0, "Update thread started (pid=%d)", getpid());
     mutex.Lock();
     loopActive = yes;
 

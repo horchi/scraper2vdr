@@ -497,6 +497,7 @@ Table recordinglist
    CHANNELID            ""            channelid        Ascii       50 Data,
 
    STATE                ""            state            Ascii        1 Data,
+   INUSE                ""            inuse            UInt         1 Data,
    JOB                  ""            job              Ascii        1 Data,
 
    // scraper fields

@@ -448,7 +448,8 @@ class cDbStatement : public cDbService
                   const char* comp, const char* delim = 0);
       int bindText(const char* text, cDbValue* value, 
                    const char* comp, const char* delim = 0);
-      
+      int bindTextFree(const char* text, cDbValue* value, const char* delim);
+
       int bindInChar(const char* ctable, const char* fname, 
                      cDbValue* value = 0, const char* delim = 0);
 
@@ -653,7 +654,7 @@ class cDbConnection
          close();
       }
 
-      int isConnected() { return getMySql() > 0; }
+      int isConnected() { return getMySql() != 0; }
 
       int attachConnection()
       { 
@@ -906,58 +907,57 @@ class cDbConnection
       // -----------------------------------------------------------
       // init() and exit() must exactly called 'once' per process
 
-      static int init(key_t semKey = 0)
+      static int init()
       {
-         if (semKey && !sem)
-            sem = new Sem(semKey);
+         int status = success;
 
-         if (!sem || sem->check() == success)
+         initMutex.Lock();
+
+         if (!initThreads)
          {
-            // call only once per process
-
-            if (sem)
-               tell(1, "Info: Calling mysql_library_init()");
+            tell(1, "Info: Calling mysql_library_init()");
 
             if (mysql_library_init(0, 0, 0)) 
             {
                tell(0, "Error: mysql_library_init() failed");
-               return fail;
+               status = fail;
             }
          }
-         else if (sem)
+         else 
          {
             tell(1, "Info: Skipping calling mysql_library_init(), it's already done!");
          }
-
-         if (sem)
-            sem->inc();
          
-         return success;
+         initThreads++;
+         initMutex.Unlock();
+
+         return status;
       }
 
       static int exit()
       {
-         mysql_thread_end();
+         initMutex.Lock();
 
-         if (sem)
-            sem->dec();
-         
-         if (!sem || sem->check() == success)
+         initThreads--;
+
+         if (!initThreads)
          {
             tell(1, "Info: Released the last usage of mysql_lib, calling mysql_library_end() now");
             mysql_library_end();
+
+            free(dbHost);
+            free(dbUser);
+            free(dbPass);
+            free(dbName);
+            free(encoding);
+            free(confPath);
          }
-         else if (sem)
+         else
          {
             tell(1, "Info: The mysql_lib is still in use, skipping mysql_library_end() call");
          }
 
-         free(dbHost);
-         free(dbUser);
-         free(dbPass);
-         free(dbName);
-         free(encoding);
-         free(confPath);
+         initMutex.Unlock();
 
          return done;
       }
@@ -971,7 +971,8 @@ class cDbConnection
       int inTact;
       int connectDropped;
 
-      static Sem* sem;
+      static cMyMutex initMutex;
+      static int initThreads;
 
       static char* encoding;
       static char* confPath;

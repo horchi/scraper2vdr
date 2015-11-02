@@ -38,7 +38,7 @@ ifdef DEBUG
   CFLAGS += -ggdb -O0
 endif
 
-CFLAGS += -fPIC -Wreturn-type -Wall -Wno-parentheses -Wformat -pedantic -Wunused-variable -Wunused-label \
+CFLAGS += -fPIC -Wextra -Wreturn-type -Wall -Wno-parentheses -Wformat -pedantic -Wunused-variable -Wunused-label \
           -Wunused-value -Wunused-function \
           -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
 

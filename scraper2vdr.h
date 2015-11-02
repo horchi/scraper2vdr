@@ -16,7 +16,7 @@
 // Constants
 //***************************************************************************
 
-static const char *VERSION        = "0.1.14";
+static const char *VERSION        = "0.1.15";
 static const char *DESCRIPTION    = "'scraper2vdr' plugin";
 static const char *MAINMENUENTRY  = "Scraper2Vdr";
 
@@ -26,6 +26,7 @@ static const char *MAINMENUENTRY  = "Scraper2Vdr";
 
 class cPluginScraper2vdr : public cPlugin {
 private:
+    int initExitDbConnection(MysqlInitExitAction action);
     cScrapManager *scrapManager;
     cUpdate *update;
 public:
