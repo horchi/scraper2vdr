@@ -489,7 +489,7 @@ Table recordinglist
    FOLDER               ""            folder           Ascii     1000 Data,
    TITLE                ""            title            Ascii      200 Data,
    SHORTTEXT            ""            shorttext        Ascii      300 Data,
-   DESCRIPTION          ""            description      MText    25000 Data,
+   LONGDESCRIPTION      ""            longdescription  MText    25000 Data,
    DURATION             ""            duration         UInt         0 Data,
    FSK                  ""            fsk              UInt         1 Data,
 
@@ -500,8 +500,40 @@ Table recordinglist
    INUSE                ""            inuse            UInt         1 Data,
    JOB                  ""            job              Ascii        1 Data,
 
-   // scraper fields
+   // enriched by 'external' data of events
 
+   ACTOR                ""            actor           Text      5000 Data,
+   AUDIO                ""            audio           Ascii       50 Data,
+   CATEGORY             ""            category        Ascii       50 Data,
+   COUNTRY              ""            country         Ascii       50 Data,
+   DIRECTOR             ""            director        Text      1000 Data,
+   FLAGS                ""            flags           Ascii      100 Data,
+   GENRE                ""            genre           Ascii      100 Data,
+   INFO                 ""            info            Text     10000 Data,
+   MUSIC                ""            music           Ascii      250 Data,
+   PRODUCER             ""            producer        Text      1000 Data,
+   SCREENPLAY           ""            screenplay      Ascii      500 Data,
+   SHORTREVIEW          ""            shortreview     Ascii      500 Data,
+   TIPP                 ""            tipp            Ascii      250 Data,
+   TOPIC                ""            topic           Ascii      500 Data,
+   YEAR                 ""            year            Ascii       10 Data,
+   RATING               ""            rating          Ascii      250 Data,
+   NUMRATING            ""            numrating       Int          2 Data,
+   MOVIEID              ""            movieid         Ascii       20 Data,
+   MODERATOR            ""            moderator       Ascii      250 Data,
+   OTHER                ""            other           Text      2000 Data,
+   GUEST                ""            guest           Text      1000 Data,
+   CAMERA               ""            camera          Text      1000 Data,
+   EXTEPNUM             ""            extepnum        Int          4 Data,
+
+   // episode reference
+
+   EPISODECOMPNAME      ""                                                   episodecompname      Ascii      100 Data epgd|httpd|epg2vdr,
+   EPISODECOMPSHORTNAME ""                                                   episodecompshortname Ascii      100 Data epgd|httpd|epg2vdr,
+   EPISODECOMPPARTNAME  ""                                                   episodecomppartname  Ascii      200 Data epgd|httpd|epg2vdr,
+   EPISODELANG          ""                                                   episodelang          Ascii       10 Data epgd|httpd|epg2vdr,
+
+   // scraper fields
    // IDs found while scraping (reference to scraper tables), managed by epgd
 
    SCRSERIESID          ""            scrseriesid       UInt         0 Data,
@@ -936,8 +968,8 @@ Table recordings
    RECPATH              ""  rec_path             Ascii      200 Primary,
    RECSTART             ""  rec_start            UInt         0 Primary,
 
-   INSSP                ""  inssp                Int         10 Meta,
-   UPDSP                ""  updsp                Int         10 Meta,
+   INSSP                ""  inssp                Int         10 Meta epgd|httpd,
+   UPDSP                ""  updsp                Int         10 Meta epgd|httpd,
 
    EVENTID              ""  event_id             UInt         0 Data,
    CHANNELID            ""  channel_id           Ascii       50 Data,
