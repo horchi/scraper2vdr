@@ -54,7 +54,7 @@ void cScraper2VdrSetup::Setup(void) {
     Add(new cOsdItem(tr("Update Scraper Recordings Information from Database")));
     Add(new cOsdItem(tr("Scan for new recordings in video directory")));
     Add(new cOsdItem(tr("Scan for new or updated scrapinfo files")));
-    Add(new cOsdItem(tr("Cleanup Recordings in Database")));
+    // Add(new cOsdItem(tr("Cleanup Recordings in Database")));
     Add(new cOsdItem(tr("Reload all values (Series, Movies and Images)")));
 
     SetCurrent(Get(currentItem));
@@ -92,10 +92,10 @@ eOSState cScraper2VdrSetup::ProcessKey(eKeys Key) {
                 } else if (Current() == 21 ) {
                     Skins.Message(mtInfo, tr("Scanning for new or updated scrapinfo files"));
                     update->ForceScrapInfoUpdate();
+//                 } else if (Current() == 22) {
+//                     Skins.Message(mtInfo, tr("Cleaning up Recordings in Database"));
+//                     update->TriggerCleanRecordingsDB();
                 } else if (Current() == 22) {
-                    Skins.Message(mtInfo, tr("Cleaning up Recordings in Database"));
-                    update->TriggerCleanRecordingsDB();
-                } else if (Current() == 23) {
                     Skins.Message(mtInfo, tr("Loading Series, Movies and Images from Database"));
                     update->ForceFullUpdate();
                 }

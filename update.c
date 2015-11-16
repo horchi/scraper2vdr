@@ -27,14 +27,14 @@ cUpdate::cUpdate(cScrapManager *manager)
     tMovieActor = NULL;
     tMovieActors = NULL;
     tMovieMedia = NULL;
-    tRecordings = NULL;
+    //tRecordings = NULL;
     tRecordingList = NULL;
 
     selectReadScrapedEventsInit = 0;
     selectReadScrapedEvents = 0;
     selectMovieActors = 0;
     selectRecordings = 0;
-    selectCleanupRecordings = 0;
+    //selectCleanupRecordings = 0;
     clearTempEpisodeTable = 0;
     fillTempEpisodeTable = 0;
       
@@ -62,7 +62,7 @@ cUpdate::cUpdate(cScrapManager *manager)
     forceRecordingUpdate = false;
     forceVideoDirUpdate = false;
     forceScrapInfoUpdate = false;
-    forceCleanupRecordingDb = false;
+    //forceCleanupRecordingDb = false;
     forceFullUpdate = false;
     forceReconnect = false;
     scrspRemoved = false;
@@ -152,8 +152,8 @@ int cUpdate::initDb()
     tMovieMedia = new cDbTable(connection, "movie_media");
     if (tMovieMedia->open() != success) return fail;
     
-    tRecordings = new cDbTable(connection, "recordings");
-    if (tRecordings->open(yes) != success) return fail;
+//     tRecordings = new cDbTable(connection, "recordings");
+//     if (tRecordings->open(yes) != success) return fail;
 
     tRecordingList = new cDbTable(connection, "recordinglist");
     if (tRecordingList->open(yes) != success) return fail;
@@ -168,6 +168,7 @@ int cUpdate::initDb()
 
     // 
     series_id.setField(tSeriesMedia->getField("SERIESID"));
+    recSeriesid.setField(tRecordingList->getField("SCRSERIESID"));
     event_scrsp.setField(tEvents->getField("SCRSP"));
     events_ScrSeriesId.setField(tEvents->getField("SCRSERIESID"));
     episode_LastUpdate.setField(tEpisodes->getField("EPISODELASTUPDATED"));
@@ -248,27 +249,39 @@ int cUpdate::initDb()
 
     // 
 
-    selectRecordings = new cDbStatement(tRecordings);
-    selectRecordings->build("select ");
-    selectRecordings->bind("RECPATH", cDBS::bndOut);
-    selectRecordings->bind("RECSTART", cDBS::bndOut, ", ");
-    selectRecordings->bind("MOVIEID", cDBS::bndOut, ", ");
-    selectRecordings->bind("SERIESID", cDBS::bndOut, ", ");
-    selectRecordings->bind("EPISODEID", cDBS::bndOut, ", ");
-    selectRecordings->build(" from %s where ", tRecordings->TableName());
-    selectRecordings->bind("VDRUUID", cDBS::bndIn | cDBS::bndSet);
-    selectRecordings->build(" and %s = 0", tRecordings->getField("SCRAPNEW")->getDbName());
-    status += selectRecordings->prepare();
+//     selectRecordings = new cDbStatement(tRecordings);
+//     selectRecordings->build("select ");
+//     selectRecordings->bind("RECPATH", cDBS::bndOut);
+//     selectRecordings->bind("RECSTART", cDBS::bndOut, ", ");
+//     selectRecordings->bind("MOVIEID", cDBS::bndOut, ", ");
+//     selectRecordings->bind("SERIESID", cDBS::bndOut, ", ");
+//     selectRecordings->bind("EPISODEID", cDBS::bndOut, ", ");
+//     selectRecordings->build(" from %s where ", tRecordings->TableName());
+//     selectRecordings->bind("VDRUUID", cDBS::bndIn | cDBS::bndSet);
+//     selectRecordings->build(" and %s = 0", tRecordings->getField("SCRAPNEW")->getDbName());
+//     status += selectRecordings->prepare();
     
+    selectRecordings = new cDbStatement(tRecordingList);
+    selectRecordings->build("select ");
+    selectRecordings->bind("PATH", cDBS::bndOut);
+    selectRecordings->bind("STARTTIME", cDBS::bndOut, ", ");
+    selectRecordings->bind("SCRMOVIEID", cDBS::bndOut, ", ");
+    selectRecordings->bind("SCRSERIESID", cDBS::bndOut, ", ");
+    selectRecordings->bind("SCRSERIESEPISODE", cDBS::bndOut, ", ");
+    selectRecordings->build(" from %s where ", tRecordingList->TableName());
+    // selectRecordings->bind("VDRUUID", cDBS::bndIn | cDBS::bndSet);
+    selectRecordings->build("%s = 0", tRecordingList->getField("SCRNEW")->getDbName());
+    status += selectRecordings->prepare();
+
     // 
 
-    selectCleanupRecordings = new cDbStatement(tRecordings);
-    selectCleanupRecordings->build("select ");
-    selectCleanupRecordings->bind("RECPATH", cDBS::bndOut);
-    selectCleanupRecordings->bind("RECSTART", cDBS::bndOut, ", ");
-    selectCleanupRecordings->build(" from %s where ", tRecordings->TableName());
-    selectCleanupRecordings->bind("VDRUUID", cDBS::bndIn | cDBS::bndSet);
-    status += selectCleanupRecordings->prepare();
+//     selectCleanupRecordings = new cDbStatement(tRecordings);
+//     selectCleanupRecordings->build("select ");
+//     selectCleanupRecordings->bind("RECPATH", cDBS::bndOut);
+//     selectCleanupRecordings->bind("RECSTART", cDBS::bndOut, ", ");
+//     selectCleanupRecordings->build(" from %s where ", tRecordings->TableName());
+//     selectCleanupRecordings->bind("VDRUUID", cDBS::bndIn | cDBS::bndSet);
+//     status += selectCleanupRecordings->prepare();
 
     // clear temp episode cache table
 
@@ -278,10 +291,11 @@ int cUpdate::initDb()
     status += clearTempEpisodeTable->prepare();
     
     // fill temp episode cache table using current series id
-/*  insert into TempEpisodeTableName select distinct A.scrseriesepisode as episode_id from
+/*  insert into TempEpisodeTableName select distinct A.scrseriesepisode as episode_id 
+               from
                (select scrseriesepisode from epg2vdr.events where (scrseriesepisode > 0) and (scrseriesid = SeriesID)
                 union all 
-                select episode_id as scrseriesepisode from epg2vdr.recordings 
+                select episode_id as scrseriesepisode from epg2vdr.recordinglist 
                 where (episode_id > 0) and (series_id = SeriesID) and (uuid = VDRUUID)) A */
     
     fillTempEpisodeTable = new cDbStatement(connection);
@@ -295,12 +309,12 @@ int cUpdate::initDb()
                                 tEvents->getField("SCRSERIESEPISODE")->getDbName());
     fillTempEpisodeTable->bind(&events_ScrSeriesId, cDBS::bndIn | cDBS::bndSet);
     fillTempEpisodeTable->build(") union all select %s as %s from %s ",
-                                tRecordings->getField("EPISODEID")->getDbName(),
+                                tRecordingList->getField("SCRSERIESEPISODE")->getDbName(),
                                 tEvents->getField("SCRSERIESEPISODE")->getDbName(),
-                                tRecordings->TableName());
+                                tRecordingList->TableName());
     fillTempEpisodeTable->build("where (%s > 0) and (",
-                                tRecordings->getField("EPISODEID")->getDbName());
-    fillTempEpisodeTable->bind(&series_id, cDBS::bndIn | cDBS::bndSet);
+                                tRecordingList->getField("SCRSERIESEPISODE")->getDbName());
+    fillTempEpisodeTable->bind(&recSeriesid, cDBS::bndIn | cDBS::bndSet);
     fillTempEpisodeTable->build(") and (");
     fillTempEpisodeTable->bind(&vdr_uuid, cDBS::bndIn | cDBS::bndSet);
     fillTempEpisodeTable->build(")) A");
@@ -360,13 +374,13 @@ int cUpdate::initDb()
                                 tEvents->getField("SCRSERIESID")->getDbName());
     selectReadSeriesInit->build(" union all ");
     selectReadSeriesInit->build("select %s, %s, %s from %s where (",
-                                tRecordings->getField("SERIESID")->getDbName(),
-                                tRecordings->getField("EPISODEID")->getDbName(),
+                                tRecordingList->getField("SCRSERIESID")->getDbName(),
+                                tRecordingList->getField("SCRSERIESEPISODE")->getDbName(),
                                 tEvents->getField("SCRSP")->getDbName(),
-                                tRecordings->TableName());
+                                tRecordingList->TableName());
     selectReadSeriesInit->bind(&vdr_uuid, cDBS::bndIn | cDBS::bndSet);
     selectReadSeriesInit->build(") and (%s > 0)",
-                                tRecordings->getField("SERIESID")->getDbName());
+                                tRecordingList->getField("SCRSERIESID")->getDbName());
     selectReadSeriesInit->build(") E group by %s,%s) C ",
                                 tSeries->getField("SERIESID")->getDbName(),
                                 tEpisodes->getField("EPISODEID")->getDbName());
@@ -438,13 +452,13 @@ int cUpdate::initDb()
     selectReadSeriesLastScrsp->bindCmp(0, &event_scrsp, ">");
     selectReadSeriesLastScrsp->build(") union all ");
     selectReadSeriesLastScrsp->build("select %s, %s, %s from %s where (",
-                                     tRecordings->getField("SERIESID")->getDbName(),
-                                     tRecordings->getField("EPISODEID")->getDbName(),
+                                     tRecordingList->getField("SCRSERIESID")->getDbName(),
+                                     tRecordingList->getField("SCRSERIESEPISODE")->getDbName(),
                                      tEvents->getField("SCRSP")->getDbName(),
-                                     tRecordings->TableName());
+                                     tRecordingList->TableName());
     selectReadSeriesLastScrsp->bind(&vdr_uuid, cDBS::bndIn | cDBS::bndSet);
     selectReadSeriesLastScrsp->build(") and (%s > 0) and (",
-                                     tRecordings->getField("SERIESID")->getDbName());
+                                     tRecordingList->getField("SCRSERIESID")->getDbName());
     selectReadSeriesLastScrsp->bindCmp(0, &event_scrsp, ">");
     selectReadSeriesLastScrsp->build(")) E group by %s,%s) C ",
                                      tSeries->getField("SERIESID")->getDbName(),
@@ -561,12 +575,12 @@ int cUpdate::initDb()
 /*  select A.movie_id, A.movie_title, A.movie_original_title, A.movie_tagline, A.movie_overview, A.movie_adult, A.movie_collection_name, A.movie_budget,
      A.movie_revenue, A.movie_genres, A.movie_homepage, A.movie_release_date, A.movie_runtime, A.movie_popularity, A.movie_vote_average, B.scrsp from epg2vdr.movie A
     right join (select C.movie_id, max(C.scrsp) as scrsp from 
-                           (select scrmovieid as movie_id, scrsp from epg2vdr.events where (scrmovieid>0)
+                           (select scrmovieid as movie_id, scrsp from events where (scrmovieid > 0)
                             union all 
-                            select movie_id, scrsp from epg2vdr.recordings
-                            where (uuid = "4E231345-9219-4FEC-8666-09C60D536E68") and (movie_id > 0)) C group by movie_id) B
-    on (A.movie_id = B.movie_id)
-    order by A.movie_id */
+                            select scrmovieid, scrsp from recordinglist
+                            where  (movie_id > 0)) C 
+                              group by movie_id) B on (A.movie_id = B.movie_id)
+                            order by A.movie_id */
     
     selectReadMoviesInit = new cDbStatement(tMovies);
     selectReadMoviesInit->build("select ");
@@ -600,18 +614,17 @@ int cUpdate::initDb()
                                 tEvents->TableName(),
                                 tEvents->getField("SCRMOVIEID")->getDbName());
     selectReadMoviesInit->build(" union all ");
-    selectReadMoviesInit->build("select %s, %s from %s where (",
-                                tRecordings->getField("MOVIEID")->getDbName(),
+    selectReadMoviesInit->build("select %s, %s from %s where ",
+                                tRecordingList->getField("SCRMOVIEID")->getDbName(),
                                 tEvents->getField("SCRSP")->getDbName(),
-                                tRecordings->TableName());
-    selectReadMoviesInit->bind(&vdr_uuid, cDBS::bndIn | cDBS::bndSet);
-    selectReadMoviesInit->build(") and (%s > 0)",
-                                tRecordings->getField("MOVIEID")->getDbName());
+                                tRecordingList->TableName());
+    selectReadMoviesInit->build(" (%s > 0)",
+                                tRecordingList->getField("SCRMOVIEID")->getDbName());
     selectReadMoviesInit->build(") C group by %s) B on (A.%s = B.%s) order by A.%s",
-                                tRecordings->getField("MOVIEID")->getDbName(),
-                                tRecordings->getField("MOVIEID")->getDbName(),
-                                tRecordings->getField("MOVIEID")->getDbName(),
-                                tRecordings->getField("MOVIEID")->getDbName());
+                                tMovies->getField("MOVIEID")->getDbName(),
+                                tMovies->getField("MOVIEID")->getDbName(),
+                                tMovies->getField("MOVIEID")->getDbName(),
+                                tMovies->getField("MOVIEID")->getDbName());
     status += selectReadMoviesInit->prepare();
 
     // get all used movies (events/recordings) and max(scrsp) of all events, filtered by lastscrsp
@@ -658,19 +671,18 @@ int cUpdate::initDb()
                                      tEvents->getField("SCRMOVIEID")->getDbName());
     selectReadMoviesLastScrsp->bindCmp(0, &event_scrsp, ">");
     selectReadMoviesLastScrsp->build(") union all ");
-    selectReadMoviesLastScrsp->build("select %s, %s from %s where (",
-                                     tRecordings->getField("MOVIEID")->getDbName(),
+    selectReadMoviesLastScrsp->build("select %s, %s from %s where ",
+                                     tRecordingList->getField("SCRMOVIEID")->getDbName(),
                                      tEvents->getField("SCRSP")->getDbName(),
-                                     tRecordings->TableName());
-    selectReadMoviesLastScrsp->bind(&vdr_uuid, cDBS::bndIn | cDBS::bndSet);
-    selectReadMoviesLastScrsp->build(") and (%s > 0) and (",
-                                     tRecordings->getField("MOVIEID")->getDbName());
+                                     tRecordingList->TableName());
+    selectReadMoviesLastScrsp->build(" (%s > 0) and (",
+                                     tRecordingList->getField("SCRMOVIEID")->getDbName());
     selectReadMoviesLastScrsp->bindCmp(0, &event_scrsp, ">");
     selectReadMoviesLastScrsp->build(")) C group by %s) B on (A.%s = B.%s) order by A.%s",
-                                     tRecordings->getField("MOVIEID")->getDbName(),
-                                     tRecordings->getField("MOVIEID")->getDbName(),
-                                     tRecordings->getField("MOVIEID")->getDbName(),
-                                     tRecordings->getField("MOVIEID")->getDbName());
+                                     tMovies->getField("MOVIEID")->getDbName(),
+                                     tMovies->getField("MOVIEID")->getDbName(),
+                                     tMovies->getField("MOVIEID")->getDbName(),
+                                     tMovies->getField("MOVIEID")->getDbName());
     status += selectReadMoviesLastScrsp->prepare();
 
     selectMovieMediaFast = new cDbStatement(tMovieMedia);
@@ -727,7 +739,7 @@ int cUpdate::exitDb() {
     delete selectReadScrapedEventsInit; selectReadScrapedEventsInit = 0;
     delete selectMovieActors;           selectMovieActors = 0;
     delete selectRecordings;            selectRecordings = 0;
-    delete selectCleanupRecordings;     selectCleanupRecordings = 0;
+    // delete selectCleanupRecordings;     selectCleanupRecordings = 0;
     delete clearTempEpisodeTable;       clearTempEpisodeTable = 0;
     delete fillTempEpisodeTable;        fillTempEpisodeTable = 0;
     delete selectReadSeriesInit;        selectReadSeriesInit = 0;
@@ -750,7 +762,7 @@ int cUpdate::exitDb() {
     delete tMovieActor;    tMovieActor = 0;
     delete tMovieActors;   tMovieActors = 0;
     delete tMovieMedia;    tMovieMedia = 0;
-    delete tRecordings;    tRecordings = 0;
+//    delete tRecordings;    tRecordings = 0;
     delete tRecordingList; tRecordingList = 0;
 
     // try to delete temp. episode cache table
@@ -994,7 +1006,7 @@ int cUpdate::ReadEpisodesContentFast(cTVDBSeries *series) {
     int numNew = 0;
 
     tEpisodes->clear();
-    series_id.setValue(series->id); // we would search for all episodes for this series
+    recSeriesid.setValue(series->id); // we would search for all episodes for this series
     events_ScrSeriesId.setValue(series->id); // we would search for all events for this series
     vdr_uuid.setValue(scraper2VdrConfig.uuid); // search all recordigs of this vdr uuid
 
@@ -1739,15 +1751,15 @@ bool cUpdate::ReadMovieImageFast(int movieId, int actorId, int mediaType, cMovie
 //***************************************************************************
 
 int cUpdate::ReadRecordings(void) {
-    tRecordings->clear();
-    tRecordings->setValue("VDRUUID", scraper2VdrConfig.uuid);
+    tRecordingList->clear();
+    // tRecordingList->setValue("VDRUUID", scraper2VdrConfig.uuid);
     int numRecs = 0;
     for (int res = selectRecordings->find(); res; res = selectRecordings->fetch()) {
-        int recStart = tRecordings->getIntValue("RECSTART");
-        string recPath = tRecordings->getStrValue("RECPATH");
-        int movieId = tRecordings->getIntValue("MOVIEID");
-        int seriesId = tRecordings->getIntValue("SERIESID");
-        int episodeId = tRecordings->getIntValue("EPISODEID");
+        int recStart = tRecordingList->getIntValue("STARTTIME");
+        string recPath = tRecordingList->getStrValue("PATH");
+        int movieId = tRecordingList->getIntValue("SCRMOVIEID");
+        int seriesId = tRecordingList->getIntValue("SCRSERIESID");
+        int episodeId = tRecordingList->getIntValue("SCRSERIESEPISODE");
         bool isNew = scrapManager->AddRecording(recStart, recPath, seriesId, episodeId, movieId);
         if (isNew)
             numRecs++;
@@ -1785,7 +1797,7 @@ int cUpdate::ScanVideoDir(void) {
             int scrapInfoSeriesID = 0;        
             int scrapInfoEpisodeID = 0;
             ReadScrapInfo(rec->FileName(), scrapInfoMovieID, scrapInfoSeriesID, scrapInfoEpisodeID);
-            int eventId = 0;
+            // int eventId = 0;
             string channelId = "";
             string title = rec->Name();
             //remove directory
@@ -1798,7 +1810,7 @@ int cUpdate::ScanVideoDir(void) {
             if (recInfo) {
                 const cEvent *recEvent = recInfo->GetEvent();
                 if (recEvent) {
-                    eventId = recEvent->EventID();
+                   // eventId = recEvent->EventID();
                     channelId = *(recInfo->ChannelID().ToString());
                     if (recInfo->Title())
                         title = recInfo->Title();
@@ -1806,21 +1818,21 @@ int cUpdate::ScanVideoDir(void) {
                 }
             }
 
-            tRecordings->clear();
-            tRecordings->setValue("VDRUUID", scraper2VdrConfig.uuid);
-            tRecordings->setValue("RECPATH", recPath.c_str());
-            tRecordings->setValue("RECSTART", recStart);
+//             tRecordings->clear();
+//             tRecordings->setValue("VDRUUID", scraper2VdrConfig.uuid);
+//             tRecordings->setValue("RECPATH", recPath.c_str());
+//             tRecordings->setValue("RECSTART", recStart);
             
-            tRecordings->setValue("EVENTID", eventId);
-            tRecordings->setValue("CHANNELID", channelId.c_str());
-            tRecordings->setValue("SCRAPINFOMOVIEID", scrapInfoMovieID);
-            tRecordings->setValue("SCRAPINFOSERIESID", scrapInfoSeriesID);
-            tRecordings->setValue("SCRAPINFOEPISODEID", scrapInfoEpisodeID);
-            tRecordings->setValue("SCRAPNEW", 1);
-            tRecordings->setValue("RECTITLE", title.c_str());
-            tRecordings->setValue("RECSUBTITLE", subTitle.c_str());
-            tRecordings->setValue("RECDURATION", rec->LengthInSeconds()/60);
-            tRecordings->store();
+//             tRecordings->setValue("EVENTID", eventId);
+//             tRecordings->setValue("CHANNELID", channelId.c_str());
+//             tRecordings->setValue("SCRAPINFOMOVIEID", scrapInfoMovieID);
+//             tRecordings->setValue("SCRAPINFOSERIESID", scrapInfoSeriesID);
+//             tRecordings->setValue("SCRAPINFOEPISODEID", scrapInfoEpisodeID);
+//             tRecordings->setValue("SCRAPNEW", 1);
+//             tRecordings->setValue("RECTITLE", title.c_str());
+//             tRecordings->setValue("RECSUBTITLE", subTitle.c_str());
+//             tRecordings->setValue("RECDURATION", rec->LengthInSeconds()/60);
+//             tRecordings->store();
 
             // update also recordinglist table for epghttpd
 
@@ -1877,85 +1889,87 @@ int cUpdate::ScanVideoDirScrapInfo(void) {
 #else
    const cRecordings* recordings = &Recordings;
 #endif
-
+   
    // --------
    // iterate 
 
-    for (const cRecording *rec = recordings->First(); rec; rec = recordings->Next(rec)) {
+    for (const cRecording *rec = recordings->First(); rec; rec = recordings->Next(rec)) 
+    {
         int recStart = rec->Start();
         string recPath = getRecPath(rec);
-        /* bool recExists = */ LoadRecording(recStart, recPath);  
+        // /* bool recExists = */ LoadRecording(recStart, recPath);  
         int scrapInfoMovieID = 0;
         int scrapInfoSeriesID = 0;        
         int scrapInfoEpisodeID = 0;
+
         ReadScrapInfo(rec->FileName(), scrapInfoMovieID, scrapInfoSeriesID, scrapInfoEpisodeID);
-        if (ScrapInfoChanged(scrapInfoMovieID, scrapInfoSeriesID, scrapInfoEpisodeID)) {
-            tRecordings->setValue("SCRAPNEW", 1);
-            tRecordings->setValue("SCRAPINFOMOVIEID", scrapInfoMovieID);
-            tRecordings->setValue("SCRAPINFOSERIESID", scrapInfoSeriesID);
-            tRecordings->setValue("SCRAPINFOEPISODEID", scrapInfoEpisodeID);
-            tRecordings->update();
 
-            // update also recordinglist table for epghttpd
+//         if (ScrapInfoChanged(scrapInfoMovieID, scrapInfoSeriesID, scrapInfoEpisodeID)) 
+//         {
+//             tRecordings->setValue("SCRAPNEW", 1);
+//             tRecordings->setValue("SCRAPINFOMOVIEID", scrapInfoMovieID);
+//             tRecordings->setValue("SCRAPINFOSERIESID", scrapInfoSeriesID);
+//             tRecordings->setValue("SCRAPINFOEPISODEID", scrapInfoEpisodeID);
+//             tRecordings->update();
 
-            md5Buf md5path;
+        md5Buf md5path;
 #if APIVERSNUM > 20103
-            const char* videoBasePath = cVideoDirectory::Name();
+        const char* videoBasePath = cVideoDirectory::Name();
 #else
-            const char* videoBasePath = VideoDirectory;
+        const char* videoBasePath = VideoDirectory;
 #endif
-
-            if (strncmp(rec->FileName(), videoBasePath, strlen(videoBasePath)) == 0)
-               createMd5(rec->FileName()+strlen(videoBasePath), md5path);
-            else
-               createMd5(rec->FileName(), md5path);
-
-            tRecordingList->clear();
-            tRecordingList->setValue("MD5PATH", md5path);
-            tRecordingList->setValue("START", recStart);
-
-            if (tRecordingList->find())
-            {
-               tRecordingList->clearChanged();
-               tRecordingList->setValue("SCRINFOMOVIEID", scrapInfoMovieID);
-               tRecordingList->setValue("SCRINFOSERIESID", scrapInfoSeriesID);
-               tRecordingList->setValue("SCRINFOEPISODEID", scrapInfoEpisodeID);
-               tRecordingList->setValue("SCRNEW", 1);
-
-               if (tRecordingList->getChanges())
-                  tRecordingList->update();
-            }
-
-            tRecordingList->reset();
-
-            numUpdated++;
+        
+        if (strncmp(rec->FileName(), videoBasePath, strlen(videoBasePath)) == 0)
+           createMd5(rec->FileName()+strlen(videoBasePath), md5path);
+        else
+           createMd5(rec->FileName(), md5path);
+        
+        tRecordingList->clear();
+        tRecordingList->setValue("MD5PATH", md5path);
+        tRecordingList->setValue("START", recStart);
+        
+        if (tRecordingList->find())
+        {
+           tRecordingList->clearChanged();
+           tRecordingList->setValue("SCRINFOMOVIEID", scrapInfoMovieID);
+           tRecordingList->setValue("SCRINFOSERIESID", scrapInfoSeriesID);
+           tRecordingList->setValue("SCRINFOEPISODEID", scrapInfoEpisodeID);
+           tRecordingList->setValue("SCRNEW", 1);
+           
+           if (tRecordingList->getChanges())
+              tRecordingList->update();
         }
+        
+        tRecordingList->reset();
+        
+        numUpdated++;
     }
+
     return numUpdated;
 }
 
-bool cUpdate::LoadRecording(int recStart, string recPath) {
-    tRecordings->clear();
-    tRecordings->setValue("VDRUUID", scraper2VdrConfig.uuid);
-    tRecordings->setValue("RECSTART", recStart);
-    tRecordings->setValue("RECPATH", recPath.c_str());
-    int found = tRecordings->find();
-    if (found == yes) {
-        return true;
-    }
-    return false;
-}
+// bool cUpdate::LoadRecording(int recStart, string recPath) {
+//     tRecordings->clear();
+//     tRecordings->setValue("VDRUUID", scraper2VdrConfig.uuid);
+//     tRecordings->setValue("RECSTART", recStart);
+//     tRecordings->setValue("RECPATH", recPath.c_str());
+//     int found = tRecordings->find();
+//     if (found == yes) {
+//         return true;
+//     }
+//     return false;
+// }
 
-bool cUpdate::ScrapInfoChanged(int scrapInfoMovieID, int scrapInfoSeriesID, int scrapInfoEpisodeID) {
-    int movieIdCurrent = tRecordings->getIntValue("SCRAPINFOMOVIEID");
-    int seriesIdCurrent = tRecordings->getIntValue("SCRAPINFOSERIESID");
-    int episodeIdCurrent = tRecordings->getIntValue("SCRAPINFOEPISODEID");
-    if ((movieIdCurrent != scrapInfoMovieID) ||
-        (seriesIdCurrent != scrapInfoSeriesID) ||
-        (episodeIdCurrent != scrapInfoEpisodeID))
-        return true;
-    return false;
-}
+// bool cUpdate::ScrapInfoChanged(int scrapInfoMovieID, int scrapInfoSeriesID, int scrapInfoEpisodeID) {
+//     int movieIdCurrent = tRecordings->getIntValue("SCRAPINFOMOVIEID");
+//     int seriesIdCurrent = tRecordings->getIntValue("SCRAPINFOSERIESID");
+//     int episodeIdCurrent = tRecordings->getIntValue("SCRAPINFOEPISODEID");
+//     if ((movieIdCurrent != scrapInfoMovieID) ||
+//         (seriesIdCurrent != scrapInfoSeriesID) ||
+//         (episodeIdCurrent != scrapInfoEpisodeID))
+//         return true;
+//     return false;
+// }
 
 void cUpdate::ReadScrapInfo(string recDir, int &scrapInfoMovieID, int &scrapInfoSeriesID, int &scrapInfoEpisodeID) {
     stringstream sInfoName("");
@@ -2101,49 +2115,49 @@ int cUpdate::CleanupMovies(void) {
     return deletedMovies;
 }
 
-int cUpdate::CleanupRecordings(void) 
-{
-   // delete all not anymore existing recordings in database
+// int cUpdate::CleanupRecordings(void) 
+// {
+//    // delete all not anymore existing recordings in database
 
-   // --------------------------
-   // get recordings lock
+//    // --------------------------
+//    // get recordings lock
    
-#if defined (APIVERSNUM) && (APIVERSNUM >= 20301)
-   cRecordingsLock recordingsLock(false);
-   const cRecordings* recordings = recordingsLock.Recordings();
-#else
-   cRecordings* recordings = &Recordings;
-#endif
+// #if defined (APIVERSNUM) && (APIVERSNUM >= 20301)
+//    cRecordingsLock recordingsLock(false);
+//    const cRecordings* recordings = recordingsLock.Recordings();
+// #else
+//    cRecordings* recordings = &Recordings;
+// #endif
 
-   // --------
-   // iterate 
+//    // --------
+//    // iterate 
    
-   tRecordings->clear();
-   tRecordings->setValue("VDRUUID", scraper2VdrConfig.uuid);
-   int numRecsDeleted = 0;
+//    tRecordings->clear();
+//    tRecordings->setValue("VDRUUID", scraper2VdrConfig.uuid);
+//    int numRecsDeleted = 0;
    
-   for (int res = selectCleanupRecordings->find(); res; res = selectCleanupRecordings->fetch()) 
-   {
-      int recStart = tRecordings->getIntValue("RECSTART");
-      const char* recPath = tRecordings->getStrValue("RECPATH");
+//    for (int res = selectCleanupRecordings->find(); res; res = selectCleanupRecordings->fetch()) 
+//    {
+//       int recStart = tRecordings->getIntValue("RECSTART");
+//       const char* recPath = tRecordings->getStrValue("RECPATH");
       
-      if (!recordings->GetByName(recPath)) 
-      {
-         char escapedPath[2*strlen(recPath) + 1];
+//       if (!recordings->GetByName(recPath)) 
+//       {
+//          char escapedPath[2*strlen(recPath) + 1];
 
-         mysql_real_escape_string(connection->getMySql(), escapedPath, recPath, strlen(recPath));
+//          mysql_real_escape_string(connection->getMySql(), escapedPath, recPath, strlen(recPath));
 
-         tRecordings->deleteWhere("uuid = '%s' and rec_path = '%s' and rec_start = %d",
-                                  scraper2VdrConfig.uuid, escapedPath, recStart);
+//          tRecordings->deleteWhere("uuid = '%s' and rec_path = '%s' and rec_start = %d",
+//                                   scraper2VdrConfig.uuid, escapedPath, recStart);
 
-         numRecsDeleted++;
-      }
-   }
+//          numRecsDeleted++;
+//       }
+//    }
    
-   selectCleanupRecordings->freeResult();
+//    selectCleanupRecordings->freeResult();
    
-   return numRecsDeleted;
-}
+//    return numRecsDeleted;
+// }
 
 // check if we should abort execution (thread stoped), also check if we should call waitCondition.TimedWait (so other processes can use the CPU) 
 bool cUpdate::CheckRunningAndWait(void)  { 
@@ -2391,14 +2405,14 @@ void cUpdate::Action()
         
         // Cleanup Recording DB
         
-        if (forceCleanupRecordingDb) 
-        {
-            worked++;
-            tell(1, "Cleaning up recordings in database...");
-            int recsDeleted = CleanupRecordings();
-            tell(1, "Deleted %d not anymore existing recordings in database", recsDeleted);
-            forceCleanupRecordingDb = false;
-        }
+//         if (forceCleanupRecordingDb) 
+//         {
+//             worked++;
+//             tell(1, "Cleaning up recordings in database...");
+//             int recsDeleted = CleanupRecordings();
+//             tell(1, "Deleted %d not anymore existing recordings in database", recsDeleted);
+//             forceCleanupRecordingDb = false;
+//         }
 
         if (worked && scraper2VdrConfig.loglevel > 2) 
            connection->showStat();
@@ -2435,10 +2449,10 @@ void cUpdate::ForceScrapInfoUpdate(void) {
     forceScrapInfoUpdate = true;
 }
 
-void cUpdate::TriggerCleanRecordingsDB(void) {
-    tell(0, "cleanup of recording DB triggered");
-    forceCleanupRecordingDb = true;
-}
+// void cUpdate::TriggerCleanRecordingsDB(void) {
+//     tell(0, "cleanup of recording DB triggered");
+//     forceCleanupRecordingDb = true;
+// }
 
 void cUpdate::ForceFullUpdate(void) {
     tell(0, "full update (including image data) from database forced");

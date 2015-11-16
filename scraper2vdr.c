@@ -36,7 +36,7 @@ cScraper2VdrPluginMenu::cScraper2VdrPluginMenu(const char* title, cUpdate *updat
     cOsdMenu::Add(new cOsdItem(tr("Update Scraper Recordings Information from Database")));
     cOsdMenu::Add(new cOsdItem(tr("Scan for new recordings in video directory")));
     cOsdMenu::Add(new cOsdItem(tr("Scan for new or updated scrapinfo files")));
-    cOsdMenu::Add(new cOsdItem(tr("Cleanup Recordings in Database")));
+//    cOsdMenu::Add(new cOsdItem(tr("Cleanup Recordings in Database")));
     cOsdMenu::Add(new cOsdItem(tr("Reload all values (Series, Movies and Images)")));
     SetHelp(0, 0, 0,0);
     Display();
@@ -66,9 +66,9 @@ eOSState cScraper2VdrPluginMenu::ProcessKey(eKeys key) {
             } else if (Current() == 3) {
                 Skins.Message(mtInfo, tr("Scanning for new or updated scrapinfo files"));
                 update->ForceScrapInfoUpdate();
-            } else if (Current() == 4) {
-                Skins.Message(mtInfo, tr("Cleaning up Recordings in Database"));
-                update->TriggerCleanRecordingsDB();
+//             } else if (Current() == 4) {
+//                 Skins.Message(mtInfo, tr("Cleaning up Recordings in Database"));
+//                 update->TriggerCleanRecordingsDB();
             } else if (Current() == 5) {
                 Skins.Message(mtInfo, tr("Loading Series, Movies and Images from Database"));
                 update->ForceFullUpdate();
@@ -297,9 +297,9 @@ cString cPluginScraper2vdr::SVDRPCommand(const char *Command, const char *Option
     } else if (strcasecmp(Command, "SCSI") == 0) {
         update->ForceScrapInfoUpdate();
         return "SCRAPER2VDR scan for new or updated scrapinfo files triggered.";
-    } else if (strcasecmp(Command, "CRDB") == 0) {
-        update->TriggerCleanRecordingsDB();
-        return "SCRAPER2VDR cleanup of recording DB triggered.";
+//     } else if (strcasecmp(Command, "CRDB") == 0) {
+//         update->TriggerCleanRecordingsDB();
+//         return "SCRAPER2VDR cleanup of recording DB triggered.";
     } else if (strcasecmp(Command, "DSER") == 0) {
         scrapManager->DumpSeries();
         return "SCRAPER2VDR dumping available series";

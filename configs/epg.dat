@@ -219,11 +219,13 @@ Table channelmap
    EXTERNALID           ""  extid                Ascii       10 Primary,
    CHANNELID            ""  channelid            Ascii       50 Primary,
    SOURCE               ""  source               Ascii       20 Primary,
+
    ORDER                ""  ord                  Int          0 Data,
    VISIBLE              ""  visible              Int          0 Data,
    CHANNELNAME          ""  channelname          Ascii      100 Data,
    VPS                  ""  vps                  Int          0 Data,
    FORMAT               ""  format               Ascii       50 Data,
+   UNKNOWNATVDR         ""  unknownatvdr         UInt         1 Data,
    MERGE                ""  merge                Int          0 Data,
    MERGESP              ""  mergesp              Int          0 Data,
    INSSP                ""  inssp                Int          0 Meta,
@@ -267,6 +269,8 @@ Table vdrs
    PID                  ""  pid                  UInt         0 Data epgd|httpd|epg2vdr,
    SVDRP                ""  svdrp                UInt         0 Data epgd|httpd|epg2vdr,
    TUNERCOUNT           ""  tunercount           UInt         0 Data epgd|httpd|epg2vdr,
+
+   INWEB                ""  inweb                UInt         1 Data,
    VIDEODIR             ""  videodir             Ascii      300 Data,
    VIDEOTOTAL           ""  videototal           UInt         0 Data,
    VIDEOFREE            ""  videofree            UInt         0 Data,
@@ -303,13 +307,14 @@ Table users
 
 Table parameters
 {
-   OWNER                ""  owner                Ascii       40 Primary,
-   NAME                 ""  name                 Ascii       40 Primary,
-   INSSP                ""  inssp                Int          0 Meta,
-   UPDSP                ""  updsp                Int          0 Meta,
-   VALUE                ""  value                Ascii      150 Data,
-   READONLY             ""  readonly             Int          0 Data,
-   VISIBLE              ""  visible              Int          0 Data,
+   OWNER                ""                                     owner    Ascii     40 Primary,
+   NAME                 ""                                     name     Ascii     40 Primary,
+   INSSP                ""                                     inssp    Int        0 Meta,
+   UPDSP                ""                                     updsp    Int        0 Meta,
+   VALUE                ""                                     value    Ascii    150 Data,
+   VALEXP               "regexp to validate the config value"  valexp   Ascii     50 Data,
+   READONLY             ""                                     readonly Int        0 Data,
+   VISIBLE              ""                                     visible  Int        0 Data,
 }
 
 // ----------------------------------------------------------------
@@ -482,6 +487,7 @@ Table recordinglist
 
    INSSP                ""            inssp            Int         10 Meta,
    UPDSP                ""            updsp            Int         10 Meta,
+   LASTIFOUPD           ""            lastifoupd       Int         10 Meta,
 
    VDRUUID              ""            vdruuid          Ascii       40 Data,
    PATH                 ""            path             Ascii     1000 Data,
@@ -519,26 +525,24 @@ Table recordinglist
    YEAR                 ""            year            Ascii       10 Data,
    RATING               ""            rating          Ascii      250 Data,
    NUMRATING            ""            numrating       Int          2 Data,
-   MOVIEID              ""            movieid         Ascii       20 Data,
    MODERATOR            ""            moderator       Ascii      250 Data,
    OTHER                ""            other           Text      2000 Data,
    GUEST                ""            guest           Text      1000 Data,
    CAMERA               ""            camera          Text      1000 Data,
-   EXTEPNUM             ""            extepnum        Int          4 Data,
 
    // episode reference
 
-   EPISODECOMPNAME      ""                                                   episodecompname      Ascii      100 Data epgd|httpd|epg2vdr,
-   EPISODECOMPSHORTNAME ""                                                   episodecompshortname Ascii      100 Data epgd|httpd|epg2vdr,
-   EPISODECOMPPARTNAME  ""                                                   episodecomppartname  Ascii      200 Data epgd|httpd|epg2vdr,
-   EPISODELANG          ""                                                   episodelang          Ascii       10 Data epgd|httpd|epg2vdr,
+   EPISODECOMPNAME      ""            episodecompname      Ascii      100 Data epgd|httpd|epg2vdr,
+   EPISODECOMPSHORTNAME ""            episodecompshortname Ascii      100 Data epgd|httpd|epg2vdr,
+   EPISODECOMPPARTNAME  ""            episodecomppartname  Ascii      200 Data epgd|httpd|epg2vdr,
+   EPISODELANG          ""            episodelang          Ascii       10 Data epgd|httpd|epg2vdr,
 
    // scraper fields
    // IDs found while scraping (reference to scraper tables), managed by epgd
 
-   SCRSERIESID          ""            scrseriesid       UInt         0 Data,
-   SCRSERIESEPISODE     ""            scrseriesepisode  UInt         0 Data,
-   SCRMOVIEID           ""            scrmovieid        UInt         0 Data,
+   SCRSERIESID          ""            scrseriesid          UInt         0 Data,
+   SCRSERIESEPISODE     ""            scrseriesepisode     UInt         0 Data,
+   SCRMOVIEID           ""            scrmovieid           UInt         0 Data,
 
    // this fields are written by the scraper plugin, 
    //    the id fields hold the user hint for scraping
@@ -713,6 +717,7 @@ Table timersdone
    STATE                "Q requested, C created, R recorded, F Failed"  state                Ascii        1 Data,
 
    TIMERID              "not filled completely in all cases yet "       timerid              UInt         0 Data,
+   AUTOTIMERID          ""                                    autotimerid          UInt         0 Data,
 
    // to compare 
 
