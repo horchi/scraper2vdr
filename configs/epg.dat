@@ -270,7 +270,9 @@ Table vdrs
    SVDRP                ""  svdrp                UInt         0 Data epgd|httpd|epg2vdr,
    TUNERCOUNT           ""  tunercount           UInt         0 Data epgd|httpd|epg2vdr,
 
-   INWEB                ""  inweb                UInt         1 Data,
+   SHAREINWEB           ""  shareinweb           UInt         1 Data,
+   USECOMMONRECFOLDER   ""  usecommonrecfolder   UInt         1 Data,
+
    VIDEODIR             ""  videodir             Ascii      300 Data,
    VIDEOTOTAL           ""  videototal           UInt         0 Data,
    VIDEOFREE            ""  videofree            UInt         0 Data,
@@ -484,6 +486,7 @@ Table recordinglist
 {
    MD5PATH              ""            md5path          Ascii       40 Primary,
    STARTTIME            ""            starttime        UInt         0 Primary,
+   OWNER                "uuid of vdr" owner            Ascii       40 Primary,
 
    INSSP                ""            inssp            Int         10 Meta,
    UPDSP                ""            updsp            Int         10 Meta,
@@ -540,9 +543,9 @@ Table recordinglist
    // scraper fields
    // IDs found while scraping (reference to scraper tables), managed by epgd
 
-   SCRSERIESID          ""            scrseriesid          UInt         0 Data,
-   SCRSERIESEPISODE     ""            scrseriesepisode     UInt         0 Data,
-   SCRMOVIEID           ""            scrmovieid           UInt         0 Data,
+   SCRSERIESID          ""            scrseriesid       UInt         0 Data,
+   SCRSERIESEPISODE     ""            scrseriesepisode  UInt         0 Data,
+   SCRMOVIEID           ""            scrmovieid        UInt         0 Data,
 
    // this fields are written by the scraper plugin, 
    //    the id fields hold the user hint for scraping
