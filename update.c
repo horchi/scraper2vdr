@@ -949,7 +949,7 @@ int cUpdate::ReadSeriesFast(long &maxscrsp) {
         maxscrsp = max(maxscrsp, series->lastscraped);
         i++;
         if (GetTimeDiffms(lastLog)>LogPeriode) {
-            tell(1, "Loaded %d series, continuing...", i);
+            tell(1, "Got %d series, continuing...", i);
             lastLog = GetTimems();
         }    
         if (isNew)
@@ -1443,7 +1443,7 @@ int cUpdate::ReadMoviesFast(long &maxscrsp) {
         maxscrsp = max(maxscrsp, movie->lastscraped);
         i++;
         if (GetTimeDiffms(lastLog)>LogPeriode) {
-            tell(1, "Loaded %d movies, continuing...", i);
+            tell(1, "Got %d movies, continuing...", i);
             lastLog = GetTimems();
         }    
         if (isNew)
@@ -2278,7 +2278,7 @@ void cUpdate::Action()
            int numNewEvents = ReadScrapedEvents();
 
            if (numNewEvents > 0) {
-              tell(1, "Loaded %d new scraped Events from Database", numNewEvents);
+              tell(1, "Got %d new scraped Events from Database", numNewEvents);
            } else {
               lastScan = time(0);
               init = false;
@@ -2300,7 +2300,7 @@ void cUpdate::Action()
            dur = time(0) - now; 
            showlog = showlog || (numValues>0);
            if (showlog) {
-               tell(1, "Loaded %d new/updated Movies in %ds from Database (new max scrsp: %ld)", numValues, dur, MaxScrspMovies);
+               tell(1, "Got %d new/updated Movies in %ds from Database (new max scrsp: %ld)", numValues, dur, MaxScrspMovies);
                tell(1, "Loading Movies content from Database...");
            }
                
@@ -2309,7 +2309,7 @@ void cUpdate::Action()
            dur = time(0) - now; 
            showlog = showlog || (numValues>0);
            if (showlog) {
-               tell(1, "Loaded %d new/updated Image information in %ds from Database", numValues, dur);
+               tell(1, "Got %d new/updated Image information in %ds from Database", numValues, dur);
                tell(1, "Loading Series information from Database...");
            }
                    
@@ -2318,7 +2318,7 @@ void cUpdate::Action()
            dur = time(0) - now;
            showlog = showlog || (numValues>0);
            if (showlog) {
-               tell(1, "Loaded %d new/updated Series in %ds from Database (new max scrsp: %ld)", numValues, dur, MaxScrspSeries);
+               tell(1, "Got %d new/updated Series in %ds from Database (new max scrsp: %ld)", numValues, dur, MaxScrspSeries);
                tell(1, "Loading Series content from Database...");
            }    
            now = time(0);
@@ -2326,7 +2326,7 @@ void cUpdate::Action()
            dur = time(0) - now;
            showlog = showlog || (numValues>0) || (numNewImages-numNewImages2>0); // ignore season thumbs here
            if (showlog) {
-               tell(1, "Loaded %d new/updated Episodes and %d new/updated Image information (including %d possible not available season poster) in %ds from Database", numValues, numNewImages+numNewImages2, numNewImages2, dur);
+               tell(1, "Got %d new/updated Episodes and %d new/updated Image information (including %d possible not available season poster) in %ds from Database", numValues, numNewImages+numNewImages2, numNewImages2, dur);
                tell(1, "Loading Image content from Database...");
            }    
            now = time(0);
@@ -2335,7 +2335,7 @@ void cUpdate::Action()
            dur = time(0) - now; 
            showlog = showlog || (numNewImages>0);
            if (showlog)
-               tell(1, "Loaded %d new/updated Images (found %d not available images) in %ds from Database", numNewImages, numNewImages2, dur);
+               tell(1, "Got %d new/updated Images (found %d not available images) in %ds from Database", numNewImages, numNewImages2, dur);
 
            lastScan = time(0);
            forceUpdate = false;

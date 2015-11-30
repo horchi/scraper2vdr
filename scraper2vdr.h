@@ -16,7 +16,7 @@
 // Constants
 //***************************************************************************
 
-static const char *VERSION        = "0.1.16";
+static const char *VERSION        = "0.1.17";
 static const char *DESCRIPTION    = "'scraper2vdr' plugin";
 static const char *MAINMENUENTRY  = "Scraper2Vdr";
 
