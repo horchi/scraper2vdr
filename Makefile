@@ -154,3 +154,9 @@ clean:
 
 cppchk:
 	cppcheck --template="{file}:{line}:{severity}:{message}" --quiet --force *.c *.h lib/*.c lib/*.h
+
+
+push:
+	echo "tagging git with $(VERSION)"
+	git tag $(VERSION) 2>/dev/null || echo "tag already exists"
+	git push --tags
