@@ -160,3 +160,4 @@ push:
 	echo "tagging git with $(VERSION)"
 	git tag $(VERSION) 2>/dev/null || echo "tag already exists"
 	git push --tags
+	git push
