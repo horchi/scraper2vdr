@@ -1926,7 +1926,7 @@ int cUpdate::ScanVideoDirScrapInfo(void) {
         
         tRecordingList->clear();
         tRecordingList->setValue("MD5PATH", md5path);
-        tRecordingList->setValue("START", recStart);
+        tRecordingList->setValue("STARTTIME", recStart);
         
         if (tRecordingList->find())
         {
