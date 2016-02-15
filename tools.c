@@ -268,7 +268,8 @@ void HandleImage(string imagePath, int originalWidth, int originalHeight,
                             usedGeometry.width(tempWidth);
                             usedGeometry.height(tempHeight);
                             usedGeometry.aspect(true); // ignore aspect ratio
-                            buffer.resize(usedGeometry); // strech/scale to new size using max distortion factors    
+                            buffer.sample(Geometry(tempWidth, tempHeight)); 
+                            // buffer.resize(usedGeometry); // strech/scale to new size using max distortion factors    
                         }    
                         if ((tempWidth != newWidth) || (tempHeight != newHeight))
                             buffer.crop(Geometry(newWidth, newHeight, (tempWidth - newWidth)/2, (tempHeight - newHeight)/2)); // crop to desired size
