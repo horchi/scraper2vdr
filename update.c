@@ -27,14 +27,12 @@ cUpdate::cUpdate(cScrapManager *manager)
     tMovieActor = NULL;
     tMovieActors = NULL;
     tMovieMedia = NULL;
-    //tRecordings = NULL;
     tRecordingList = NULL;
 
     selectReadScrapedEventsInit = 0;
     selectReadScrapedEvents = 0;
     selectMovieActors = 0;
     selectRecordings = 0;
-    //selectCleanupRecordings = 0;
     clearTempEpisodeTable = 0;
     fillTempEpisodeTable = 0;
       
@@ -62,7 +60,6 @@ cUpdate::cUpdate(cScrapManager *manager)
     forceRecordingUpdate = false;
     forceVideoDirUpdate = false;
     forceScrapInfoUpdate = false;
-    //forceCleanupRecordingDb = false;
     forceFullUpdate = false;
     forceReconnect = false;
     scrspRemoved = false;
@@ -152,9 +149,6 @@ int cUpdate::initDb()
     tMovieMedia = new cDbTable(connection, "movie_media");
     if (tMovieMedia->open() != success) return fail;
     
-//     tRecordings = new cDbTable(connection, "recordings");
-//     if (tRecordings->open(yes) != success) return fail;
-
     tRecordingList = new cDbTable(connection, "recordinglist");
     if (tRecordingList->open(yes) != success) return fail;
 
@@ -249,18 +243,6 @@ int cUpdate::initDb()
 
     // 
 
-//     selectRecordings = new cDbStatement(tRecordings);
-//     selectRecordings->build("select ");
-//     selectRecordings->bind("RECPATH", cDBS::bndOut);
-//     selectRecordings->bind("RECSTART", cDBS::bndOut, ", ");
-//     selectRecordings->bind("MOVIEID", cDBS::bndOut, ", ");
-//     selectRecordings->bind("SERIESID", cDBS::bndOut, ", ");
-//     selectRecordings->bind("EPISODEID", cDBS::bndOut, ", ");
-//     selectRecordings->build(" from %s where ", tRecordings->TableName());
-//     selectRecordings->bind("VDRUUID", cDBS::bndIn | cDBS::bndSet);
-//     selectRecordings->build(" and %s = 0", tRecordings->getField("SCRAPNEW")->getDbName());
-//     status += selectRecordings->prepare();
-    
     selectRecordings = new cDbStatement(tRecordingList);
     selectRecordings->build("select ");
     selectRecordings->bind("PATH", cDBS::bndOut);
@@ -269,19 +251,8 @@ int cUpdate::initDb()
     selectRecordings->bind("SCRSERIESID", cDBS::bndOut, ", ");
     selectRecordings->bind("SCRSERIESEPISODE", cDBS::bndOut, ", ");
     selectRecordings->build(" from %s where ", tRecordingList->TableName());
-    // selectRecordings->bind("VDRUUID", cDBS::bndIn | cDBS::bndSet);
     selectRecordings->build("%s = 0", tRecordingList->getField("SCRNEW")->getDbName());
     status += selectRecordings->prepare();
-
-    // 
-
-//     selectCleanupRecordings = new cDbStatement(tRecordings);
-//     selectCleanupRecordings->build("select ");
-//     selectCleanupRecordings->bind("RECPATH", cDBS::bndOut);
-//     selectCleanupRecordings->bind("RECSTART", cDBS::bndOut, ", ");
-//     selectCleanupRecordings->build(" from %s where ", tRecordings->TableName());
-//     selectCleanupRecordings->bind("VDRUUID", cDBS::bndIn | cDBS::bndSet);
-//     status += selectCleanupRecordings->prepare();
 
     // clear temp episode cache table
 
@@ -739,7 +710,6 @@ int cUpdate::exitDb() {
     delete selectReadScrapedEventsInit; selectReadScrapedEventsInit = 0;
     delete selectMovieActors;           selectMovieActors = 0;
     delete selectRecordings;            selectRecordings = 0;
-    // delete selectCleanupRecordings;     selectCleanupRecordings = 0;
     delete clearTempEpisodeTable;       clearTempEpisodeTable = 0;
     delete fillTempEpisodeTable;        fillTempEpisodeTable = 0;
     delete selectReadSeriesInit;        selectReadSeriesInit = 0;
@@ -762,10 +732,10 @@ int cUpdate::exitDb() {
     delete tMovieActor;    tMovieActor = 0;
     delete tMovieActors;   tMovieActors = 0;
     delete tMovieMedia;    tMovieMedia = 0;
-//    delete tRecordings;    tRecordings = 0;
     delete tRecordingList; tRecordingList = 0;
 
     // try to delete temp. episode cache table
+
     if (dbConnected())
         connection->query("%s",TempEpisodeDeleteStatement.c_str());
     
@@ -1752,7 +1722,6 @@ bool cUpdate::ReadMovieImageFast(int movieId, int actorId, int mediaType, cMovie
 
 int cUpdate::ReadRecordings(void) {
     tRecordingList->clear();
-    // tRecordingList->setValue("VDRUUID", scraper2VdrConfig.uuid);
     int numRecs = 0;
     for (int res = selectRecordings->find(); res; res = selectRecordings->fetch()) {
         int recStart = tRecordingList->getIntValue("STARTTIME");
@@ -1768,6 +1737,10 @@ int cUpdate::ReadRecordings(void) {
     selectRecordings->freeResult();
     return numRecs;
 }
+
+//***************************************************************************
+// 
+//***************************************************************************
 
 int cUpdate::ScanVideoDir(void) {
     int newRecs = 0;
@@ -1797,10 +1770,8 @@ int cUpdate::ScanVideoDir(void) {
             int scrapInfoSeriesID = 0;        
             int scrapInfoEpisodeID = 0;
             ReadScrapInfo(rec->FileName(), scrapInfoMovieID, scrapInfoSeriesID, scrapInfoEpisodeID);
-            // int eventId = 0;
-            string channelId = "";
+            // string channelId = "";
             string title = rec->Name();
-            //remove directory
             size_t posDelim = title.find_last_of('~');
             if (posDelim != string::npos) {
                 title = title.substr(posDelim+1);
@@ -1810,29 +1781,12 @@ int cUpdate::ScanVideoDir(void) {
             if (recInfo) {
                 const cEvent *recEvent = recInfo->GetEvent();
                 if (recEvent) {
-                   // eventId = recEvent->EventID();
-                    channelId = *(recInfo->ChannelID().ToString());
+                   //channelId = *(recInfo->ChannelID().ToString());
                     if (recInfo->Title())
                         title = recInfo->Title();
                     subTitle = (recInfo->ShortText())?(recInfo->ShortText()):"";
                 }
             }
-
-//             tRecordings->clear();
-//             tRecordings->setValue("VDRUUID", scraper2VdrConfig.uuid);
-//             tRecordings->setValue("RECPATH", recPath.c_str());
-//             tRecordings->setValue("RECSTART", recStart);
-            
-//             tRecordings->setValue("EVENTID", eventId);
-//             tRecordings->setValue("CHANNELID", channelId.c_str());
-//             tRecordings->setValue("SCRAPINFOMOVIEID", scrapInfoMovieID);
-//             tRecordings->setValue("SCRAPINFOSERIESID", scrapInfoSeriesID);
-//             tRecordings->setValue("SCRAPINFOEPISODEID", scrapInfoEpisodeID);
-//             tRecordings->setValue("SCRAPNEW", 1);
-//             tRecordings->setValue("RECTITLE", title.c_str());
-//             tRecordings->setValue("RECSUBTITLE", subTitle.c_str());
-//             tRecordings->setValue("RECDURATION", rec->LengthInSeconds()/60);
-//             tRecordings->store();
 
             // update also recordinglist table for epghttpd
 
@@ -1897,20 +1851,11 @@ int cUpdate::ScanVideoDirScrapInfo(void) {
     {
         int recStart = rec->Start();
         string recPath = getRecPath(rec);
-        // /* bool recExists = */ LoadRecording(recStart, recPath);  
         int scrapInfoMovieID = 0;
         int scrapInfoSeriesID = 0;        
         int scrapInfoEpisodeID = 0;
 
         ReadScrapInfo(rec->FileName(), scrapInfoMovieID, scrapInfoSeriesID, scrapInfoEpisodeID);
-
-//         if (ScrapInfoChanged(scrapInfoMovieID, scrapInfoSeriesID, scrapInfoEpisodeID)) 
-//         {
-//             tRecordings->setValue("SCRAPNEW", 1);
-//             tRecordings->setValue("SCRAPINFOMOVIEID", scrapInfoMovieID);
-//             tRecordings->setValue("SCRAPINFOSERIESID", scrapInfoSeriesID);
-//             tRecordings->setValue("SCRAPINFOEPISODEID", scrapInfoEpisodeID);
-//             tRecordings->update();
 
         md5Buf md5path;
 #if APIVERSNUM > 20103
@@ -1947,29 +1892,6 @@ int cUpdate::ScanVideoDirScrapInfo(void) {
 
     return numUpdated;
 }
-
-// bool cUpdate::LoadRecording(int recStart, string recPath) {
-//     tRecordings->clear();
-//     tRecordings->setValue("VDRUUID", scraper2VdrConfig.uuid);
-//     tRecordings->setValue("RECSTART", recStart);
-//     tRecordings->setValue("RECPATH", recPath.c_str());
-//     int found = tRecordings->find();
-//     if (found == yes) {
-//         return true;
-//     }
-//     return false;
-// }
-
-// bool cUpdate::ScrapInfoChanged(int scrapInfoMovieID, int scrapInfoSeriesID, int scrapInfoEpisodeID) {
-//     int movieIdCurrent = tRecordings->getIntValue("SCRAPINFOMOVIEID");
-//     int seriesIdCurrent = tRecordings->getIntValue("SCRAPINFOSERIESID");
-//     int episodeIdCurrent = tRecordings->getIntValue("SCRAPINFOEPISODEID");
-//     if ((movieIdCurrent != scrapInfoMovieID) ||
-//         (seriesIdCurrent != scrapInfoSeriesID) ||
-//         (episodeIdCurrent != scrapInfoEpisodeID))
-//         return true;
-//     return false;
-// }
 
 void cUpdate::ReadScrapInfo(string recDir, int &scrapInfoMovieID, int &scrapInfoSeriesID, int &scrapInfoEpisodeID) {
     stringstream sInfoName("");
@@ -2115,50 +2037,6 @@ int cUpdate::CleanupMovies(void) {
     return deletedMovies;
 }
 
-// int cUpdate::CleanupRecordings(void) 
-// {
-//    // delete all not anymore existing recordings in database
-
-//    // --------------------------
-//    // get recordings lock
-   
-// #if defined (APIVERSNUM) && (APIVERSNUM >= 20301)
-//    cRecordingsLock recordingsLock(false);
-//    const cRecordings* recordings = recordingsLock.Recordings();
-// #else
-//    cRecordings* recordings = &Recordings;
-// #endif
-
-//    // --------
-//    // iterate 
-   
-//    tRecordings->clear();
-//    tRecordings->setValue("VDRUUID", scraper2VdrConfig.uuid);
-//    int numRecsDeleted = 0;
-   
-//    for (int res = selectCleanupRecordings->find(); res; res = selectCleanupRecordings->fetch()) 
-//    {
-//       int recStart = tRecordings->getIntValue("RECSTART");
-//       const char* recPath = tRecordings->getStrValue("RECPATH");
-      
-//       if (!recordings->GetByName(recPath)) 
-//       {
-//          char escapedPath[2*strlen(recPath) + 1];
-
-//          mysql_real_escape_string(connection->getMySql(), escapedPath, recPath, strlen(recPath));
-
-//          tRecordings->deleteWhere("uuid = '%s' and rec_path = '%s' and rec_start = %d",
-//                                   scraper2VdrConfig.uuid, escapedPath, recStart);
-
-//          numRecsDeleted++;
-//       }
-//    }
-   
-//    selectCleanupRecordings->freeResult();
-   
-//    return numRecsDeleted;
-// }
-
 // check if we should abort execution (thread stoped), also check if we should call waitCondition.TimedWait (so other processes can use the CPU) 
 bool cUpdate::CheckRunningAndWait(void)  { 
   if (Running())
@@ -2228,7 +2106,7 @@ void cUpdate::Action()
 
     time_t now = time(0);
     int dur = 0;
-    int numNewRecs = 0;
+    //int numNewRecs = 0;
     int numValues = 0;
     int numNewImages = 0;
     int numNewImages2 = 0;
@@ -2262,10 +2140,11 @@ void cUpdate::Action()
         }
 
         // Update Recordings from Database
+
         if (forceRecordingUpdate || (time(0) - lastScanNewRecDB > scanNewRecDBFreq) && Running()) 
         {
             worked++;
-            numNewRecs = ReadRecordings();
+            /*numNewRecs = */ ReadRecordings();
             lastScanNewRecDB = time(0);
             forceRecordingUpdate = false;
         }
@@ -2346,28 +2225,28 @@ void cUpdate::Action()
 
         if ((init || forceVideoDirUpdate || (time(0) - lastScanNewRec > scanNewRecFreq)) && Running()) 
         {
-           // ---------------------------------------
-           // check if any recording has changed ...
+//            // ---------------------------------------
+//            // check if any recording has changed ...
            
-#if defined (APIVERSNUM) && (APIVERSNUM >= 20301)
-           static cStateKey* recordingsKey = new cStateKey();
-           cRecordings* recordings = cRecordings::GetRecordingsWrite(*recordingsKey, 500/*ms*/);
-           int recStateChanged = recordings != 0;
+// #if defined (APIVERSNUM) && (APIVERSNUM >= 20301)
+//            static cStateKey* recordingsKey = new cStateKey();
+//            cRecordings* recordings = cRecordings::GetRecordingsWrite(*recordingsKey, 500/*ms*/);
+//            int recStateChanged = recordings != 0;
            
-           if (recordings)
-              recordingsKey->Remove();
-#else
-           static int recState = 0;
-           int recStateChanged = Recordings.StateChanged(recState);
-#endif
+//            if (recordings)
+//               recordingsKey->Remove();
+// #else
+//            static int recState = 0;
+//            int recStateChanged = Recordings.StateChanged(recState);
+// #endif
            
-           if (recStateChanged)
-           {
-              tell(1, "Searching for new recordings because of Recordings State Change...");
-              worked++;
-              numNewRecs = ScanVideoDir();
-              tell(1, "found %d new recordings", numNewRecs);
-           }
+//            if (recStateChanged)
+//            {
+//               tell(1, "Searching for new recordings because of Recordings State Change...");
+//               worked++;
+//               numNewRecs = ScanVideoDir();
+//               tell(1, "found %d new recordings", numNewRecs);
+//            }
            
            lastScanNewRec = time(0);
            forceVideoDirUpdate = false;
@@ -2375,16 +2254,16 @@ void cUpdate::Action()
         
         init = false;
         
-        // Scan Video dir for scrapinfo files
+//         // Scan Video dir for scrapinfo files
 
-        if (forceScrapInfoUpdate) 
-        {
-           worked++;
-           tell(1, "Checking for new or updated scrapinfo files in recordings...");
-           int numUpdated = ScanVideoDirScrapInfo();
-           tell(1, "found %d new or updated scrapinfo files", numUpdated);
-           forceScrapInfoUpdate = false;
-        }
+//         if (forceScrapInfoUpdate) 
+//         {
+//            worked++;
+//            tell(1, "Checking for new or updated scrapinfo files in recordings...");
+//            int numUpdated = ScanVideoDirScrapInfo();
+//            tell(1, "found %d new or updated scrapinfo files", numUpdated);
+//            forceScrapInfoUpdate = false;
+//         }
         
         // Cleanup
 
@@ -2403,17 +2282,6 @@ void cUpdate::Action()
            lastCleanup = time(0);
         }
         
-        // Cleanup Recording DB
-        
-//         if (forceCleanupRecordingDb) 
-//         {
-//             worked++;
-//             tell(1, "Cleaning up recordings in database...");
-//             int recsDeleted = CleanupRecordings();
-//             tell(1, "Deleted %d not anymore existing recordings in database", recsDeleted);
-//             forceCleanupRecordingDb = false;
-//         }
-
         if (worked && scraper2VdrConfig.loglevel > 2) 
            connection->showStat();
 
@@ -2448,11 +2316,6 @@ void cUpdate::ForceScrapInfoUpdate(void) {
     tell(0, "scanning of recording scrapinfo files triggered");
     forceScrapInfoUpdate = true;
 }
-
-// void cUpdate::TriggerCleanRecordingsDB(void) {
-//     tell(0, "cleanup of recording DB triggered");
-//     forceCleanupRecordingDb = true;
-// }
 
 void cUpdate::ForceFullUpdate(void) {
     tell(0, "full update (including image data) from database forced");
