@@ -443,7 +443,7 @@ int cDbDict::parseField(const char* line)
    }
    else
    {
-      tell(0, "Info: Ignoring field '%s' due to filter configiuration", 
+      tell(2, "Info: Ignoring field '%s' due to filter configiuration", 
            f->getName());
       delete f;
    }

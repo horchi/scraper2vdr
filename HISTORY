@@ -114,3 +114,6 @@ Version 0.1.20 (horchi)
            SCRINFOMOVIEID = 22222
            SCRINFOSERIESID = 23454
            SCRINFOEPISODEID = 23424
+
+Version 0.1.21 (horchi)
+- changed log level for field filter to 2
