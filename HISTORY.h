@@ -1,5 +1,64 @@
-VDR Plugin 'scraper2vdr' Revision History
------------------------------------------
+/* 
+ * -----------------------------------
+ * scraper2vdr Plugin - Revision History
+ * -----------------------------------
+ *
+ */
+
+#define _VERSION     "0.1.23"
+#define VERSION_DATE "10.05.2016"
+#define DB_API       4
+
+#ifdef GIT_REV
+#  define VERSION _VERSION "-GIT" GIT_REV
+#else
+#  define VERSION _VERSION
+#endif
+
+/*
+ * ------------------------------------
+
+2016-05-10: version 0.1.23 (horchi)
+   - change: Fixed group by statement (patch by ckone)
+
+ Version 0.1.21 (horchi)
+   - changed log level for field filter to 2
+
+ Version 0.1.20 (horchi)
+   - changed removed scrapinfo file support, using info.epg2vdr via epg2vdr plugin instead
+           -> move your settings to info.epg2vdr like:
+           SCRINFOMOVIEID = 22222
+           SCRINFOSERIESID = 23454
+           SCRINFOEPISODEID = 23424
+
+ Version 0.1.19 (horchi)
+   - changed more compatibility to graphicsmagick
+
+ Version 0.1.18 (horchi)
+   - changed fixed wrong fieldname
+
+ Version 0.1.17 (horchi)
+   - changed log messages
+
+ Version 0.1.16 (horchi)
+   - changed recording path (now without base path)
+   - added service to register mysql_lib_init
+
+ Version 0.1.15 (horchi)
+   - started http branch
+
+ Version 0.1.14 (horchi)
+   - porting to vdr 2.3.1
+
+
+ Version 0.1.13 (horchi)
+   - fixed format string handling at call of deleteWhere
+   - added format string to deleteWhere to avoid buggy format strings
+   - update table recordinglist for use by epghttpd (maybe even for later replacement of recordings table)
+
+-------------------------
+------ old history ------
+-------------------------
 
 2014-03-02: Version 0.0.1
 
@@ -84,36 +143,5 @@ Version 0.1.12
 - removed option for using new DB parser
 - removed all code of old DB parser
 
-Version 0.1.13 (horchi)
-- fixed format string handling at call of deleteWhere
-- added format string to deleteWhere to avoid buggy format strings
-- update table recordinglist for use by epghttpd (maybe even for later replacement of recordings table)
-
-Version 0.1.14 (horchi)
-- porting to vdr 2.3.1
-
-Version 0.1.15 (horchi)
-- started http branch
-
-Version 0.1.16 (horchi)
-- changed recording path (now without base path)
-- added service to register mysql_lib_init
-
-Version 0.1.17 (horchi)
-- changed log messages
-
-Version 0.1.18 (horchi)
-- changed fixed wrong fieldname
-
-Version 0.1.19 (horchi)
-- changed more compatibility to graphicsmagick
-
-Version 0.1.20 (horchi)
-- changed removed scrapinfo file support, using info.epg2vdr via epg2vdr plugin instead
-           -> move your settings to info.epg2vdr like:
-           SCRINFOMOVIEID = 22222
-           SCRINFOSERIESID = 23454
-           SCRINFOEPISODEID = 23424
-
-Version 0.1.21 (horchi)
-- changed log level for field filter to 2
+ * ------------------------------------
+ */

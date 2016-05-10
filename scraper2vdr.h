@@ -11,12 +11,12 @@
 #include "scrapmanager.h"
 #include "update.h"
 #include "services.h"
+#include "HISTORY.h"
 
 //***************************************************************************
 // Constants
 //***************************************************************************
 
-static const char *VERSION        = "0.1.21";
 static const char *DESCRIPTION    = "'scraper2vdr' plugin";
 static const char *MAINMENUENTRY  = "Scraper2Vdr";
 
@@ -32,8 +32,8 @@ private:
 public:
     cPluginScraper2vdr(void);
     virtual ~cPluginScraper2vdr();
-    virtual const char *Version(void) { return VERSION; }
-    virtual const char *Description(void) { return DESCRIPTION; }
+    virtual const char *Version(void)      { return VERSION; }
+    virtual const char *Description(void)  { return DESCRIPTION; }
     virtual const char *CommandLineHelp(void);
     virtual bool ProcessArgs(int argc, char *argv[]);
     virtual bool Initialize(void);

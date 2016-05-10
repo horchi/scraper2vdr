@@ -294,7 +294,7 @@ int cUpdate::initDb()
     // get all used series (events/recordings), last_update of used episodes and max(scrsp) of all events 
 /*  select A.series_id, A.series_name, A.series_last_scraped, A.series_last_updated, A.series_overview, A.series_firstaired, A.series_network,
      A.series_imdb_id, A.series_genre,A.series_rating, A.series_status, B.episode_last_updated, B.scrsp from epg2vdr.series A
-    right join (select C.series_id,C.episode_id,max(D.episode_last_updated) as episode_last_updated,max(C.scrsp) as scrsp from 
+    right join (select C.series_id,max(D.episode_last_updated) as episode_last_updated,max(C.scrsp) as scrsp from 
                        (select E.series_id,E.episode_id, max(E.scrsp) as scrsp from
                            (select scrseriesid as series_id, scrseriesepisode as episode_id, scrsp from epg2vdr.events where (scrseriesid>0)
                             union all 
@@ -323,9 +323,8 @@ int cUpdate::initDb()
     selectReadSeriesInit->bind(&event_scrsp, cDBS::bndOut, ", B."); // max last scrsp time of all events/recordings of current series 
     selectReadSeriesInit->build(" from %s A ",
                                 tSeries->TableName());
-    selectReadSeriesInit->build("right join (select C.%s, C.%s, max(D.%s) as %s, max(C.%s) as %s from ",
+    selectReadSeriesInit->build("right join (select C.%s, max(D.%s) as %s, max(C.%s) as %s from ",
                                 tSeries->getField("SERIESID")->getDbName(),
-                                tEpisodes->getField("EPISODEID")->getDbName(),
                                 tEpisodes->getField("EPISODELASTUPDATED")->getDbName(),
                                 tEpisodes->getField("EPISODELASTUPDATED")->getDbName(),
                                 tEvents->getField("SCRSP")->getDbName(),
@@ -371,7 +370,7 @@ int cUpdate::initDb()
     // get all used series (events/recordings), last_update of used episodes and max(scrsp) of all events, filtered by lastscrsp
 /*  select A.series_id, A.series_name, A.series_last_scraped, A.series_last_updated, A.series_overview, A.series_firstaired, A.series_network,
      A.series_imdb_id, A.series_genre,A.series_rating, A.series_status, B.episode_last_updated, B.scrsp from epg2vdr.series A
-    right join (select C.series_id,C.episode_id,max(D.episode_last_updated) as episode_last_updated,max(C.scrsp) as scrsp from 
+    right join (select C.series_id,max(D.episode_last_updated) as episode_last_updated,max(C.scrsp) as scrsp from 
                        (select E.series_id,E.episode_id, max(E.scrsp) as scrsp from
                            (select scrseriesid as series_id, scrseriesepisode as episode_id, scrsp from epg2vdr.events where (scrseriesid>0) and (scrsp>LASTSCRSP)
                             union all 
@@ -400,9 +399,8 @@ int cUpdate::initDb()
     selectReadSeriesLastScrsp->bind(&event_scrsp, cDBS::bndOut, ", B."); // max last scrsp time of all events/recordings of current series 
     selectReadSeriesLastScrsp->build(" from %s A ",
                                      tSeries->TableName());
-    selectReadSeriesLastScrsp->build("right join (select C.%s, C.%s, max(D.%s) as %s, max(C.%s) as %s from ",
+    selectReadSeriesLastScrsp->build("right join (select C.%s, max(D.%s) as %s, max(C.%s) as %s from ",
                                      tSeries->getField("SERIESID")->getDbName(),
-                                     tEpisodes->getField("EPISODEID")->getDbName(),
                                      tEpisodes->getField("EPISODELASTUPDATED")->getDbName(),
                                      tEpisodes->getField("EPISODELASTUPDATED")->getDbName(),
                                      tEvents->getField("SCRSP")->getDbName(),
