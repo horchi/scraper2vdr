@@ -5,7 +5,7 @@
  *
  */
 
-#define _VERSION     "0.1.24"
+#define _VERSION     "0.1.25"
 #define VERSION_DATE "20.05.2016"
 #define DB_API       4
 
@@ -17,6 +17,9 @@
 
 /*
  * ------------------------------------
+
+2016-05-20: version 0.1.25 (horchi)
+   - change: minor logging change
 
 2016-05-20: version 0.1.24 (horchi)
    - added:  new column for textual rating and commentator

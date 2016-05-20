@@ -122,7 +122,7 @@ int cUpdate::initDb()
     }    
     
     vdrDb = new cDbTable(connection, "vdrs");
-    if (vdrDb->open(yes) != success) return fail;
+    if (vdrDb->open() != success) return fail;
 
     tEvents = new cDbTable(connection, "events");
     if (tEvents->open() != success) return fail;
@@ -152,7 +152,7 @@ int cUpdate::initDb()
     if (tMovieMedia->open() != success) return fail;
     
     tRecordingList = new cDbTable(connection, "recordinglist");
-    if (tRecordingList->open(yes) != success) return fail;
+    if (tRecordingList->open() != success) return fail;
 
     // try to create temp. episode cache table
 
