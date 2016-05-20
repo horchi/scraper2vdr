@@ -13,6 +13,8 @@
 #include "tools.h"
 #include "update.h"
 
+#include <sstream>
+
 cUpdate::cUpdate(cScrapManager *manager) 
    : cThread("scraper2vdr-update", true) 
 {
@@ -1004,7 +1006,7 @@ void cUpdate::ReadSeriesMediaFast(cTVDBSeries *series, int &newImages, int &newS
     newSeasonPoster = 0;
     bool isFirst = true;
     int mediaType = 0;
-    stringstream imageName("");
+    std::stringstream imageName("");
     imageName << imgPathSeries << "/" << series->id;
     string seriesPath = imageName.str();
     string thumbName = "";

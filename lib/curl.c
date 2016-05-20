@@ -13,8 +13,9 @@
 
 cCurl curl;
 
-string cCurl::sBuf = "";
+std::string cCurl::sBuf = "";
 int cCurl::curlInitialized = no;
+cSystemNotification* cCurl::sysNotification = 0;
 
 //***************************************************************************
 // Callbacks
@@ -22,7 +23,7 @@ int cCurl::curlInitialized = no;
 
 size_t collect_data(void *ptr, size_t size, size_t nmemb, void* stream)
 {
-   string sTmp;
+   std::string sTmp;
    register size_t actualsize = size * nmemb;
 
    if ((FILE *)stream == NULL) 
@@ -136,7 +137,7 @@ int cCurl::exit()
 // Get Url
 //***************************************************************************
 
-int cCurl::GetUrl(const char *url, string *sOutput, const string &sReferer) 
+int cCurl::GetUrl(const char *url, std::string *sOutput, const std::string &sReferer) 
 {
   CURLcode res;
 
@@ -164,7 +165,7 @@ int cCurl::GetUrl(const char *url, string *sOutput, const string &sReferer)
   return 1;
 }
 
-int cCurl::GetUrlFile(const char *url, const char *filename, const string &sReferer)
+int cCurl::GetUrlFile(const char *url, const char *filename, const std::string &sReferer)
 {
   int nRet = 0;
   init();
@@ -190,21 +191,21 @@ int cCurl::GetUrlFile(const char *url, const char *filename, const string &sRefe
   return nRet;
 }
 
-int cCurl::PostUrl(const char *url, const string &sPost, string *sOutput, const string &sReferer)
+int cCurl::PostUrl(const char *url, const std::string &sPost, std::string *sOutput, const std::string &sReferer)
 {
   init();
 
   int retval = 1;
-  string::size_type nStart = 0, nEnd, nPos;
-  string sTmp, sName, sValue;
+  std::string::size_type nStart = 0, nEnd, nPos;
+  std::string sTmp, sName, sValue;
   struct curl_httppost *formpost=NULL;
   struct curl_httppost *lastptr=NULL;
   struct curl_slist *headerlist=NULL;
 
   // Add the POST variables here
-  while ((nEnd = sPost.find("##", nStart)) != string::npos) {
+  while ((nEnd = sPost.find("##", nStart)) != std::string::npos) {
     sTmp = sPost.substr(nStart, nEnd - nStart);
-    if ((nPos = sTmp.find("=")) == string::npos)
+    if ((nPos = sTmp.find("=")) == std::string::npos)
       return 0;
     sName = sTmp.substr(0, nPos);
     sValue = sTmp.substr(nPos+1);
@@ -212,7 +213,7 @@ int cCurl::PostUrl(const char *url, const string &sPost, string *sOutput, const 
     nStart = nEnd + 2;
   }
   sTmp = sPost.substr(nStart);
-  if ((nPos = sTmp.find("=")) == string::npos)
+  if ((nPos = sTmp.find("=")) == std::string::npos)
     return 0;
   sName = sTmp.substr(0, nPos);
   sValue = sTmp.substr(nPos+1);
@@ -225,7 +226,7 @@ int cCurl::PostUrl(const char *url, const string &sPost, string *sOutput, const 
   return retval;
 }
 
-int cCurl::PostRaw(const char *url, const string &sPost, string *sOutput, const string &sReferer)
+int cCurl::PostRaw(const char *url, const std::string &sPost, std::string *sOutput, const std::string &sReferer)
 {
   init();
 
@@ -243,7 +244,7 @@ int cCurl::PostRaw(const char *url, const string &sPost, string *sOutput, const 
   return retval;  
 }
 
-int cCurl::DoPost(const char *url, string *sOutput, const string &sReferer,
+int cCurl::DoPost(const char *url, std::string *sOutput, const std::string &sReferer,
                       struct curl_httppost *formpost, struct curl_slist *headerlist) 
 {
   headerlist = curl_slist_append(headerlist, "Expect:");
@@ -298,6 +299,9 @@ size_t cCurl::WriteMemoryCallback(void* ptr, size_t size, size_t nmemb, void* da
    size_t realsize = size * nmemb;
    struct MemoryStruct* mem = (struct MemoryStruct*)data;
    
+   if (sysNotification)
+      sysNotification->check();
+
    if (mem->memory)
       mem->memory = (char*)realloc(mem->memory, mem->size + realsize + 1);
    else
@@ -319,6 +323,9 @@ size_t cCurl::WriteHeaderCallback(void* ptr, size_t size, size_t nmemb, void* da
    struct MemoryStruct* mem = (struct MemoryStruct*)data;
    char* p;
 
+   if (sysNotification)
+      sysNotification->check();
+
    if (ptr)
    {
       // get filename
@@ -329,7 +336,7 @@ size_t cCurl::WriteHeaderCallback(void* ptr, size_t size, size_t nmemb, void* da
          
          if ((p = strcasestr((char*)ptr, attribute)))
          {
-            if (p = strcasestr(p, "filename="))
+            if ((p = strcasestr(p, "filename=")))
             {
                p += strlen("filename=");
 

@@ -72,7 +72,8 @@ class cDbService
          ftPrimary    = 2,
          ftMeta       = 4,
          ftAutoinc    = 8,
-         ftDef0       = 16
+
+         ftAll = ftData | ftPrimary | ftMeta
       };
 
       enum BindType
@@ -126,6 +127,7 @@ class cDbFieldDef : public cDbService
          description = 0;
          dbdescription = 0;
          filter = 0xFFFF;
+         def = 0;
       }
 
       cDbFieldDef(const char* n, const char* dn, FieldFormat f, int s, int t, int flt = 0xFFFF)
@@ -138,9 +140,10 @@ class cDbFieldDef : public cDbService
          filter = flt;
          description = 0;
          dbdescription = 0;
+         def = 0;
       }
 
-      ~cDbFieldDef()  { free(name); free(dbname); free(description); free(dbdescription); }
+   ~cDbFieldDef()  { free(name); free(dbname); free(description); free(dbdescription); free(def); }
       
       int getIndex()                 { return index; }
       const char* getName()          { return name; }
@@ -152,9 +155,18 @@ class cDbFieldDef : public cDbService
       int getSize()                  { return size; }
       FieldFormat getFormat()        { return format; }
       int getType()                  { return type; }
+      const char* getDefault()       { return def ? def : ""; }
       int getFilter()                { return filter; }
       int filterMatch(int f)         { return !f || filter & f; }
       int hasType(int types)         { return types & type; }
+      int hasFormat(int f)           { return format == f; }
+
+      int isString()                 { return format == ffAscii || format == ffText || 
+                                              format == ffMText || format == ffMlob; }
+      int isInt()                    { return format == ffInt || format == ffUInt; }
+      int isBigInt()                 { return format == ffBigInt || format == ffUBigInt; }
+      int isFloat()                  { return format == ffFloat; }
+      int isDateTime()               { return format == ffDateTime; }
 
       void setDescription(const char* desc)
       {
@@ -212,8 +224,8 @@ class cDbFieldDef : public cDbService
 
          sprintf(fType, "(%s)", toName((FieldType)type, tmp));
             
-         tell(0, "%-20s %-25s %-17s %-20s (0x%04X) '%s'", name, dbname, 
-              toColumnFormat(colFmt), fType, filter, description); 
+         tell(0, "%-20s %-25s %-17s %-20s (0x%04X) default '%s' '%s'", name, dbname, 
+              toColumnFormat(colFmt), fType, filter, notNull(def, ""), description); 
       }
 
    protected:
@@ -227,6 +239,7 @@ class cDbFieldDef : public cDbService
       int index;
       int type;
       int filter;     // bitmask (defaults to 0xFFFF)
+      char* def;
 };
 
 //***************************************************************************
@@ -298,14 +311,30 @@ class cDbTableDef : public cDbService
       int fieldCount()                 { return dfields.size(); }
       cDbFieldDef* getField(int id)    { return _dfields[id]; }
 
-      cDbFieldDef* getField(const char* fname)    
+      cDbFieldDef* getField(const char* fname, int silent = no)    
       { 
          std::map<std::string, cDbFieldDef*, _casecmp_>::iterator f;
 
          if ((f = dfields.find(fname)) != dfields.end())
             return f->second;
          
-         tell(0, "Fatal: Missing definition of field '%s.%s' in dictionary!", name, fname);
+         if (!silent)
+            tell(0, "Fatal: Missing definition of field '%s.%s' in dictionary!", name, fname);
+
+         return 0;
+      }
+
+      cDbFieldDef* getFieldByDbName(const char* dbname)
+      { 
+         std::map<std::string, cDbFieldDef*, _casecmp_>::iterator it;
+
+         for (it = dfields.begin(); it != dfields.end(); it++)
+         {
+            if (it->second->hasDbName(dbname))
+               return it->second;
+         }
+         
+         tell(5, "Fatal: Missing definition of field '%s.%s' in dictionary!", name, dbname);
 
          return 0;
       }
@@ -367,8 +396,12 @@ class cDbTableDef : public cDbService
 
       char* name;
       std::vector<cDbIndexDef*> indices;
-      std::vector<cDbFieldDef*> _dfields;                     // FiledDefs stored as list to have access via index
-      std::map<std::string, cDbFieldDef*, _casecmp_> dfields; // same FiledDef references stored as a map to habe access via name
+
+      // FiledDefs stored as list to have access via index
+      std::vector<cDbFieldDef*> _dfields;
+
+      // same FiledDef references stored as a map to have access via name
+      std::map<std::string, cDbFieldDef*, _casecmp_> dfields;
 };
 
 //***************************************************************************
@@ -389,8 +422,7 @@ class cDbDict : public cDbService
          dtFormat,
          dtSize,
          dtType,
-         dtFilter,
-
+         
          dtCount
       };
 
@@ -421,7 +453,7 @@ class cDbDict : public cDbService
       int atLine(const char* line);
       int parseField(const char* line);
       int parseIndex(const char* line);
-      int toFilter(char* token);
+      int parseFilter(cDbFieldDef* f, const char* value);
 
       // data
 

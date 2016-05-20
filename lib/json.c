@@ -45,7 +45,7 @@ int addFieldToJson(json_t* obj, cDbValue* value, int ignoreEmpty, const char* ex
       return fail;
 
    name = strdup(extName ? extName : value->getField()->getName());
-   toCase(cLower, name);   // use always lower case names
+   toCase(cLower, name);   // use always lower case names in json
 
    switch (value->getField()->getFormat())
    {
@@ -78,9 +78,62 @@ int addFieldToJson(json_t* obj, cDbValue* value, int ignoreEmpty, const char* ex
 // Add field to json object
 //***************************************************************************
 
-int addFieldToJson(json_t* obj, cDbTable* table, const char* fname, int ignoreEmpty, const char* extName)
+int addFieldToJson(json_t* obj, cDbTable* table, const char* fname, 
+                   int ignoreEmpty, const char* extName)
 {
    return addFieldToJson(obj, table->getValue(fname), ignoreEmpty, extName);
+}
+
+//***************************************************************************
+// Get Field From Json
+//   - if a default is required put it into the row 
+//     before calling this function
+//***************************************************************************
+
+int getFieldFromJson(json_t* obj, cDbRow* row, const char* fname, const char* extName)
+{
+   cDbValue* value = row->getValue(fname);
+   char* jname;
+
+   if (!value)
+      return fail;
+
+   jname = strdup(!isEmpty(extName) ? extName : value->getField()->getName());
+   toCase(cLower, jname);   // use always lower case names in json
+
+   switch (value->getField()->getFormat())
+   {
+      case cDBS::ffAscii:
+      case cDBS::ffText:
+      case cDBS::ffMText:
+      {
+         const char* v = getStringFromJson(obj, jname, "");
+         if (!isEmpty(v) || !value->isEmpty())
+            value->setValue(v);
+         break;
+      }
+
+      case cDBS::ffInt:
+      case cDBS::ffUInt:
+      {
+         int v = getIntFromJson(obj, jname, na);
+         if (v != na || !value->isEmpty()) 
+            value->setValue(v);
+         break;
+      }
+// #TODO to be implemented
+//       case cDBS::ffFloat:
+//       {
+//          double v = getFloatFromJson(obj, jname, na);
+//          if (v != na) value->setValue(v);
+//          break;
+//       }
+
+      default:
+         break;
+   }
+
+   return success;
 }
 
 //***************************************************************************
@@ -107,4 +160,5 @@ int getIntFromJson(json_t* obj, const char* name, int def)
    return json_integer_value(o);
 }
 
+//***************************************************************************
 #endif // USEJSON

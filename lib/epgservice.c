@@ -8,6 +8,40 @@
 #include "epgservice.h"
 
 //***************************************************************************
+// Timer  State / Action
+//***************************************************************************
+
+const char* toName(TimerState s)
+{
+   switch (s)
+   {
+      case tsPending:  return "pending";
+      case tsRunning:  return "running";
+      case tsFinished: return "finished";
+      case tsDeleted:  return "deleted";
+      case tsError:    return "failed";
+      case tsIgnore:   return "ignore";
+      case tsUnknown:  return "unknown";         
+   }
+
+   return "unknown";
+}
+
+const char* toName(TimerAction a, int nice)
+{
+   switch (a)
+   {
+      case taCreate:  return "create";
+      case taModify:  return "modify";
+      case taDelete:  return "delete";
+      case taAssumed: return nice ? "-" : "assumed";
+      case taFailed:  return "failed";
+   }
+
+   return nice ? "-" : "unknown";
+}
+
+//***************************************************************************
 // cEpgdState
 //***************************************************************************
 

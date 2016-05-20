@@ -25,6 +25,7 @@ int fromJpeg(Imlib_Image& image, unsigned char* buffer, int size);
 long toJpeg(Imlib_Image image, MemoryStruct* data, int quality);
 int scaleImageToJpegBuffer(Imlib_Image image, MemoryStruct* data, int width = 0, int height = 0);
 int scaleJpegBuffer(MemoryStruct* data, int width = 0, int height = 0);
-
+const char* strImlibError(Imlib_Load_Error err);
+   
 //***************************************************************************
 #endif // __IMGTOOLS_H

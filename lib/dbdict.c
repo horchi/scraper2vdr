@@ -26,7 +26,7 @@ int getToken(const char*& p, char* token, int size, char delimiter = ' ', char e
    if (*p == end || isEmpty(p))
       return fail;
 
-   while (*p && num < size && !((*p == delimiter || *p ==  end) && !insideStr))
+   while (*p && num < size && !((*p == delimiter || *p == end) && !insideStr))
    {
       if (*p == '"')
       {
@@ -42,7 +42,7 @@ int getToken(const char*& p, char* token, int size, char delimiter = ' ', char e
 
    *dest = 0;
 
-   return success;
+  return success;
 }
 
 //***************************************************************************
@@ -101,7 +101,6 @@ cDbService::TypeDef cDbService::types[] =
    { ftPrimary, "primary" },
    { ftMeta,    "meta" },
    { ftAutoinc, "autoinc" },
-   { ftDef0,    "def0" },
 
    { ftUnknown, "" }
 };
@@ -152,10 +151,15 @@ const char* cDbService::toName(FieldType type, char* buf)
    return buf;
 }
 
+//***************************************************************************
+//***************************************************************************
+// Class cDbDict
+//***************************************************************************
+
 cDbDict dbDict;
 
 //***************************************************************************
-// cDbDict
+// Object
 //***************************************************************************
 
 cDbDict::cDbDict()
@@ -205,7 +209,7 @@ int cDbDict::init(cDbFieldDef*& field, const char* tname, const char* fname)
    cDbTableDef* table = getTable(tname);
 
    if (table)
-      if (field = table->getField(fname))
+      if ((field = table->getField(fname)))
          return success;
 
    tell(0, "Fatal: Can't init field %s.%s, not found in dictionary", tname, fname);
@@ -363,28 +367,26 @@ int cDbDict::atLine(const char* line)
 }
 
 //***************************************************************************
-// To Filter
+// Parse Filter
 //***************************************************************************
 
-int cDbDict::toFilter(char* token)
+int cDbDict::parseFilter(cDbFieldDef* f, const char* value)
 {
-   const int sizeFilterName = 20;
-   char name[sizeFilterName+TB];
-   const char* p = token;
-   int filter = 0;
-
-   if (isEmpty(token))
-      return 0xFFFF;
-
-   while (getToken(p, name, sizeFilterName, '|') == success)   
-   {
-      if (isalpha(*token) && fltFromNameFct)
-         filter |= fltFromNameFct(name);
+   const int sizeNameMax = 50;
+   char name[sizeNameMax+TB];
+   const char* v = value;
+   
+   f->filter = 0;
+   
+   while (getToken(v, name, sizeNameMax, '|') == success)
+   {     
+      if (isalpha(*name) && fltFromNameFct)
+         f->filter |= fltFromNameFct(name);
       else
-         filter |= atoi(name);
+         f->filter |= atoi(name);
    }
 
-   return filter;
+   return success;
 }
 
 //***************************************************************************
@@ -398,10 +400,13 @@ int cDbDict::parseField(const char* line)
    const char* p = line;
 
    cDbFieldDef* f = new cDbFieldDef;
-
+   f->filter = 0xFFFF;
+   
    if (!curTable)
       return fail;
 
+   // first parse fixed part of field definition up to the 'type'
+   
    for (int i = 0; i < dtCount; i++)
    {
       if (getToken(p, token, sizeTokenMax) != success)
@@ -419,16 +424,37 @@ int cDbDict::parseField(const char* line)
 
       switch (i)
       {
-         case dtName:        f->name = strdup(token);         break;
-         case dtDescription: f->setDescription(token);        break;
-         case dtDbName:      f->dbname = strdup(token);       break;
-         case dtFormat:      f->format = toDictFormat(token); break;
-         case dtSize:        f->size = atoi(token);           break;
-         case dtType:        f->type = toType(token);         break;
-         case dtFilter:      f->filter = toFilter(token);     break;
+         case dtName:        f->name = strdup(token);             break;
+         case dtDescription: f->setDescription(token);            break;
+         case dtDbName:      f->dbname = strdup(token);           break;
+         case dtFormat:      f->format = toDictFormat(token);     break;
+         case dtSize:        f->size = atoi(token);               break;
+         case dtType:        f->type = toType(token);             break;
       }
    }
 
+   // second ... parse dynamic part of the field definition like filter and default
+
+   while (getToken(p, token, sizeTokenMax) == success)
+   {
+      char content[sizeTokenMax+TB];
+
+      if (getToken(p, content, sizeTokenMax) != success || isEmpty(content))
+      {
+         tell(0, "Error: Skipping token '%s' missing content!", token);
+         break;
+      }
+         
+      if (strcasecmp(token, "filter") == 0)
+         parseFilter(f, content);
+
+      else if (strcasecmp(token, "default") == 0)
+         f->def = strdup(content);
+
+      else
+         tell(0, "Warning: Skipping unexpected token '%s'", token);
+   }
+   
    if (!f->isValid())
    {
       tell(0, "Error: Can't parse line [%s], invalid field configuration", line);

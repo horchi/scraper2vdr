@@ -39,6 +39,7 @@ struct cEpgConfig
 
       static int logstdout;
       static int loglevel;
+      static int argLoglevel;
       static int logFacility;
       static const char* logName;
 };

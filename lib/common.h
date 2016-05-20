@@ -15,21 +15,24 @@
 #include <zlib.h>
 #include <errno.h>
 #include <string>
+#include <map>
 
+#ifdef USESYSD
+#  include <systemd/sd-daemon.h>
+#endif
 
 #ifdef USEMD5
 #  include <openssl/md5.h> // MD5_*
 #endif
 
-//#ifdef VDR_PLUGIN
-//#  include <vdr/tools.h>
-//#  include <vdr/thread.h>
-//#endif
-
 #ifdef USELIBXML
 # include <libxslt/transform.h>
 # include <libxslt/xsltutils.h>
 # include <libexslt/exslt.h>
+#endif
+
+#ifdef VDR_PLUGIN
+#  include <vdr/tools.h>
 #endif
 
 class MemoryStruct;
@@ -38,10 +41,13 @@ class MemoryStruct;
 // Misc
 //***************************************************************************
 
-// #ifndef VDR_PLUGIN
-inline long min(long a, long b) { return a < b ? a : b; }
-inline long max(long a, long b) { return a > b ? a : b; }
-// #endif
+#ifndef VDR_PLUGIN
+  inline long min(long a, long b) { return a < b ? a : b; }
+  inline long max(long a, long b) { return a > b ? a : b; }
+#else
+#  define __STL_CONFIG_H
+#  include <vdr/tools.h>
+#endif
 
 enum Misc
 {
@@ -65,7 +71,8 @@ enum Misc
 
    tmeSecondsPerMinute = 60,
    tmeSecondsPerHour = tmeSecondsPerMinute * 60,
-   tmeSecondsPerDay = 24 * tmeSecondsPerHour
+   tmeSecondsPerDay = 24 * tmeSecondsPerHour,
+   tmeUsecondsPerSecond = 1000 * 1000
 };
 
 enum Case
@@ -210,6 +217,8 @@ struct MemoryStruct
          *mimeType = 0;
          modTime = time(0);
          headerOnly = no;
+         headers.clear();
+         statusCode = 0;
          // expireAt = time(0); -> don't reset 'expireAt' here !!!!
       }
 
@@ -229,8 +238,10 @@ struct MemoryStruct
       char mimeType[100+TB];         // 
       char contentEncoding[100+TB];  // 
       int headerOnly;
+      long statusCode;
       time_t modTime;
       time_t expireAt;
+      std::map<std::string, std::string> headers;
 };
 
 //***************************************************************************
@@ -240,8 +251,15 @@ struct MemoryStruct
 double usNow();
 unsigned int getHostId();
 const char* getHostName();
-const char* getFirstIp();
+const char* getFirstInterface();
+const char* getInterfaces();
+const char* getFirstIp(int skipLo = yes);
 const char* getIpOf(const char* device);
+const char* getMacOf(const char* device);
+const char* getMaskOf(const char* device);
+const char* bcastAddressOf(const char* ipStr, const char* maskStr = 0);
+
+//***************************************************************************
 
 #ifdef USEUUID
   const char* getUniqueId();
@@ -254,6 +272,10 @@ void prepareCompressed(std::string& pattern);
 std::string strReplace(const std::string& what, const std::string& with, const std::string& subject);
 std::string strReplace(const std::string& what, long with, const std::string& subject);
 std::string strReplace(const std::string& what, double with, const std::string& subject);
+char* strReplace(char* buffer, char from, char to);
+
+int rangeFrom(const char* s);
+int rangeTo(const char* s);
 
 char* rTrim(char* buf);
 char* lTrim(char* buf);
@@ -279,6 +301,7 @@ int urlUnescape(char* dst, const char* src, int normalize = yes);
 int storeToFile(const char* filename, const char* data, int size);
 int loadFromFile(const char* infile, MemoryStruct* data);
 
+int folderExists(const char* path);
 int fileExists(const char* path);
 int fileSize(const char* path);
 time_t fileModTime(const char* path);
@@ -286,7 +309,7 @@ int createLink(const char* link, const char* dest, int force);
 int isLink(const char* path);
 const char* suffixOf(const char* path);
 int isEmpty(const char* str);
-const char* notNull(const char* str);
+const char* notNull(const char* str, const char* def = "<null>");
 int isZero(const char* str);
 int removeFile(const char* filename);
 int chkDir(const char* path);
@@ -317,15 +340,19 @@ int unzip(const char* file, const char* filter, char*& buffer,
 
 class cMyMutex 
 {
-      friend class cCondVar;
-   private:
-      pthread_mutex_t mutex;
-      int locked;
+   friend class cCondVar;
+
    public:
+
       cMyMutex(void);
       ~cMyMutex();
       void Lock(void);
       void Unlock(void);
+
+   private:
+
+      pthread_mutex_t mutex;
+      int locked;
 };
 
 //***************************************************************************
@@ -346,6 +373,24 @@ class cMyTimeMs
       bool TimedOut(void);
       uint64_t Elapsed(void);
 };
+
+//***************************************************************************
+// Wrapper for Regual Expression Library
+//***************************************************************************
+
+enum Option
+{
+   repUseRegularExpression = 1,
+   repIgnoreCase = 2
+};
+
+int rep(const char* string, const char* expression, Option options = repUseRegularExpression);
+
+int rep(const char* string, const char* expression, 
+        const char*& s_location, Option options = repUseRegularExpression);
+
+int rep(const char* string, const char* expression, const char*& s_location, 
+        const char*& e_location, Option options = repUseRegularExpression);
 
 //***************************************************************************
 // Log Duration

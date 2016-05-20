@@ -15,38 +15,48 @@ TEST = tst
 LIBOBJS = common.o config.o db.o epgservice.o dbdict.o json.o
 
 ifdef USEJPEG
-LIBOBJS += imgtools.o
+   LIBOBJS += imgtools.o
 endif
 
 ifdef USECURL
-LIBOBJS += curl.o
+   LIBOBJS += curl.o configuration.o thread.o
 endif
 
 BASELIBS = -lrt -lz -luuid 
 BASELIBS += $(shell mysql_config --libs_r)
 
 ifdef USECURL
-BASELIBS += -lcurl 
+   BASELIBS += -lcurl 
+endif
+
+ifdef USEEPGS
+	LIBOBJS += searchtimer.o
+endif
+
+ifdef USEPYTHON
+	BASELIBS += $(shell python-config --libs)
+   LIBOBJS += python.o
 endif
 
 ifdef USELIBXML
-BASELIBS += $(shell xml2-config --libs) $(shell xslt-config --libs)
+   BASELIBS += $(shell xml2-config --libs) $(shell xslt-config --libs)
 endif
-DEBUG = 1
+
+ifdef SYSD_NOTIFY
+   BASELIBS  += $(shell pkg-config --libs libsystemd-daemon)
+	CFLAGS += $(shell pkg-config --cflags libsystemd-daemon)
+endif
 
 ifdef DEBUG
   CFLAGS += -ggdb -O0
 endif
 
-CFLAGS += -fPIC -Wextra -Wreturn-type -Wall -Wno-parentheses -Wformat -pedantic -Wunused-variable -Wunused-label \
-          -Wunused-value -Wunused-function \
-          -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
-
 CFLAGS += $(shell mysql_config --include)
-ifdef USELIBXML
-CFLAGS += $(shell xml2-config --cflags) $(shell xslt-config --cflags)
+DEFINES += $(USES)
+
+ifdef USEPYTHON
+	CFLAGS += $(shell python-config --includes)
 endif
-DEFINES = $(USES)
 
 all: lib $(TEST) $(DEMO)
 lib: $(LIBTARGET).a
@@ -60,6 +70,9 @@ tst: test.o lib
 
 demo: demo.o lib 
 	$(doLink) demo.o $(HLIB) -larchive -lcrypto $(BASELIBS) -o $@
+
+pytst: pytst.c python.c python.h hlib
+	$(CC) $(CFLAGS) pytst.c python.c -L./lib -lhorchi $(DLIBS) -o pytst 
 
 clean:
 	rm -f *.o *~ core $(TEST) $(DEMO) $(LIBTARGET).a
@@ -77,15 +90,19 @@ cppchk:
 
 HEADER = db.h common.h config.h dbdict.h
 
-common.o     :  common.c      $(HEADER) common.h
-curl.o       :  curl.c        $(HEADER) curl.h
-imgtools.o   :  imgtools.c    $(HEADER) imgtools.h
-config.o     :  config.c      $(HEADER) config.h
-db.o         :  db.c          $(HEADER) db.h
-epgservice.o :  epgservice.c  $(HEADER) epgservice.h
-dbdict.o     :  dbdict.c      $(HEADER) dbdict.h
-json.o       :  json.c        $(HEADER) json.h
+common.o          :  common.c           $(HEADER) common.h
+configuration.o   :  configuration.c    $(HEADER) configuration.h
+thread.o     		:  thread.c      		 $(HEADER) thread.h
+curl.o       		:  curl.c        		 $(HEADER) curl.h
+imgtools.o   		:  imgtools.c    		 $(HEADER) imgtools.h
+config.o     		:  config.c      		 $(HEADER) config.h
+db.o         		:  db.c          		 $(HEADER) db.h
+epgservice.o 		:  epgservice.c  		 $(HEADER) epgservice.h
+dbdict.o     		:  dbdict.c      		 $(HEADER) dbdict.h
+json.o       		:  json.c        		 $(HEADER) json.h
+python.o        :  python.c          $(HEADER) python.h
+searchtimer.o     :  searchtimer.c      $(HEADER) searchtimer.h
 
-demo.o       :  demo.c        $(HEADER) 
-test.o       :  test.c        $(HEADER) 
+demo.o       		:  demo.c        		 $(HEADER) 
+test.o       		:  test.c        		 $(HEADER) 
 

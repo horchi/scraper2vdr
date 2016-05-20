@@ -5,8 +5,8 @@
  *
  */
 
-#define _VERSION     "0.1.23"
-#define VERSION_DATE "10.05.2016"
+#define _VERSION     "0.1.24"
+#define VERSION_DATE "20.05.2016"
 #define DB_API       4
 
 #ifdef GIT_REV
@@ -17,6 +17,11 @@
 
 /*
  * ------------------------------------
+
+2016-05-20: version 0.1.24 (horchi)
+   - added:  new column for textual rating and commentator
+   - change: removed unused info column
+   - change: to actual libhorchi
 
 2016-05-10: version 0.1.23 (horchi)
    - change: Fixed group by statement (patch by ckone)
