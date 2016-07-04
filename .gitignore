@@ -7,3 +7,4 @@
 *.pot
 lib/demo
 lib/tst
+*.tgz

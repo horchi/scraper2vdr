@@ -5,13 +5,16 @@
  *
  */
 
-#ifndef __CONFIG_H
-#define __CONFIG_H
+#ifndef __CONFIGURATION_H
+#define __CONFIGURATION_H
+
+#include "thread.h"
+#include "common.h"
 
 extern const char* confDir;
 
 //***************************************************************************
-// Configuration (#TODO move to lib)
+// Configuration
 //***************************************************************************
 
 class Configuration
@@ -88,4 +91,49 @@ class Configuration
 };
 
 //***************************************************************************
-#endif //  __CONFIG_H
+// System Notification Interface (systemd, watchdog, pidfile, ...)
+//***************************************************************************
+
+class cSystemNotification : public cThread
+{
+   public:
+
+      enum SystemEvent
+      {
+         evReady,
+         evStatus,
+         evKeepalive,
+         evStopping
+      };
+      
+      enum Misc
+      {
+         defaultInterval = 60
+      };
+
+      cSystemNotification();
+
+      int __attribute__ ((format(printf, 3, 4))) notify(int event, const char* format = 0, ...);
+      int getWatchdogState(int minInterval);
+      void check();
+
+      int startNotifyThread(int timeout);
+      int stopNotifyThread();
+
+      static void setPidFile(const char* file) { pidfile = file; }
+
+   protected:
+
+      virtual void action();
+
+      int interval;
+      int threadTimeout;
+      cCondVar waitCondition;
+      
+      static time_t lastWatchdogAt;
+      static const char* pidfile;
+};
+
+//***************************************************************************
+
+#endif // __CONFIGURATION_H

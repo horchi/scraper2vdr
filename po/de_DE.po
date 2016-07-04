@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: vdr-scraper2vdr 0.0.1\n"
 "Report-Msgid-Bugs-To: <see README>\n"
-"POT-Creation-Date: 2015-03-10 22:22+0100\n"
+"POT-Creation-Date: 2015-11-16 20:05+0100\n"
 "PO-Revision-Date: 2014-03-30 18:30+0100\n"
 "Last-Translator: 3PO\n"
 "Language-Team: German <vdr@linuxtv.org>\n"
@@ -27,9 +27,6 @@ msgstr "Videoverzeichnis nach neuen Aufnahmen scannen"
 msgid "Scan for new or updated scrapinfo files"
 msgstr "Nach neuen oder geänderten scrapinfo Dateien suchen"
 
-msgid "Cleanup Recordings in Database"
-msgstr "Aufnahmen in Datenbank bereinigen"
-
 msgid "Reload all values (Series, Movies and Images)"
 msgstr "Alle Daten (Serien, Filme und Bilder) neu laden"
 
@@ -44,9 +41,6 @@ msgstr "Scanne Videoverzeichnis nach neuen Aufnahmen"
 
 msgid "Scanning for new or updated scrapinfo files"
 msgstr "Suche nach neuen oder geänderten scrapinfo Dateien"
-
-msgid "Cleaning up Recordings in Database"
-msgstr "Bereinige Aufnahmen in Datenbank"
 
 msgid "Loading Series, Movies and Images from Database"
 msgstr "Filme, Serien und Bilder werden aus Datenbank neu geladen"
@@ -104,3 +98,9 @@ msgstr "Protokollierungs Stufe"
 
 msgid "Actions"
 msgstr "Aktionen"
+
+#~ msgid "Cleanup Recordings in Database"
+#~ msgstr "Aufnahmen in Datenbank bereinigen"
+
+#~ msgid "Cleaning up Recordings in Database"
+#~ msgstr "Bereinige Aufnahmen in Datenbank"

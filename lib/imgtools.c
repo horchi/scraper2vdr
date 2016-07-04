@@ -75,7 +75,7 @@ int fromJpeg(Imlib_Image& image, unsigned char* buffer, int size)
 
 long toJpeg(Imlib_Image image, MemoryStruct* data, int quality)
 {
-   struct jpeg_compress_struct cinfo = { 0 };
+   struct jpeg_compress_struct cinfo;
    struct jpeg_error_mgr jerr;
    DATA32* ptr;
    DATA8* buf;
@@ -164,7 +164,7 @@ int scaleImageToJpegBuffer(Imlib_Image image, MemoryStruct* data, int width, int
       imlib_context_set_image(scaledImage);
       imlib_free_image();
 
-      tell(1, "Scaled image to %d/%d, now %d bytes", width, height, (int)data->size);
+      tell(2, "Scaled image to %d/%d, now %d bytes", width, height, (int)data->size);
    }
    else
    {
@@ -186,4 +186,32 @@ int scaleJpegBuffer(MemoryStruct* data, int width, int height)
    imlib_free_image();
 
    return success;
+}
+
+//***************************************************************************
+// Str Imlib Error
+//***************************************************************************
+
+const char* strImlibError(Imlib_Load_Error err)
+{
+   switch (err)
+   {
+      case IMLIB_LOAD_ERROR_NONE:
+      case IMLIB_LOAD_ERROR_FILE_DOES_NOT_EXIST:                return "File does not exist";
+      case IMLIB_LOAD_ERROR_FILE_IS_DIRECTORY:                  return "File is directory";
+      case IMLIB_LOAD_ERROR_PERMISSION_DENIED_TO_READ:          return "Permission denied to read";
+      case IMLIB_LOAD_ERROR_NO_LOADER_FOR_FILE_FORMAT:          return "No loader for file format";
+      case IMLIB_LOAD_ERROR_PATH_TOO_LONG:                      return "Path too long";
+      case IMLIB_LOAD_ERROR_PATH_COMPONENT_NON_EXISTANT:        return "Path component non existant";
+      case IMLIB_LOAD_ERROR_PATH_COMPONENT_NOT_DIRECTORY:       return "Path component not directory";
+      case IMLIB_LOAD_ERROR_PATH_POINTS_OUTSIDE_ADDRESS_SPACE:  return "Path points outside address space";
+      case IMLIB_LOAD_ERROR_TOO_MANY_SYMBOLIC_LINKS:            return "Too many symbolic links";
+      case IMLIB_LOAD_ERROR_OUT_OF_MEMORY:                      return "Out of memory";
+      case IMLIB_LOAD_ERROR_OUT_OF_FILE_DESCRIPTORS:            return "Out of file descriptors"; 
+      case IMLIB_LOAD_ERROR_PERMISSION_DENIED_TO_WRITE:         return "Permission denied to write";
+      case IMLIB_LOAD_ERROR_OUT_OF_DISK_SPACE:                  return "Out of disk space";
+      case IMLIB_LOAD_ERROR_UNKNOWN:                            return "Unknown format";
+   }
+   
+   return "";
 }

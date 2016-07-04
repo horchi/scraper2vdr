@@ -20,16 +20,17 @@ const char* logPrefix = "";
 
 void initConnection()
 {
-   cDbConnection::init(0x3db00012);
+   cDbConnection::init();
 
-   cDbConnection::setEncoding("utf8");
    cDbConnection::setHost("localhost");
-
+   // cDbConnection::setHost("192.168.200.101");
    cDbConnection::setPort(3306);
    cDbConnection::setName("epg2vdr");
    cDbConnection::setUser("epg2vdr");
    cDbConnection::setPass("epg");
+
    cDbConnection::setConfPath("/etc/epgd/");
+   cDbConnection::setEncoding("utf8");
 
    connection = new cDbConnection();
 }
@@ -301,6 +302,166 @@ int insertDemo()
 }
 
 //***************************************************************************
+// 
+//***************************************************************************
+
+int findUseEvent()
+{
+   cDbTable* useeventsDb = new cDbTable(connection, "useevents");
+   if (useeventsDb->open() != success) return fail;
+
+   // select event by useid
+
+   tell(0, "========================================");
+
+   cDbStatement* selectEventById = new cDbStatement(useeventsDb);
+
+   // select * from eventsview
+   //      where useid = ?
+   //        and updflg in (.....)
+
+   selectEventById->build("select ");
+   selectEventById->bindAllOut();
+   selectEventById->build(" from %s where ", useeventsDb->TableName());
+   selectEventById->bind("USEID", cDBS::bndIn | cDBS::bndSet);
+   selectEventById->build(" and %s in (%s)", 
+                          useeventsDb->getField("UPDFLG")->getDbName(),
+                          Us::getNeeded());
+
+   selectEventById->prepare();
+
+   tell(0, "========================================");
+
+   useeventsDb->clear();
+   useeventsDb->setValue("USEID", 1146680);
+
+   const char* flds[] =
+   {
+      "ACTOR",
+      "AUDIO",
+      "CATEGORY",
+      "COUNTRY",
+      "DIRECTOR",
+      "FLAGS",
+      "GENRE",
+      "INFO",
+      "MUSIC",
+      "PRODUCER",
+      "SCREENPLAY",
+      "SHORTREVIEW",
+      "TIPP",
+      "TOPIC",
+      "YEAR",
+      "RATING",
+      "NUMRATING",
+      "MODERATOR",
+      "OTHER",
+      "GUEST",
+      "CAMERA",
+
+      0
+   };
+
+   if (selectEventById->find())
+   {
+      FILE* f;
+      char* fileName = 0;
+
+      asprintf(&fileName, "%s/info.epg2vdr", ".");
+
+      if (!(f = fopen(fileName, "w")))
+      {
+         selectEventById->freeResult();
+         tell(0, "Error opening file '%s' failed, %s", fileName, strerror(errno));
+         free(fileName);
+
+         return fail;
+      }
+
+      tell(0, "Storing event details to '%s'", fileName);
+
+      for (int i = 0; flds[i]; i++)
+      {
+         cDbFieldDef* field = useeventsDb->getField(flds[i]);
+
+         if (!field)
+         {
+            tell(0, "Warning: Field '%s' not found at table '%s'", flds[i], useeventsDb->TableName());
+            continue;
+         }
+
+         if (field->getFormat() == cDbService::ffAscii || 
+             field->getFormat() == cDbService::ffText || 
+             field->getFormat() == cDbService::ffMText)
+         {
+            fprintf(f, "%s: %s\n", flds[i], useeventsDb->getStrValue(flds[i]));
+         }
+         else
+         {
+            fprintf(f, "%s: %ld\n", flds[i], useeventsDb->getIntValue(flds[i]));
+         }
+      }
+
+   selectEventById->freeResult();
+      free(fileName);
+      fclose(f);
+   }
+
+   tell(0, "========================================");
+
+   selectEventById->freeResult();
+
+   return done; 
+}
+
+//***************************************************************************
+// 
+//***************************************************************************
+
+int updateRecordingDirectory()
+{
+   int ins = 0;
+
+   cDbTable* recordingDirDb = new cDbTable(connection, "recordingdirs");
+   if (recordingDirDb->open() != success) return fail;
+
+   // char* dir = strdup("more~Marvel's Agents of S.H.I.E.L.D.~xxx.ts");
+   char* dir = strdup("aaaaa~bbbbbb~ccccc.ts");
+   char* pos = strrchr(dir, '~');
+   
+   if (pos)
+   {
+      *pos = 0;
+      
+      for (int level = 0; level < 3; level++)
+      {
+         recordingDirDb->clear();
+
+         recordingDirDb->setValue("VDRUUID", "foobar");
+         recordingDirDb->setValue("DIRECTORY", dir);
+         
+         if (!recordingDirDb->find())
+         {
+            ins++;
+            recordingDirDb->store();
+         }
+         
+         recordingDirDb->reset();
+         
+         char* pos = strrchr(dir, '~');
+         if (pos) *pos=0;
+      }
+   }
+   
+   tell(0, "inserted %d directories", ins);
+
+   delete recordingDirDb;
+   free(dir);
+
+   return ins;
+}
+
+//***************************************************************************
 // Main
 //***************************************************************************
 
@@ -315,18 +476,39 @@ int main(int argc, char** argv)
       path = argv[1];
 
    // read deictionary
-
+   
    dbDict.setFilterFromNameFct(toFieldFilter);
-
+   
    if (dbDict.in(path, ffEpgd) != success)
    {
       tell(0, "Invalid dictionary configuration, aborting!");
       return 1;
    }
 
-   dbDict.show();
+   cUserTimes userTimes;
+
+   tell(0, "--------------");
+   //userTimes.clear();
+   tell(0, "--------------");
+
+   userTimes.add("@Now", "What's on now?") ;
+   userTimes.add("@Next", "What's on next?" );
+   userTimes.add("20:15", "prime time");
+   userTimes.add("22:20", "late night");
+   userTimes.add("00:00");
+
+   tell(0, "--------------");
+
+   for (int i = 0; i < 6; i++)
+   {
+      cUserTimes::UserTime* t = userTimes.next();
+
+      tell(0, "%d - %s (%s)", t->getHHMM(), t->getTitle(), t->getHHMMStr());
+   }
 
    return 0;
+
+   // dbDict.show();
 
    initConnection();
 
@@ -335,6 +517,13 @@ int main(int argc, char** argv)
    // insertDemo();
 
    tell(0, "uuid: '%s'", getUniqueId());
+
+   tell(0, "- - - - - - - - - - - - - - - - - ");
+   
+   //updateRecordingDirectory();
+   findUseEvent();
+
+   tell(0, "- - - - - - - - - - - - - - - - - ");
 
    exitConnection();
 

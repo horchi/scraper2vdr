@@ -17,6 +17,7 @@
 #include "db.h"
 #include "epgservice.h"
 #include "dbdict.h"
+//#include "wol.h"
 
 cDbConnection* connection = 0;
 const char* logPrefix = "";
@@ -27,16 +28,18 @@ const char* logPrefix = "";
 
 void initConnection()
 {
-   cDbConnection::init(0x3db00011);
+   cDbConnection::init();
 
-   cDbConnection::setEncoding("utf8");
    // cDbConnection::setHost("192.168.200.101");
    cDbConnection::setHost("localhost");
    cDbConnection::setPort(3306);
+
    cDbConnection::setName("epg2vdr");
    cDbConnection::setUser("epg2vdr");
    cDbConnection::setPass("epg");
+
    cDbConnection::setConfPath("/etc/epgd/");
+   cDbConnection::setEncoding("utf8");
 
    connection = new cDbConnection();
 }
@@ -357,8 +360,8 @@ void chkStatement1()
 
 int contentOf(char* buf, const char* tag, const char* xml)
 {
-   string sTag = "<" + string(tag) + ">";
-   string eTag = "</" + string(tag) + ">";
+   std::string sTag = "<" + std::string(tag) + ">";
+   std::string eTag = "</" + std::string(tag) + ">";
 
    const char* s;
    const char* e;
@@ -404,8 +407,8 @@ long getTimerIdOf(const char* aux)
 
 void removeTag(char* xml, const char* tag)
 {
-   string sTag = "<" + string(tag) + ">";
-   string eTag = "</" + string(tag) + ">";
+   std::string sTag = "<" + std::string(tag) + ">";
+   std::string eTag = "</" + std::string(tag) + ">";
    
    const char* s;
    const char* e;
@@ -434,7 +437,7 @@ void removeTag(char* xml, const char* tag)
 int insertTag(char* xml, const char* parent, const char* tag, int value)
 {
    char tmp[1000+TB];
-   string sTag = "<" + string(parent) + ">";
+   std::string sTag = "<" + std::string(parent) + ">";
    const char* s;
    
    if ((s = strstr(xml, sTag.c_str())))
@@ -475,17 +478,20 @@ void statementrecording()
    recordingListDb->setValue("MD5PATH", "dummy");
 #endif
 
-   recordingListDb->setValue("START", 12121212);
+   recordingListDb->setValue("OWNER", "me");
+   recordingListDb->setValue("STARTTIME", 12121212);
    
    insert = !recordingListDb->find();
    recordingListDb->clearChanged();
 
    tell(0, "#1 %d changes", recordingListDb->getChanges());
-   
+
+   // recordingListDb->setValue("STATE", "E");
+   recordingListDb->getValue("STATE")->setNull();
    recordingListDb->setValue("PATH", "rec->FileName()");
    recordingListDb->setValue("TITLE", "title");
    recordingListDb->setValue("SHORTTEXT", "subTitle");
-   recordingListDb->setValue("DESCRIPTION", "description");
+   // recordingListDb->setValue("DESCRIPTION", "description");
 
    recordingListDb->setValue("DURATION", 120*60);
    recordingListDb->setValue("EVENTID", 1212);
@@ -556,7 +562,7 @@ void statementTimer()
    selectAllTimer->clrBindPrefix();
    selectAllTimer->build(" from %s t left outer join %s e", 
                          timerDb->TableName(), "eventsviewplain");
-   selectAllTimer->build(" on (t.eventid = e.cnt_useid) and e.updflg in (%s)", Us::getVisible());
+   selectAllTimer->build(" on (t.eventid = e.cnt_useid) and e.updflg in (%s)", cEventState::getVisible());
 
    selectAllTimer->setBindPrefix("t.");
    selectAllTimer->build(" where ");
@@ -586,6 +592,35 @@ void statementTimer()
    delete timerDb;
 }
 
+void statementVdrs()
+{
+   cDbTable* vdrDb = new cDbTable(connection, "vdrs");
+   if (vdrDb->open() != success) return ;
+
+   vdrDb->clear();
+   vdrDb->setValue("UUID", "10");
+   vdrDb->find();
+   vdrDb->setValue("VIDEOTOTAL", 1782579);
+   vdrDb->store();
+
+   delete vdrDb;
+}
+
+std::map<std::string, int> transponders;
+
+int tsp(std::string transponder)
+{
+   size_t endpos = transponder.find_last_of("-");
+   
+   if (endpos == std::string::npos)
+      return 0;
+   
+   transponder = transponder.substr(0, endpos);
+   transponders[transponder]++;
+
+   return 0;
+}
+
 //***************************************************************************
 // Main
 //***************************************************************************
@@ -595,6 +630,31 @@ int main(int argc, char** argv)
    cEpgConfig::logstdout = yes;
    cEpgConfig::loglevel = 2;
 
+   const char* interface = getFirstInterface();
+
+   tell(0, "%s: %s - %s [%s]", getFirstInterface(), getIpOf(""), getMaskOf(""), getMacOf(""));
+   tell(0, "%s: %s - %s [%s]", getFirstInterface(), getIpOf(interface), getMaskOf(interface), getMacOf(interface));
+  
+   // if (sendWol(argv[1], bcastAddressOf(getIpOf(interface), getMaskOf(interface))) != success)
+   //    tell(0, "Error occured during sending the WOL magic packet for mac address '%s' via bcat '%s'",
+   //         argv[1], bcastAddressOf(getIpOf(interface), getMaskOf(interface)));
+
+   return 0;
+  
+   tsp("S19.2E-1-1109-5402");
+   tsp("S19.2E-1-1109-5404");
+   tsp("S19.2E-1-1112-5404");
+
+   std::map<std::string, int>::iterator it;
+   
+   for (it = transponders.begin(); it != transponders.end(); it++)
+      printf("'%s' (%d)\n", it->first.c_str(), it->second);
+   
+   return 0;
+      
+   printf("%s\n", getInterfaces());
+
+   
    if (argc > 1)
    {
       int timerId = getTimerIdOf(argv[1]);
@@ -630,13 +690,39 @@ int main(int argc, char** argv)
 
    // read dictionary
 
-   if (dbDict.in("epg-demo.dat") != success)
+   if (dbDict.in("demo.dat") != success)
+//   if (dbDict.in("../configs/epg.dat") != success)
    {
       tell(0, "Invalid dictionary configuration, aborting!");
       return 1;
    }
-
+   
+   dbDict.show();
+   
    initConnection();
+
+   cDbTable* table = new cDbTable(connection, "_test");
+
+   if (table->open(yes) != success)
+   { 
+      tell(0, "Could not access database '%s:%d' (%s)", 
+           cDbConnection::getHost(), cDbConnection::getPort(), table->TableName());
+
+      return 0;
+   }
+
+   table->setValue("ID", 5);
+   table->setValue("VDRUUID", "0000");
+
+   if (!table->find())
+      tell(0, "not found");
+   table->setValue("INFO", "abcd");
+
+   table->store();
+
+   delete table;
+   
+   tell(0, "---------------------------------------------------");
 
    // structure();
 
@@ -644,13 +730,13 @@ int main(int argc, char** argv)
 
 //    tell(0, "duration was: '%s'", ms2Dur(2340).c_str());
 
-   statementTimer();
-   statementrecording();
+//   statementVdrs();
+
+   // statementTimer();
+   // statementrecording();
    // chkStatement2();
    // chkStatement3();
-   // chkStatement4();
-  
-   exitConnection();
+   // chkStatement4();   exitConnection();
 
    return 0;
 }

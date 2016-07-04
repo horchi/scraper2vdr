@@ -36,7 +36,6 @@ cScraper2VdrPluginMenu::cScraper2VdrPluginMenu(const char* title, cUpdate *updat
     cOsdMenu::Add(new cOsdItem(tr("Update Scraper Recordings Information from Database")));
     cOsdMenu::Add(new cOsdItem(tr("Scan for new recordings in video directory")));
     cOsdMenu::Add(new cOsdItem(tr("Scan for new or updated scrapinfo files")));
-    cOsdMenu::Add(new cOsdItem(tr("Cleanup Recordings in Database")));
     cOsdMenu::Add(new cOsdItem(tr("Reload all values (Series, Movies and Images)")));
     SetHelp(0, 0, 0,0);
     Display();
@@ -66,9 +65,6 @@ eOSState cScraper2VdrPluginMenu::ProcessKey(eKeys key) {
             } else if (Current() == 3) {
                 Skins.Message(mtInfo, tr("Scanning for new or updated scrapinfo files"));
                 update->ForceScrapInfoUpdate();
-            } else if (Current() == 4) {
-                Skins.Message(mtInfo, tr("Cleaning up Recordings in Database"));
-                update->TriggerCleanRecordingsDB();
             } else if (Current() == 5) {
                 Skins.Message(mtInfo, tr("Loading Series, Movies and Images from Database"));
                 update->ForceFullUpdate();
@@ -89,13 +85,11 @@ eOSState cScraper2VdrPluginMenu::ProcessKey(eKeys key) {
 cPluginScraper2vdr::cPluginScraper2vdr(void) {
     update = NULL;
     scrapManager = NULL;
-    cDbConnection::init(EPG_PLUGIN_SEM_KEY);
 }
 
 cPluginScraper2vdr::~cPluginScraper2vdr() {
     delete update;
     delete scrapManager;
-    cDbConnection::exit();
 }
 
 const char *cPluginScraper2vdr::CommandLineHelp(void) {
@@ -133,7 +127,13 @@ bool cPluginScraper2vdr::Initialize(void) {
     return true;
 }
 
-bool cPluginScraper2vdr::Start(void) {
+bool cPluginScraper2vdr::Start(void) 
+{
+   // Initialize cDbConnection only once for whole VDR!
+   //  -> therefore delegate to epg2vdr
+
+   if (initExitDbConnection(mieaInit) != success)
+      return fail;
 
    if (update->init() == success)
       update->Start();                 // start plugin thread
@@ -145,6 +145,32 @@ bool cPluginScraper2vdr::Start(void) {
 
 void cPluginScraper2vdr::Stop(void) {
     update->Stop();
+    initExitDbConnection(mieaExit);
+}
+
+int cPluginScraper2vdr::initExitDbConnection(MysqlInitExitAction action)
+{
+   Mysql_Init_Exit_v1_0 req;
+   req.action = action;
+
+   cPlugin* epg2vdrPlugin = cPluginManager::GetPlugin("epg2vdr");
+   int epg2vdrPluginUuidService = epg2vdrPlugin && epg2vdrPlugin->Service(MYSQL_INIT_EXIT, 0);
+   
+   if (!epg2vdrPluginUuidService)
+   {
+      tell(0, "Warning: Can't find %s to init mysql library, aborting!", 
+           epg2vdrPlugin ? "service " MYSQL_INIT_EXIT : "plugin epg2vdr");
+      return fail;
+   }
+   
+   if (!epg2vdrPlugin->Service(MYSQL_INIT_EXIT, &req))
+   {
+      tell(0, "Warning: Calling service '%s' at epg2vdr failed, aborting",
+           MYSQL_INIT_EXIT);
+      return fail;
+   }
+
+   return success;
 }
 
 void cPluginScraper2vdr::Housekeeping(void) {
@@ -176,6 +202,7 @@ bool cPluginScraper2vdr::SetupParse(const char *Name, const char *Value) {
 bool cPluginScraper2vdr::Service(const char *Id, void *Data) {
     if (Data == NULL)
         return false;
+
     if (strcmp(Id, "GetEventType") == 0) {
         ScraperGetEventType* call = (ScraperGetEventType*) Data;
         if (!call->event && !call->recording)
@@ -266,9 +293,6 @@ cString cPluginScraper2vdr::SVDRPCommand(const char *Command, const char *Option
     } else if (strcasecmp(Command, "SCSI") == 0) {
         update->ForceScrapInfoUpdate();
         return "SCRAPER2VDR scan for new or updated scrapinfo files triggered.";
-    } else if (strcasecmp(Command, "CRDB") == 0) {
-        update->TriggerCleanRecordingsDB();
-        return "SCRAPER2VDR cleanup of recording DB triggered.";
     } else if (strcasecmp(Command, "DSER") == 0) {
         scrapManager->DumpSeries();
         return "SCRAPER2VDR dumping available series";

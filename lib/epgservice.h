@@ -8,13 +8,20 @@
 #ifndef __EPGSERVICE_H
 #define __EPGSERVICE_H
 
-#include "db.h"
+#include <list>
+
+#include "common.h"
 
 #define EPG_PLUGIN_SEM_KEY 0x3db00001
 
 //***************************************************************************
 // Globals
 //***************************************************************************
+
+enum EpgServiceMisc
+{
+   sizeMaxParameterValue = 150   // should match the field size in parameters table
+};
 
 enum FieldFilter
 {
@@ -38,16 +45,10 @@ int toFieldFilter(const char* name);
 
 enum SearchFields
 {
+   sfNone               = 0,  // off
    sfTitle              = 1,
-   sfShorttext          = 2,
-   sfDescription        = 4,
-   sfEpisode            = 8,
-   sfEpisodePart        = 16, 
-
-   sfExistStart         = sfEpisodePart,
-   sfShorttextIfExit    = 32,
-   sfEpisodeIfExit      = 64,
-   sfEpisodePartIfExit  = 128
+   sfFolge              = 2,
+   sfDescription        = 4
 };
 
 enum SearchMode
@@ -72,20 +73,49 @@ enum TimerNamingMode
 
 };
 
+enum RecordingState
+{
+   rsFinished  = 'F',
+   rsRecording = 'R',
+   rsDeleted   = 'D'
+};
+
 enum TimerState
 {
+   tsUnknown  = 'U',
    tsPending  = 'P',
-   tsRunning  = 'R',
+   tsRunning  = 'R',    // timer is recording
    tsFinished = 'F',
    tsDeleted  = 'D',
-   tsError    = 'E'
+   tsError    = 'E',
+   tsIgnore   = '-'     // ignore in timer menu -> already tooked 'any-VDR' timer
 };
+
+const char* toName(TimerState s);
+
+enum TimerAction
+{
+   taCreate   = 'C',
+   taModify   = 'M',
+   taDelete   = 'D',
+   taAssumed  = 'A',
+   taFailed   = 'F'
+};
+
+enum TimerType
+{
+   ttRecord = 'R',   // Aufnahme-Timer
+   ttView   = 'V',   // Umschalt-Timer
+   ttSearch = 'S'    // Such-Timer
+};
+
+const char* toName(TimerAction a, int nice = no);
 
 enum TimerDoneState
 {
-   tdsTimerRequested     = 'Q',  // timer requested by epgd/webif
+   tdsTimerRequested     = 'Q',  // timer already requested by epgd/webif
    tdsTimerCreated       = 'C',  // timer created by VDR
-   tdsTimerCreateFailed  = 'f',  // create of timer failed by VDR
+   tdsTimerCreateFailed  = 'f',  // create/delete of timer failed by VDR
 
    tdsRecordingDone      = 'R',  // Recording finished successfull
    tdsRecordingFailed    = 'F',  // Recording failed
@@ -168,32 +198,32 @@ class cEpgdState
 typedef cEpgdState Es;
 
 //***************************************************************************
-// cUpdateState
+// cEventState
 //***************************************************************************
 
-class cUpdateState
+class cEventState
 {
    public:
-
+   
       enum State
       {
-         // add to VDRs EPG
-         
-         usActive      = 'A',
-         usLink        = 'L',
-         usPassthrough = 'P',
-         
-         // remove from VDRs EPG
-         
-         usChanged     = 'C',
-         usDelete      = 'D', 
-         usRemove      = 'R',
-         
-         // don't care for VDRs EPG
-         
-         usInactive    = 'I',
-         usTarget      = 'T',
-         usMergeSpare  = 'S'
+         // add to VDRs EPG => wird von allen VDR angezeigt
+        
+         usActive      = 'A', // => Aktiv
+         usLink        = 'L', // => DVB Event welches auf ein externes zeigt
+         usPassthrough = 'P', // => Durchgeleitetes Event: vdr:000
+        
+         // remove from VDRs EPG => Löschsignal wird an alle vdr gesendet
+        
+         usChanged     = 'C', // => war mal aktiv wurde jedoch später zum Target,seine eigene ID muss also aus dem epg gelöscht werden. C ist also eine Ausprägung von T
+         usDelete      = 'D', // => Sender oder Providerseitig gelöscht
+         usRemove      = 'R', // => von uns gelöscht weil wir uns für ein anderes Event entschieden haben, zB eins mit Bildern oder Serieninformationen.
+        
+         // don't care for VDRs EPG => werden von den VDRs nicht beachtet und nicht mal gesehen.
+        
+         usInactive    = 'I', // => inaktiv
+         usTarget      = 'T', // => verknüftes Event zum Link, wird unter seiner ID mithilfe des Link im vdr geführt
+         usMergeSpare  = 'S'  // => ersatzevent welches für Multimerge ur Verfügung steht
       };
 
       // get lists for SQL 'in' statements
@@ -209,7 +239,191 @@ class cUpdateState
 
 };
 
-typedef cUpdateState Us;
+typedef cEventState Us;   // remove later, not uses anymore
+
+//***************************************************************************
+// cUserTimes
+//***************************************************************************
+
+class cUserTimes
+{
+   public:
+
+      enum Mode
+      {
+         mUnknown = na,
+         mNow,
+         mNext,
+         mTime,
+         mSearch
+      };
+
+      struct UserTime
+      {
+         UserTime(const char* strTime, const char* strTitle = 0)  
+         {
+            mode = mUnknown; 
+            *hhmmStr = 0;
+            title = 0;
+            hhmm = 0;
+            search = 0;
+            setTime(strTime, strTitle); 
+         }
+
+         UserTime(const UserTime& cp)
+         {
+            mode = cp.mode;
+            hhmm = cp.hhmm;
+            strcpy(hhmmStr, cp.hhmmStr);
+            title = strdup(cp.title);
+            search = cp.search ? strdup(cp.search) : 0;
+         }
+
+         ~UserTime()  { free(title); free(search); }
+        
+         void setTime(const char* strTime, const char* strTitle)
+         {
+            hhmm = 0;
+            *hhmmStr = 0;
+
+            if (strchr(strTime, ':'))
+            {
+               hhmm = atoi(strTime) * 100 + atoi(strchr(strTime, ':')+1);
+               sprintf(hhmmStr, "%02d:%02d", hhmm / 100, hhmm % 100);
+               mode = mTime;
+            }
+            else if (*strTime == '@')
+            {
+               if (strcmp(strTime, "@Now") == 0)
+                  mode = mNow;
+               else if (strcmp(strTime, "@Next") == 0)
+                  mode = mNext;
+               else
+                  mode = mSearch;
+            }
+            
+            // title
+
+            free(title);
+            title = 0;
+
+            if (!isEmpty(strTitle))
+               title = strdup(strTitle);
+            else if (!isEmpty(hhmmStr))
+               asprintf(&title, "%02d:%02d", hhmm / 100, hhmm % 100);
+
+            // search
+            
+            if (*strTime == '@')
+            {
+               free(search);
+               search = strdup(strTime+1);
+            }
+         }
+
+         int getHHMM()            const { return hhmm; }
+         const char* getHHMMStr() const { return hhmmStr; }
+         const char* getTitle()   const { return title; }
+         const char* getSearch()  const { return search; }
+         int getMode()            const { return mode; }
+         const char* getHelpKey() const { return title; }
+         
+         time_t getTime()
+         { 
+            struct tm tmnow;
+            time_t now = time(0);
+
+            localtime_r(&now, &tmnow);
+            tmnow.tm_hour = hhmm / 100;
+            tmnow.tm_min = hhmm % 100;
+            tmnow.tm_sec = 0;
+
+            time_t ltime = mktime(&tmnow);
+
+            if (ltime < time(0)-tmeSecondsPerHour)
+               ltime += tmeSecondsPerDay;
+
+            return ltime;
+         }
+         
+         int mode;
+         char* title;
+         char* search;
+         int hhmm;
+         char hhmmStr[5+TB];
+      };
+
+      cUserTimes()
+      {
+         clear();
+         it = times.end();
+      }
+
+      void clear() 
+      { 
+         times.clear(); 
+      }
+
+      void add(const char* strTime, const char* strTitle = 0) 
+      {
+         UserTime ut(strTime, strTitle);
+         times.push_back(ut);
+      }
+
+      UserTime* first() 
+      { 
+         it = times.begin();
+
+         if (it == times.end()) 
+            return 0; 
+
+         return &(*it); 
+      }
+
+      UserTime* next()
+      { 
+         if (it == times.end()) 
+            it = times.begin();
+         else
+            it++; 
+
+         if (it == times.end()) 
+            it = times.begin();
+
+         return &(*it); 
+      }
+
+      UserTime* getFirst()
+      { 
+         std::list<UserTime>::iterator i;
+         
+         i = times.begin();
+
+         return &(*i); 
+      }
+   
+      UserTime* getNext()
+      { 
+         std::list<UserTime>::iterator i = it;
+         
+         if (i == times.end()) 
+            i = times.begin();
+         else
+            i++; 
+
+         if (i == times.end()) 
+            i = times.begin();
+
+         return &(*i); 
+      }
+
+      UserTime* current() { return &(*it); }
+
+   private:
+
+      std::list<UserTime>::iterator it;
+      std::list<UserTime> times;
+};
 
 //***************************************************************************
 // EPG Services
@@ -220,6 +434,19 @@ typedef cUpdateState Us;
 struct Epg2vdr_UUID_v1_0
 {
    const char* uuid;
+};
+
+#define MYSQL_INIT_EXIT	"Mysql_Init_Exit-v1.0"
+
+enum MysqlInitExitAction
+{
+   mieaInit = 0,
+   mieaExit = 1
+};
+
+struct Mysql_Init_Exit_v1_0
+{
+   MysqlInitExitAction action;
 };
 
 #endif // __EPGSERVICE_H

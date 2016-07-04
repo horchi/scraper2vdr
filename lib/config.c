@@ -15,6 +15,7 @@
 
 int cEpgConfig::logstdout = no;
 int cEpgConfig::loglevel = 1;
+int cEpgConfig::argLoglevel = na;
 int cEpgConfig::logFacility = LOG_USER;
 const char* cEpgConfig::logName = "unknown";
 
@@ -32,7 +33,7 @@ cEpgConfig::cEpgConfig()
    sstrcpy(dbUser, "epg2vdr", sizeof(dbUser));
    sstrcpy(dbPass, "epg", sizeof(dbPass));
 
-   sstrcpy(netDevice, "", sizeof(netDevice));
+   sstrcpy(netDevice, getFirstInterface(), sizeof(netDevice));
 
    uuid[0] = 0;
 

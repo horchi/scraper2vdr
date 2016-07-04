@@ -9,10 +9,17 @@ IMAGELIB = imagemagick
 
 PLUGIN = scraper2vdr
 HLIB   = -L./lib -lhorchi
+HISTFILE  = "HISTORY.h"
 
 ### The version number of this plugin (taken from the main source file):
 
-VERSION = $(shell grep 'static const char \*VERSION *=' $(PLUGIN).h | awk '{ print $$6 }' | sed -e 's/[";]//g')
+VERSION = $(shell grep 'define _VERSION ' $(HISTFILE) | awk '{ print $$3 }' | sed -e 's/[";]//g')
+
+LASTHIST    = $(shell grep '^20[0-3][0-9]' $(HISTFILE) | head -1)
+LASTCOMMENT = $(subst |,\n,$(shell sed -n '/$(LASTHIST)/,/^ *$$/p' $(HISTFILE) | tr '\n' '|'))
+LASTTAG     = $(shell git describe --tags --abbrev=0)
+BRANCH      = $(shell git rev-parse --abbrev-ref HEAD)
+GIT_REV = $(shell git describe --always 2>/dev/null)
 
 ### The directory environment:
 
@@ -56,6 +63,10 @@ INCLUDES += $(shell mysql_config --include)
 
 DEFINES += -DPLUGIN_NAME_I18N='"$(PLUGIN)"' -DLOG_PREFIX='"$(PLUGIN): "'
 DEFINES += -DVDR_PLUGIN -DUSEUUID -DUSEMD5
+
+ifdef GIT_REV
+   DEFINES += -DGIT_REV='"$(GIT_REV)"'
+endif
 
 ifeq ($(IMAGELIB), imagemagick)
 	INCLUDES += $(shell pkg-config --cflags Magick++)
@@ -154,3 +165,37 @@ clean:
 
 cppchk:
 	cppcheck --template="{file}:{line}:{severity}:{message}" --quiet --force *.c *.h lib/*.c lib/*.h
+
+# ------------------------------------------------------
+# Git / Versioning / Tagging
+# ------------------------------------------------------
+
+vcheck:
+	git fetch
+	if test "$(LASTTAG)" = "$(VERSION)"; then \
+		echo "Warning: tag/version '$(VERSION)' already exists, update HISTORY first. Aborting!"; \
+		exit 1; \
+	fi
+
+push: vcheck
+	echo "tagging git with $(VERSION)"
+	git tag $(VERSION)
+	git push --tags
+	git push
+
+commit: vcheck
+	git commit -m "$(LASTCOMMENT)" -a
+
+git: commit push
+
+showv:
+	@echo "Git ($(BRANCH)):\\n  Version: $(LASTTAG) (tag)"
+	@echo "Local:"
+	@echo "  Version: $(VERSION)"
+	@echo "  Change:"
+	@echo -n "   $(LASTCOMMENT)"
+
+update:
+	git pull
+	@make clean install
+	restart vdr

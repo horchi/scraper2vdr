@@ -34,7 +34,7 @@ class cUpdate : public cThread  {
         cDbTable* tMovieActor;
         cDbTable* tMovieActors;
         cDbTable* tMovieMedia;
-        cDbTable* tRecordings;
+        // cDbTable* tRecordings;
         cDbTable* tRecordingList;
         cFileDateManager fileDateManager;
         int lastScrap;
@@ -47,7 +47,7 @@ class cUpdate : public cThread  {
         bool forceRecordingUpdate;
         bool forceVideoDirUpdate;
         bool forceScrapInfoUpdate;
-        bool forceCleanupRecordingDb;
+      // bool forceCleanupRecordingDb;
         bool forceFullUpdate; // force full update (information and images)
         bool forceReconnect; // force DB reconnect (e.g. after changing Host/DB/User/Port)
         bool scrspRemoved; // true if field scrsp get removed from dbdict (recordings table)
@@ -87,7 +87,7 @@ class cUpdate : public cThread  {
         //CLEANUP
         int CleanupSeries(void);
         int CleanupMovies(void);
-        int CleanupRecordings(void);
+      // int CleanupRecordings(void);
         // ...
         int initUuid(int timeout);
 
@@ -97,7 +97,7 @@ class cUpdate : public cThread  {
       cDbStatement* selectReadScrapedEvents;
       cDbStatement* selectMovieActors;
       cDbStatement* selectRecordings;
-      cDbStatement* selectCleanupRecordings;
+      // cDbStatement* selectCleanupRecordings;
       cDbStatement* clearTempEpisodeTable;
       cDbStatement* fillTempEpisodeTable;
       cDbStatement* selectReadSeriesInit; // statement to select all series which are used from min one event
@@ -112,6 +112,7 @@ class cUpdate : public cThread  {
 
       cDbValue imageSize;
       cDbValue series_id;
+      cDbValue recSeriesid;
       cDbValue event_scrsp;
       cDbValue events_ScrSeriesId;
       cDbValue episode_LastUpdate;
@@ -132,7 +133,7 @@ class cUpdate : public cThread  {
         void ForceRecordingUpdate(void);
         void ForceVideoDirUpdate(void);
         void ForceScrapInfoUpdate(void);
-        void TriggerCleanRecordingsDB(void);
+        // void TriggerCleanRecordingsDB(void);
         void ForceFullUpdate(void);
         void ForceReconnect(void); // force DB reconnect (e.g. after changing Host/DB/User/Port)
 };

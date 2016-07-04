@@ -13,7 +13,7 @@
 #include <arpa/inet.h>
 
 #ifdef USEUUID
-# include <uuid/uuid.h>
+#  include <uuid/uuid.h>
 #endif
 
 #include <stdarg.h>
@@ -22,10 +22,12 @@
 #include <syslog.h>
 #include <unistd.h>
 #include <errno.h>
+#include <regex.h>
+#include <limits.h>
 
 #ifdef USELIBARCHIVE
-# include <archive.h>
-# include <archive_entry.h>
+#  include <archive.h>
+#  include <archive_entry.h>
 #endif
 
 #include "common.h"
@@ -70,6 +72,8 @@ void tell(int eloquence, const char* format, ...)
 
    vsnprintf(t+strlen(t), sizeBuffer-strlen(t), format, ap);
    
+   strReplace(t, '\n', '$');
+
    if (cEpgConfig::logstdout)
    {
       char buf[50+TB];
@@ -203,7 +207,7 @@ void toUpper(std::string& str)
 
    for (int ps = 0; ps < lenSrc; ps += csSrc)
    {
-      csSrc = max(mblen(&s[ps], lenSrc-ps), 1);
+      csSrc = std::max(mblen(&s[ps], lenSrc-ps), 1);
       
       if (csSrc == 1)
          *d++ = toupper(s[ps]);
@@ -238,7 +242,7 @@ const char* toCase(Case cs, char* str)
 
    for (int ps = 0; ps < lenSrc; ps += csSrc)
    {
-      csSrc = max(mblen(&s[ps], lenSrc-ps), 1);
+      csSrc = std::max(mblen(&s[ps], lenSrc-ps), 1);
       
       if (csSrc == 1)
          s[ps] = cs == cUpper ? toupper(s[ps]) : tolower(s[ps]);
@@ -273,11 +277,11 @@ void removeChars(std::string& str, const char* ignore)
    {
       int skip = no;
 
-      csSrc = max(mblen(&s[ps], lenSrc-ps), 1);
+      csSrc = std::max(mblen(&s[ps], lenSrc-ps), 1);
 
       for (int pi = 0; pi < lenIgn; pi += csIgn)
       {
-         csIgn = max(mblen(&ignore[pi], lenIgn-pi), 1);
+         csIgn = std::max(mblen(&ignore[pi], lenIgn-pi), 1);
 
          if (csSrc == csIgn && strncmp(&s[ps], &ignore[pi], csSrc) == 0)
          {
@@ -315,11 +319,12 @@ void removeCharsExcept(std::string& str, const char* except)
    {
       int skip = yes;
 
-      csSrc = max(mblen(&s[ps], lenSrc-ps), 1);
+      mblen(0,0);
+      csSrc = std::max(mblen(&s[ps], lenSrc-ps), 1);
 
       for (int pi = 0; pi < lenIgn; pi += csIgn)
       {
-         csIgn = max(mblen(&except[pi], lenIgn-pi), 1);
+         csIgn = std::max(mblen(&except[pi], lenIgn-pi), 1);
 
          if (csSrc == csIgn && strncmp(&s[ps], &except[pi], csSrc) == 0)
          {
@@ -362,6 +367,27 @@ void prepareCompressed(std::string& pattern)
    removeWord(pattern, " TEIL ");
    removeWord(pattern, " FOLGE ");
    removeCharsExcept(pattern, notignore);
+}
+
+//***************************************************************************
+// Get Range Parts of String like '33-123' or '-123' or '21-'
+//***************************************************************************
+
+int rangeFrom(const char* s)
+{
+   return atoi(s);
+}
+
+int rangeTo(const char* s)
+{
+   int to = INT_MAX;
+   
+   const char* p = strchr(s, '-');
+
+   if (p && *(p+1))
+      to = atoi(p+1);
+   
+   return to;
 }
 
 //***************************************************************************
@@ -441,6 +467,21 @@ std::string strReplace(const std::string& what, double with, const std::string& 
    sprintf(swith, "%.2f", with);
 
    return strReplace(what, swith, subject);
+}
+
+char* strReplace(char* buffer, char from, char to)
+{
+   char* p = buffer;
+
+   while (*p)
+   {
+      if (*p == from)
+         *p = to;
+
+      p++;
+   }
+
+   return buffer;
 }
 
 //***************************************************************************
@@ -628,7 +669,10 @@ std::string ms2Dur(uint64_t t)
    int s = t / 1000;
    int ms = t % 1000;
 
-   snprintf(txt, sizeof(txt), "%d.%03d seconds", s, ms);
+   if (s != 0)
+      snprintf(txt, sizeof(txt), "%d.%03d seconds", s, ms);
+   else
+      snprintf(txt, sizeof(txt), "%d ms", ms);
    
    return std::string(txt);
 }
@@ -720,7 +764,8 @@ int loadFromFile(const char* infile, MemoryStruct* data)
 
       else if (strcmp(sfx, "png") == 0 || strcmp(sfx, "jpg") == 0 || strcmp(sfx, "gif") == 0)
          sprintf(data->contentType, "image/%s", sfx);
-
+      else if (strcmp(sfx, "svg") == 0)
+         sprintf(data->contentType, "image/%s+xml", sfx);
       else if (strcmp(sfx, "ico") == 0)
          strcpy(data->contentType, "image/x-icon");
 
@@ -745,10 +790,10 @@ int isEmpty(const char* str)
    return !str || !*str;
 }
 
-const char* notNull(const char* str)
+const char* notNull(const char* str, const char* def)
 {
    if (!str)
-      return "<null>";
+      return def;
 
    return str;
 }
@@ -845,6 +890,12 @@ time_t fileModTime(const char* path)
    return 0;
 }
 
+int folderExists(const char* path)
+{
+   struct stat fs;
+
+   return stat(path, &fs) == 0 && S_ISDIR(fs.st_mode);
+}
 
 int fileExists(const char* path)
 {
@@ -1107,10 +1158,11 @@ const char* getHostName()
    return info.nodename;
 }
 
-const char* getFirstIp()
+const char* getFirstIp(int skipLo)
 {
    struct ifaddrs *ifaddr, *ifa;
    static char host[NI_MAXHOST] = "";
+   static char netMask[INET6_ADDRSTRLEN] = "";
 
    if (getifaddrs(&ifaddr) == -1) 
    {
@@ -1136,18 +1188,25 @@ const char* getFirstIp()
 
          if (res)
          {
-            tell(0, "getnameinfo() failed: %s", gai_strerror(res));
-            return "";
+            tell(0, "getnameinfo() for '%s' failed: %s", gai_strerror(res), ifa->ifa_name);
+            continue;
          }
 
          // skip loopback interface
 
-         if (strcmp(host, "127.0.0.1") == 0)
+         if (skipLo && strcmp(host, "127.0.0.1") == 0)
             continue;
-
-         tell(5, "%-8s %-15s %s", ifa->ifa_name, host,
+         
+         if (ifa->ifa_netmask && ifa->ifa_netmask->sa_family == AF_INET)
+         {
+            void* p = &((struct sockaddr_in*)ifa->ifa_netmask)->sin_addr;
+            inet_ntop(ifa->ifa_netmask->sa_family, p, netMask, sizeof(netMask));
+         }
+         
+         tell(5, "%-8s %-15s %s; netmask '%s'", ifa->ifa_name, host,
               ifa->ifa_addr->sa_family == AF_INET   ? " (AF_INET)" :
-              ifa->ifa_addr->sa_family == AF_INET6  ? " (AF_INET6)" : "");
+              ifa->ifa_addr->sa_family == AF_INET6  ? " (AF_INET6)" : "",
+              netMask);
       }
    }
 
@@ -1157,32 +1216,211 @@ const char* getFirstIp()
 }
 
 //***************************************************************************
+// Get Interfaces
+//***************************************************************************
+
+const char* getInterfaces()
+{
+   static char buffer[1000+TB] = "";
+   static char host[NI_MAXHOST] = "";
+   struct ifaddrs *ifaddr, *ifa;
+
+   *buffer = 0;
+
+   if (getifaddrs(&ifaddr) == -1) 
+   {
+      tell(0, "getifaddrs() failed");
+      return "";
+   }
+
+   // walk through linked interface list
+
+   for (ifa = ifaddr; ifa; ifa = ifa->ifa_next) 
+   {
+      if (!ifa->ifa_addr)
+         continue;
+      
+      // For an AF_INET interfaces
+
+      if (ifa->ifa_addr->sa_family == AF_INET) //  || ifa->ifa_addr->sa_family == AF_INET6) 
+      {        
+         int res = getnameinfo(ifa->ifa_addr, 
+                               (ifa->ifa_addr->sa_family == AF_INET) ? sizeof(struct sockaddr_in) :
+                               sizeof(struct sockaddr_in6),
+                               host, NI_MAXHOST, 0, 0, NI_NUMERICHOST);
+         
+         if (res)
+         {
+            tell(0, "getnameinfo() failed: %s, skipping interface '%s'", gai_strerror(res), ifa->ifa_name);
+            continue;
+         }
+
+         sprintf(eos(buffer), "%s:%s ", ifa->ifa_name, host);
+      }
+   }
+
+   freeifaddrs(ifaddr);
+
+   return buffer;   
+}
+
+//***************************************************************************
+// Get First Interface
+//***************************************************************************
+
+const char* getFirstInterface()
+{
+   static char buffer[1000+TB] = "";
+   static char host[NI_MAXHOST] = "";
+   struct ifaddrs *ifaddr, *ifa;
+
+   *buffer = 0;
+
+   if (getifaddrs(&ifaddr) == -1)
+   {
+      tell(0, "getifaddrs() failed");
+      return "";
+   }
+
+   // walk through linked interface list
+
+   for (ifa = ifaddr; ifa; ifa = ifa->ifa_next)
+   {
+      if (!ifa->ifa_addr)
+         continue;
+
+      // For an AF_INET interfaces
+
+      if (ifa->ifa_addr->sa_family == AF_INET) //  || ifa->ifa_addr->sa_family == AF_INET6) 
+      {
+         int res = getnameinfo(ifa->ifa_addr,
+                               (ifa->ifa_addr->sa_family == AF_INET) ? sizeof(struct sockaddr_in) :
+                               sizeof(struct sockaddr_in6),
+                               host, NI_MAXHOST, 0, 0, NI_NUMERICHOST);
+
+         if (res)
+         {
+            tell(0, "getnameinfo() failed: %s, skipping interface '%s'", gai_strerror(res), ifa->ifa_name);
+            continue;
+         }
+
+         if (strcasecmp(ifa->ifa_name, "lo") != 0)
+            sprintf(buffer, "%s", ifa->ifa_name);
+      }
+   }
+
+   freeifaddrs(ifaddr);
+
+   return buffer;
+}
+
+//***************************************************************************
 // Get IP Of 
 //***************************************************************************
 
 const char* getIpOf(const char* device)
 {
-   int fd;
    struct ifreq ifr;
-
+   int fd;
+   
    if (isEmpty(device))
       return getFirstIp();
 
    fd = socket(AF_INET, SOCK_DGRAM, 0);
    
-   // IPv4 IP address
-
    ifr.ifr_addr.sa_family = AF_INET;
-   
    strncpy(ifr.ifr_name, device, IFNAMSIZ-1);
-   
+
    ioctl(fd, SIOCGIFADDR, &ifr);
-   
    close(fd);
-   
+
    // caller has to copy the result string 'before' calling again!
 
    return inet_ntoa(((struct sockaddr_in*)&ifr.ifr_addr)->sin_addr);
+}
+
+//***************************************************************************
+// Get Mask Of 
+//***************************************************************************
+
+const char* getMaskOf(const char* device)
+{
+   struct ifreq ifr;
+   static char netMask[INET6_ADDRSTRLEN] = "";
+   int fd;
+
+   if (isEmpty(device))
+      device = getFirstInterface();
+
+   fd = socket(AF_INET, SOCK_DGRAM, 0);
+
+   ifr.ifr_addr.sa_family = AF_INET;
+   strncpy(ifr.ifr_name, device, IFNAMSIZ-1);
+   ioctl(fd, SIOCGIFNETMASK, &ifr);
+   close(fd);
+
+   if (ifr.ifr_netmask.sa_family == AF_INET)
+   {
+      void* p = &((struct sockaddr_in*)(&ifr.ifr_netmask))->sin_addr;
+      inet_ntop(ifr.ifr_netmask.sa_family, p, netMask, sizeof(netMask));
+
+      tell(5, "netmask for device '%s' is '%s'", device, netMask);
+  }
+        
+  return netMask;
+}
+
+//***************************************************************************
+// Broadcast Address Of
+//***************************************************************************
+
+const char* bcastAddressOf(const char* ipStr, const char* maskStr)
+{
+   struct in_addr host, mask, broadcast;
+   static char bcastAddress[INET_ADDRSTRLEN] = "";
+
+   if (isEmpty(maskStr))
+      maskStr = "255.255.255.0";
+
+   if (inet_pton(AF_INET, ipStr, &host) == 1 && inet_pton(AF_INET, maskStr, &mask) == 1)
+   {
+      broadcast.s_addr = host.s_addr | ~mask.s_addr;
+
+      if (inet_ntop(AF_INET, &broadcast, bcastAddress, INET_ADDRSTRLEN))
+         tell(5, "Bcast for '%s' is '%s'", ipStr, bcastAddress);
+      else
+         tell(0, "Error: Failed converting number to string");
+   }
+   else
+   {
+      tell(0, "Error: Failed converting strings to numbers");
+   }
+
+   return bcastAddress;
+}
+
+//***************************************************************************
+// MAC Address Of
+//***************************************************************************
+
+const char* getMacOf(const char* device)
+{
+   enum { macTuppel = 6 };
+   
+   static char mac[20+TB];
+   struct ifreq ifr;
+   int s;
+     
+   s = socket(AF_INET, SOCK_DGRAM, 0);
+   strcpy(ifr.ifr_name, device);
+   ioctl(s, SIOCGIFHWADDR, &ifr);
+   
+   for (int i = 0; i < macTuppel; i++)
+      sprintf(&mac[i*3],"%02x:",((unsigned char*)ifr.ifr_hwaddr.sa_data)[i]);
+   
+   mac[17] = 0;
+   
+   return mac;
 }
 
 #ifdef USELIBARCHIVE
@@ -1349,6 +1587,67 @@ uint64_t cMyTimeMs::Elapsed(void)
   return Now() - begin;
 }
 
+//**************************************************************************
+//  Regular Expression Searching
+//**************************************************************************
+
+int rep(const char* string, const char* expression, Option options)
+{
+  const char* tmpA;
+  const char* tmpB;
+
+  return rep(string, expression, tmpA, tmpB, options);
+}
+
+int rep(const char* string, const char* expression, const char*& s_location, 
+        Option options)
+{
+  const char* tmpA;
+
+  return rep(string, expression, s_location, tmpA, options);
+}
+
+
+int rep(const char* string, const char* expression, const char*& s_location, 
+        const char*& e_location, Option options)
+{
+   regex_t reg;
+   regmatch_t rm;
+   int status;
+   int opt = 0;
+
+   // Vorbereiten von reg fuer die Expressionsuche mit regexec
+   // Flags:  REG_EXTENDED = Use Extended Regular Expressions
+   //         REG_ICASE    = Ignore case in match.
+
+   reg.re_nsub = 0;
+
+   // Options umwandeln
+   if (options & repUseRegularExpression)
+     opt = opt | REG_EXTENDED;
+   if (options & repIgnoreCase)
+     opt = opt | REG_ICASE;
+ 
+   if (regcomp( &reg, expression, opt) != 0)
+     return fail;  
+
+   // Suchen des ersten Vorkommens von reg in string
+
+   status = regexec(&reg, string, 1, &rm, 0);
+   regfree(&reg);
+
+   if (status != 0) 
+     return fail; 
+
+   // Suche erfolgreich =>
+   // Setzen der ermittelten Start- und Endpositionen
+
+   s_location = (char*)(string + rm.rm_so);
+   e_location = (char*)(string + rm.rm_eo);
+
+   return success; 
+}
+
 //***************************************************************************
 // Class LogDuration
 //***************************************************************************
@@ -1366,13 +1665,13 @@ LogDuration::LogDuration(const char* aMessage, int aLogLevel)
 LogDuration::~LogDuration()
 {
    tell(logLevel, "duration '%s' was (%ldms)",
-        message, cMyTimeMs::Now() - durationStart);
+        message, (long)(cMyTimeMs::Now() - durationStart));
 }
 
 void LogDuration::show(const char* label)
 {
    tell(logLevel, "elapsed '%s' at '%s' was (%ldms)",
-        message, label, cMyTimeMs::Now() - durationStart);
+        message, label, (long)(cMyTimeMs::Now() - durationStart));
 }
 
 //***************************************************************************
@@ -1428,7 +1727,7 @@ int createMd5OfFile(const char* path, const char* name, md5* md5)
    
    if (!(f = fopen(file, "r")))
    {
-      tell(0, "Fatal: Can't access '%s'; %s", file, strerror(errno));
+      tell(0, "Fatal: Cannot build MD5 of '%s'; Error was '%s'", file, strerror(errno));
       free(file);
       return fail;
    }
