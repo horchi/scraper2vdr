@@ -12,7 +12,7 @@
 
 Table events
 {
-   EVENTID              ""                                                   eventid              UInt         0 Primary,
+   EVENTID              ""                                                   eventid              UBigInt      0 Primary,
    CHANNELID            ""                                                   channelid            Ascii       50 Primary,
 
    MASTERID             ""                                                   masterid             UInt         0 Autoinc,
@@ -38,8 +38,8 @@ Table events
    PARENTALRATING       ""                                                   parentalrating       Int          2 Data,
    VPS                  ""                                                   vps                  Int         10 Data,
    CONTENTS             "Genre code like table 28 of ETSI EN 300 468"        contents             ASCII      100 Data filter epgd|httpd|epg2vdr,
-   SHORTDESCRIPTION     ""                                                   shortdescription     Ascii     3000 Data,
-   ACTOR                ""                                                   actor                Text      5000 Data,
+   SHORTDESCRIPTION     ""                                                   shortdescription     MText     3000 Data,
+   ACTOR                ""                                                   actor                MText     5000 Data,
    AUDIO                ""                                                   audio                Ascii       50 Data,
    CATEGORY             ""                                                   category             Ascii       50 Data,
    COUNTRY              ""                                                   country              Ascii       50 Data,
@@ -52,7 +52,7 @@ Table events
    SCREENPLAY           ""                                                   screenplay           Ascii      500 Data,
    SHORTREVIEW          ""                                                   shortreview          Ascii      500 Data,
    TIPP                 ""                                                   tipp                 Ascii      250 Data,
-   TOPIC                ""                                                   topic                Ascii      500 Data,
+   TOPIC                ""                                                   topic                Ascii     1000 Data,
    YEAR                 ""                                                   year                 Ascii       10 Data,
    RATING               ""                                                   rating               Ascii      250 Data,
    NUMRATING            ""                                                   numrating            Int          2 Data filter epgd|httpd|epg2vdr,
@@ -102,7 +102,7 @@ Index events
 
 Table components
 {
-   EVENTID              ""  eventid              UInt         0 Primary,
+   EVENTID              ""  eventid              UBigInt      0 Primary,
    CHANNELID            ""  channelid            Ascii       50 Primary,
    STREAM               ""  stream               Int          3 Primary,
    TYPE                 ""  type                 Int          3 Primary,
@@ -143,7 +143,7 @@ Index filerefs
 
 Table imagerefs
 {
-   EVENTID              ""  eventid              UInt         0 Primary,
+   EVENTID              ""  eventid              UBigInt      0 Primary,
    LFN                  ""  lfn                  Int          0 Primary,
    INSSP                ""  inssp                Int          0 Meta,
    UPDSP                ""  updsp                Int          0 Meta,
@@ -171,7 +171,7 @@ Table images
    IMGNAME              ""  imagename            Ascii      100 Primary,
    INSSP                ""  inssp                Int          0 Meta,
    UPDSP                ""  updsp                Int          0 Meta,
-   IMAGE                ""  image                Mlob    200000 Data,
+   IMAGE                ""  image                Mlob    512000 Data,
 }
 
 // ----------------------------------------------------------------
@@ -326,13 +326,13 @@ Table analyse
 {
    CHANNELID            ""  channelid            Ascii       50 Primary,
    VDRMASTERID          ""  vdr_masterid         UInt         0 Data,
-   VDREVENTID           ""  vdr_eventid          UInt         0 Primary,
+   VDREVENTID           ""  vdr_eventid          UBigInt      0 Primary,
    VDRSTARTTIME         ""  vdr_starttime        Int         10 Data,
    VDRDURATION          ""  vdr_duration         Int          5 Data,
    VDRTITLE             ""  vdr_title            Ascii      200 Data,
    VDRSHORTTEXT         ""  vdr_shorttext        Ascii      300 Data,
    EXTMASTERID          ""  ext_masterid         UInt         0 Data,
-   EXTEVENTID           ""  ext_eventid          UInt         0 Data,
+   EXTEVENTID           ""  ext_eventid          UBigInt       0 Data,
    EXTSTARTTIME         ""  ext_starttime        Int         10 Data,
    EXTDURATION          ""  ext_duration         Int          5 Data,
    EXTTITLE             ""  ext_title            Ascii      200 Data,
@@ -362,7 +362,7 @@ Table snapshot
    CHANNELID            ""  channelid            Ascii       50 Data,
    SOURCE               ""  source               Ascii       10 Data,
    VDRMASTERID          ""  masterid             UInt         0 Data,
-   EVENTID              ""  eventid              UInt         0 Data,
+   EVENTID              ""  eventid              UBigInt      0 Data,
    USEID                ""  useid                UInt         0 Data,
    STARTTIME            ""  starttime            Int         10 Data,
    DURATION             ""  duration             Int          5 Data,
@@ -394,13 +394,13 @@ Table useevents
 {
    CNTSOURCE               ""                                               cnt_source                    Ascii     10 Primary,
    CHANNELID               ""                                               cnt_channelid                 Ascii     50 Primary,
-   CNTEVENTID              ""                                               cnt_eventid                   UInt       0 Primary|Meta,
+   CNTEVENTID              ""                                               cnt_eventid                   UBigInt    0 Primary|Meta,
 
    MASTERID                ""                                               cnt_masterid                  UInt       0 Data|Meta,
    USEID                   ""                                               cnt_useid                     UInt       0 Data,
 
    SUBSOURCE               ""                                               sub_source                    Ascii     10 Data|Meta,
-   SUBEVENTID              ""                                               sub_eventid                   UInt       0 Data|Meta,
+   SUBEVENTID              ""                                               sub_eventid                   UBigInt    0 Data|Meta,
    UPDSP                   ""                                               all_updsp                     Int        0 Data,
    UPDFLG                  ""                                               cnt_updflg                    Ascii      1 Data|Meta,
    DELFLG                  ""                                               cnt_delflg                    Ascii      1 Data,
@@ -420,19 +420,19 @@ Table useevents
    VPS                     ""                                               cnt_vps                       Int       10 Data,
    CONTENTS                "Genre code like table 28 of ETSI EN 300 468"    cnt_contents                  ASCII    100 Data,
    CATEGORY                ""                                               sub_category                  Ascii     50 Data,
-   SHORTDESCRIPTION        ""                                               sub_shortdescription          Ascii   3000 Data,
+   SHORTDESCRIPTION        ""                                               sub_shortdescription          MText   3000 Data,
    SHORTREVIEW             ""                                               sub_shortreview               Ascii    500 Data,
    TIPP                    ""                                               sub_tipp                      Ascii    250 Data,
    RATING                  ""                                               sub_rating                    Ascii    250 Data,
    NUMRATING               ""                                               sub_numrating                 Int        2 Data,
    TXTRATING               ""                                               sub_txtrating                 Ascii    100 Data,
-   TOPIC                   ""                                               sub_topic                     Ascii    500 Data,
+   TOPIC                   ""                                               sub_topic                     Ascii   1000 Data,
    LONGDESCRIPTION         ""                                               sub_longdescription           MText  25000 Data,
    COMPLONGDESCRIPTION     ""                                               sub_complongdescription       MText  25000 Data,
    CNTLONGDESCRIPTION      ""                                               cnt_longdescription           MText  25000 Data,
    MODERATOR               ""                                               sub_moderator                 Ascii    250 Data,
    GUEST                   ""                                               sub_guest                     Text    1000 Data,
-   ACTOR                   ""                                               sub_actor                     Text    5000 Data,
+   ACTOR                   ""                                               sub_actor                     MText   5000 Data,
    PRODUCER                ""                                               sub_producer                  Text    1000 Data,
    OTHER                   ""                                               sub_other                     Text    2000 Data,
    DIRECTOR                ""                                               sub_director                  Text    1000 Data,
@@ -503,7 +503,7 @@ Table recordinglist
    DURATION             ""            duration         UInt         0 Data,
    FSK                  ""            fsk              UInt         1 Data,
 
-   EVENTID              ""            eventid          UInt         0 Data,
+   EVENTID              "useid"       eventid          UInt         0 Data,
    CHANNELID            ""            channelid        Ascii       50 Data,
    CHANNELNAME          "just a copy" channelname      Ascii      100 Data,
 
@@ -513,7 +513,7 @@ Table recordinglist
 
    // enriched by 'external' data of events
 
-   ACTOR                ""            actor           Text      5000 Data,
+   ACTOR                ""            actor           MText     5000 Data,
    AUDIO                ""            audio           Ascii       50 Data,
    CATEGORY             ""            category        Ascii       50 Data,
    COUNTRY              ""            country         Ascii       50 Data,
@@ -525,7 +525,7 @@ Table recordinglist
    SCREENPLAY           ""            screenplay      Ascii      500 Data,
    SHORTREVIEW          ""            shortreview     Ascii      500 Data,
    TIPP                 ""            tipp            Ascii      250 Data,
-   TOPIC                ""            topic           Ascii      500 Data,
+   TOPIC                ""            topic           Ascii     1000 Data,
    YEAR                 ""            year            Ascii       10 Data,
    RATING               ""            rating          Ascii      250 Data,
    NUMRATING            ""            numrating       Int          2 Data,
@@ -585,7 +585,7 @@ Table timers
    INSSP                ""                                       inssp                Int          0 Meta,
    UPDSP                ""                                       updsp                Int          0 Meta,
 
-   EVENTID              ""                                       eventid              UInt         0 Data,        
+   EVENTID              "useid"                                  eventid              UInt         0 Data,        
    CHANNELID            ""                                       channelid            Ascii       50 Data,
    _STARTTIME           "pre filled start timer for trigger"     _starttime           Int         10 Data,
    

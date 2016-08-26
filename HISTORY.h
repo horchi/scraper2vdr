@@ -5,8 +5,8 @@
  *
  */
 
-#define _VERSION     "1.0.0"
-#define VERSION_DATE "04.07.2016"
+#define _VERSION     "1.0.1"
+#define VERSION_DATE "26.08.2016"
 #define DB_API       4
 
 #ifdef GIT_REV
@@ -17,6 +17,9 @@
 
 /*
  * ------------------------------------
+
+2016-08-26: version 1.0.1 (horchi)
+   - added: support of long eventids for tvsp (merged dev into master)
 
 2016-07-04: version 1.0.0 (horchi)
    - change: merged http branch into master
