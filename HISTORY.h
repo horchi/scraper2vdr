@@ -5,8 +5,8 @@
  *
  */
 
-#define _VERSION     "1.0.1"
-#define VERSION_DATE "26.08.2016"
+#define _VERSION     "1.0.2"
+#define VERSION_DATE "05.10.2016"
 #define DB_API       4
 
 #ifdef GIT_REV
@@ -17,6 +17,9 @@
 
 /*
  * ------------------------------------
+
+2016-10-05: version 1.0.2 (horchi)
+   - bugfix: fixed timing of retry loop
 
 2016-08-26: version 1.0.1 (horchi)
    - added: support of long eventids for tvsp (merged dev into master)

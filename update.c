@@ -2102,7 +2102,7 @@ void cUpdate::Action()
     time_t lastScanNewRec = time(0);
     time_t lastScanNewRecDB = time(0);
     time_t lastCleanup = time(0);
-    bool init = true;
+    bool init = yes;
 
     time_t now = time(0);
     int dur = 0;
@@ -2135,6 +2135,7 @@ void cUpdate::Action()
 
         if (CheckEpgdBusy())
         {
+           init = no;
            tell(1, "epgd busy, trying again in %d seconds ...", sleep);
            continue;
         }
@@ -2160,7 +2161,7 @@ void cUpdate::Action()
               tell(1, "Got %d new scraped Events from Database", numNewEvents);
            } else {
               lastScan = time(0);
-              init = false;
+              init = no;
            }
            
            worked++;
@@ -2252,7 +2253,7 @@ void cUpdate::Action()
            forceVideoDirUpdate = false;
         }
         
-        init = false;
+        init = no;
         
 //         // Scan Video dir for scrapinfo files
 
