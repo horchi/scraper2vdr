@@ -1,12 +1,12 @@
-/* 
+/*
  * -----------------------------------
  * scraper2vdr Plugin - Revision History
  * -----------------------------------
  *
  */
 
-#define _VERSION     "1.0.2"
-#define VERSION_DATE "05.10.2016"
+#define _VERSION     "1.0.3"
+#define VERSION_DATE "05.12.2016"
 #define DB_API       4
 
 #ifdef GIT_REV
@@ -17,6 +17,9 @@
 
 /*
  * ------------------------------------
+
+2016-12-05: version 1.0.3 (horchi)
+   - change: changed Makefile for make -jN (by 3po)
 
 2016-10-05: version 1.0.2 (horchi)
    - bugfix: fixed timing of retry loop
@@ -149,7 +152,7 @@ Version 0.1.10
 
 Version 0.1.11
 - add fixed poster size (enabled/defined in setup)
-  if is enabled, all posters get stretched/scaled/croped to defined size 
+  if is enabled, all posters get stretched/scaled/croped to defined size
   because of that all thumbnails will have the same size also (using definend thumbnail height)
   this is a enhancement for skin, because now they can calculate with a fixed poster size and aspect ratio
   Warning, this functionality need more CPU power. But the CPU load should not reach problematic levels, because a sleep is used periodically.

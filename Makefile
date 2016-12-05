@@ -84,8 +84,8 @@ OBJS = $(PLUGIN).o plgconfig.o setup.o update.o scrapmanager.o tvdbseries.o movi
 
 all: hlib $(SOFILE) i18n
 
-hlib: 
-	(cd lib && make -s lib)
+hlib:
+	(cd lib && $(MAKE) -s lib)
 
 ### Implicit rules:
 
@@ -160,7 +160,7 @@ dist: $(I18Npo) clean
 
 clean:
 	@-rm -f $(PODIR)/*.mo $(PODIR)/*.pot
-	@-rm -f $(OBJS) $(DEPFILE) *.so *.tgz core* *~ 
+	@-rm -f $(OBJS) $(DEPFILE) *.so *.tgz core* *~
 	(cd lib && make clean)
 
 cppchk:
