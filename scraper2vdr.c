@@ -127,7 +127,7 @@ bool cPluginScraper2vdr::Initialize(void) {
     return true;
 }
 
-bool cPluginScraper2vdr::Start(void) 
+bool cPluginScraper2vdr::Start(void)
 {
    // Initialize cDbConnection only once for whole VDR!
    //  -> therefore delegate to epg2vdr
@@ -155,14 +155,14 @@ int cPluginScraper2vdr::initExitDbConnection(MysqlInitExitAction action)
 
    cPlugin* epg2vdrPlugin = cPluginManager::GetPlugin("epg2vdr");
    int epg2vdrPluginUuidService = epg2vdrPlugin && epg2vdrPlugin->Service(MYSQL_INIT_EXIT, 0);
-   
+
    if (!epg2vdrPluginUuidService)
    {
-      tell(0, "Warning: Can't find %s to init mysql library, aborting!", 
+      tell(0, "Warning: Can't find %s to init mysql library, aborting!",
            epg2vdrPlugin ? "service " MYSQL_INIT_EXIT : "plugin epg2vdr");
       return fail;
    }
-   
+
    if (!epg2vdrPlugin->Service(MYSQL_INIT_EXIT, &req))
    {
       tell(0, "Warning: Calling service '%s' at epg2vdr failed, aborting",
@@ -200,6 +200,8 @@ bool cPluginScraper2vdr::SetupParse(const char *Name, const char *Value) {
 }
 
 bool cPluginScraper2vdr::Service(const char *Id, void *Data) {
+   tell(2, "Service '%s' was called with [%s]", Id, Data ? "<data>" : "<null>");
+
     if (Data == NULL)
         return false;
 
@@ -251,7 +253,7 @@ bool cPluginScraper2vdr::Service(const char *Id, void *Data) {
         ScraperGetPosterThumb* call = (ScraperGetPosterThumb*) Data;
         if (!call->event && !call->recording)
             return false;
-        return scrapManager->GetPosterThumb(call);  
+        return scrapManager->GetPosterThumb(call);
     }
 
     return false;

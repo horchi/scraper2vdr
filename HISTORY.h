@@ -5,8 +5,8 @@
  *
  */
 
-#define _VERSION     "1.0.3"
-#define VERSION_DATE "05.12.2016"
+#define _VERSION     "1.0.4"
+#define VERSION_DATE "29.05.2017"
 #define DB_API       4
 
 #ifdef GIT_REV
@@ -17,6 +17,9 @@
 
 /*
  * ------------------------------------
+
+2017-05-29: version 1.0.4 (horchi)
+   - change: vdr 2.3.4 porting
 
 2016-12-05: version 1.0.3 (horchi)
    - change: changed Makefile for make -jN (by 3po)

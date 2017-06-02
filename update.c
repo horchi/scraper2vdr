@@ -860,7 +860,7 @@ int cUpdate::ReadScrapedEvents(void) {
         episodeId = tEvents->getIntValue("SCRSERIESEPISODE");
         movieId = tEvents->getIntValue("SCRMOVIEID");
         scrapManager->AddEvent(eventId, channelId, seriesId, episodeId, movieId);
-        lastScrap = max(lastScrap, (int)tEvents->getIntValue("SCRSP"));
+        lastScrap = std::max(lastScrap, (int)tEvents->getIntValue("SCRSP"));
         numNew++;
     }
 
@@ -916,7 +916,7 @@ int cUpdate::ReadSeriesFast(long &maxscrsp) {
                 isNew = true;
             }
         }
-        maxscrsp = max(maxscrsp, series->lastscraped);
+        maxscrsp = std::max(maxscrsp, series->lastscraped);
         i++;
         if (GetTimeDiffms(lastLog)>LogPeriode) {
             tell(1, "Got %d series, continuing...", i);
@@ -1410,7 +1410,7 @@ int cUpdate::ReadMoviesFast(long &maxscrsp) {
                 isNew = false;
             }    
         }
-        maxscrsp = max(maxscrsp, movie->lastscraped);
+        maxscrsp = std::max(maxscrsp, movie->lastscraped);
         i++;
         if (GetTimeDiffms(lastLog)>LogPeriode) {
             tell(1, "Got %d movies, continuing...", i);
