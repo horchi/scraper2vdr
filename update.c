@@ -15,8 +15,8 @@
 
 #include <sstream>
 
-cUpdate::cUpdate(cScrapManager *manager) 
-   : cThread("scraper2vdr-update", true) 
+cUpdate::cUpdate(cScrapManager *manager)
+   : cThread("scraper2vdr-update", true)
 {
     connection = NULL;
     vdrDb = NULL;
@@ -37,7 +37,7 @@ cUpdate::cUpdate(cScrapManager *manager)
     selectRecordings = 0;
     clearTempEpisodeTable = 0;
     fillTempEpisodeTable = 0;
-      
+
     selectReadSeriesInit = 0;
     selectReadSeriesLastScrsp = 0;
     selectReadEpisodes = 0;
@@ -71,7 +71,7 @@ int cUpdate::init()
 {
    char* lang;
    lang = setlocale(LC_CTYPE, 0);
-   
+
    if (lang) {
       tell(0, "Set locale to '%s'", lang);
       if ((strcasestr(lang, "UTF-8") != 0) || (strcasestr(lang, "UTF8") != 0)){
@@ -81,12 +81,12 @@ int cUpdate::init()
    } else {
       tell(0, "Reseting locale for LC_CTYPE failed.");
    }
-   
+
    // initialize the dictionary
    if (LoadDBDict() != success) return fail;
-   
+
    // init database ...
-   
+
    cDbConnection::setEncoding(withutf8 ? "utf8": "latin1"); // mysql uses latin1 for ISO8851-1
    cDbConnection::setHost(scraper2VdrConfig.dbHost);
    cDbConnection::setPort(scraper2VdrConfig.dbPort);
@@ -94,7 +94,7 @@ int cUpdate::init()
    cDbConnection::setUser(scraper2VdrConfig.dbUser);
    cDbConnection::setPass(scraper2VdrConfig.dbPass);
    cDbConnection::setConfPath(cPlugin::ConfigDirectory("scraper2vdr/"));
-   
+
    return success;
 }
 
@@ -108,19 +108,19 @@ cUpdate::~cUpdate() {
 cDbFieldDef imageSizeDef("MEDIACONTENT", "media_content", cDBS::ffUInt, 0, cDBS::ftData);
 cDbFieldDef uuIDDef("VDRUUID", "vdruuid", cDBS::ffAscii, 40, cDBS::ftData);
 
-int cUpdate::initDb() 
+int cUpdate::initDb()
 {
     int status = success;
 
     if (!connection)
         connection = new cDbConnection();
-    
+
     if (scrspRemoved) {
-        // have to reload dbdict, because we removed scrsp field from recordings table 
+        // have to reload dbdict, because we removed scrsp field from recordings table
         if (LoadDBDict() != success) return fail;
         scrspRemoved = false;
-    }    
-    
+    }
+
     vdrDb = new cDbTable(connection, "vdrs");
     if (vdrDb->open() != success) return fail;
 
@@ -150,19 +150,19 @@ int cUpdate::initDb()
 
     tMovieMedia = new cDbTable(connection, "movie_media");
     if (tMovieMedia->open() != success) return fail;
-    
+
     tRecordingList = new cDbTable(connection, "recordinglist");
     if (tRecordingList->open() != success) return fail;
 
     // try to create temp. episode cache table
 
     if (connection->query("%s", TempEpisodeCreateStatement.c_str()) != success)
-        return fail;  
-    
+        return fail;
+
     // --------------------
     // prepare statements
 
-    // 
+    //
     series_id.setField(tSeriesMedia->getField("SERIESID"));
     recSeriesid.setField(tRecordingList->getField("SCRSERIESID"));
     event_scrsp.setField(tEvents->getField("SCRSP"));
@@ -185,17 +185,17 @@ int cUpdate::initDb()
     selectReadScrapedEventsInit->bind("SCRMOVIEID", cDBS::bndOut, ", ");
     selectReadScrapedEventsInit->bind("SCRSP", cDBS::bndOut, ", ");
     selectReadScrapedEventsInit->build(" from %s where ", tEvents->TableName());
-    selectReadScrapedEventsInit->build(" ((%s is not null and %s > 0) ", 
-                                       tEvents->getField("SCRSERIESID")->getDbName(), 
+    selectReadScrapedEventsInit->build(" ((%s is not null and %s > 0) ",
+                                       tEvents->getField("SCRSERIESID")->getDbName(),
                                        tEvents->getField("SCRSERIESID")->getDbName());
-    selectReadScrapedEventsInit->build(" or (%s is not null and %s > 0)) ", 
-                                   tEvents->getField("SCRMOVIEID")->getDbName(), 
+    selectReadScrapedEventsInit->build(" or (%s is not null and %s > 0)) ",
+                                   tEvents->getField("SCRMOVIEID")->getDbName(),
                                    tEvents->getField("SCRMOVIEID")->getDbName());
     selectReadScrapedEventsInit->build(" order by %s", tEvents->getField("INSSP")->getDbName());
-    
+
     status += selectReadScrapedEventsInit->prepare();
 
-    // 
+    //
 
     selectReadScrapedEvents = new cDbStatement(tEvents);
     selectReadScrapedEvents->build("select ");
@@ -207,18 +207,18 @@ int cUpdate::initDb()
     selectReadScrapedEvents->bind("SCRMOVIEID", cDBS::bndOut, ", ");
     selectReadScrapedEvents->bind("SCRSP", cDBS::bndOut, ", ");
     selectReadScrapedEvents->build(" from %s where ", tEvents->TableName());
-    selectReadScrapedEvents->build(" ((%s is not null and %s > 0) ", 
-                                   tEvents->getField("SCRSERIESID")->getDbName(), 
+    selectReadScrapedEvents->build(" ((%s is not null and %s > 0) ",
+                                   tEvents->getField("SCRSERIESID")->getDbName(),
                                    tEvents->getField("SCRSERIESID")->getDbName());
-    selectReadScrapedEvents->build(" or (%s is not null and %s > 0)) ", 
-                                   tEvents->getField("SCRMOVIEID")->getDbName(), 
+    selectReadScrapedEvents->build(" or (%s is not null and %s > 0)) ",
+                                   tEvents->getField("SCRMOVIEID")->getDbName(),
                                    tEvents->getField("SCRMOVIEID")->getDbName());
     selectReadScrapedEvents->bindCmp(0, "SCRSP", 0, ">", " and ");
     selectReadScrapedEvents->build(" order by %s", tEvents->getField("INSSP")->getDbName());
-   
+
     status += selectReadScrapedEvents->prepare();
-    
-    // 
+
+    //
 
     selectMovieActors = new cDbStatement(tMovieActor);
     selectMovieActors->build("select ");
@@ -231,19 +231,19 @@ int cUpdate::initDb()
     selectMovieActors->bind(&thbWidth, cDBS::bndOut, ", ");
     selectMovieActors->bind(&thbHeight, cDBS::bndOut, ", ");
     selectMovieActors->clrBindPrefix();
-    selectMovieActors->build(" from %s act, %s role, %s thumb where ", 
+    selectMovieActors->build(" from %s act, %s role, %s thumb where ",
                         tMovieActor->TableName(), tMovieActors->TableName(), tMovieMedia->TableName());
     selectMovieActors->build("act.%s = role.%s ",
-                        tMovieActor->getField("ACTORID")->getDbName(), 
+                        tMovieActor->getField("ACTORID")->getDbName(),
                         tMovieActors->getField("ACTORID")->getDbName());
     selectMovieActors->build(" and role.%s = thumb.%s ",
-                        tMovieActors->getField("ACTORID")->getDbName(), 
+                        tMovieActors->getField("ACTORID")->getDbName(),
                         tMovieMedia->getField("ACTORID")->getDbName());
     selectMovieActors->setBindPrefix("role.");
     selectMovieActors->bind(&actorMovie, cDBS::bndIn | cDBS::bndSet, " and ");
     status += selectMovieActors->prepare();
 
-    // 
+    //
 
     selectRecordings = new cDbStatement(tRecordingList);
     selectRecordings->build("select ");
@@ -262,15 +262,15 @@ int cUpdate::initDb()
     clearTempEpisodeTable->build("truncate table %s",
                                  TempEpisodeTableName.c_str());
     status += clearTempEpisodeTable->prepare();
-    
+
     // fill temp episode cache table using current series id
-/*  insert into TempEpisodeTableName select distinct A.scrseriesepisode as episode_id 
+/*  insert into TempEpisodeTableName select distinct A.scrseriesepisode as episode_id
                from
                (select scrseriesepisode from epg2vdr.events where (scrseriesepisode > 0) and (scrseriesid = SeriesID)
-                union all 
-                select episode_id as scrseriesepisode from epg2vdr.recordinglist 
+                union all
+                select episode_id as scrseriesepisode from epg2vdr.recordinglist
                 where (episode_id > 0) and (series_id = SeriesID) and (uuid = VDRUUID)) A */
-    
+
     fillTempEpisodeTable = new cDbStatement(connection);
     fillTempEpisodeTable->build("insert into %s select distinct A.%s as %s from ",
                                 TempEpisodeTableName.c_str(),
@@ -292,14 +292,14 @@ int cUpdate::initDb()
     fillTempEpisodeTable->bind(&vdr_uuid, cDBS::bndIn | cDBS::bndSet);
     fillTempEpisodeTable->build(")) A");
     status += fillTempEpisodeTable->prepare();
-    
-    // get all used series (events/recordings), last_update of used episodes and max(scrsp) of all events 
+
+    // get all used series (events/recordings), last_update of used episodes and max(scrsp) of all events
 /*  select A.series_id, A.series_name, A.series_last_scraped, A.series_last_updated, A.series_overview, A.series_firstaired, A.series_network,
      A.series_imdb_id, A.series_genre,A.series_rating, A.series_status, B.episode_last_updated, B.scrsp from epg2vdr.series A
-    right join (select C.series_id,max(D.episode_last_updated) as episode_last_updated,max(C.scrsp) as scrsp from 
+    right join (select C.series_id,max(D.episode_last_updated) as episode_last_updated,max(C.scrsp) as scrsp from
                        (select E.series_id,E.episode_id, max(E.scrsp) as scrsp from
                            (select scrseriesid as series_id, scrseriesepisode as episode_id, scrsp from epg2vdr.events where (scrseriesid>0)
-                            union all 
+                            union all
                             select series_id, episode_id, scrsp from epg2vdr.recordings
                             where (uuid = "4E231345-9219-4FEC-8666-09C60D536E68") and (series_id > 0)) E group by series_id,episode_id) C
                 left join epg2vdr.series_episode D
@@ -322,7 +322,7 @@ int cUpdate::initDb()
     selectReadSeriesInit->bind("SERIESRATING", cDBS::bndOut, ", A.");
     selectReadSeriesInit->bind("SERIESSTATUS", cDBS::bndOut, ", A.");
     selectReadSeriesInit->bind(&episode_LastUpdate, cDBS::bndOut, ", B."); // max last update time of all episodes of current series with event/recording
-    selectReadSeriesInit->bind(&event_scrsp, cDBS::bndOut, ", B."); // max last scrsp time of all events/recordings of current series 
+    selectReadSeriesInit->bind(&event_scrsp, cDBS::bndOut, ", B."); // max last scrsp time of all events/recordings of current series
     selectReadSeriesInit->build(" from %s A ",
                                 tSeries->TableName());
     selectReadSeriesInit->build("right join (select C.%s, max(D.%s) as %s, max(C.%s) as %s from ",
@@ -335,7 +335,7 @@ int cUpdate::initDb()
                                 tSeries->getField("SERIESID")->getDbName(),
                                 tEpisodes->getField("EPISODEID")->getDbName(),
                                 tEvents->getField("SCRSP")->getDbName(),
-                                tEvents->getField("SCRSP")->getDbName());    
+                                tEvents->getField("SCRSP")->getDbName());
     selectReadSeriesInit->build("(select %s as %s, %s as %s, %s from %s where (%s>0)",
                                 tEvents->getField("SCRSERIESID")->getDbName(),
                                 tSeries->getField("SERIESID")->getDbName(),
@@ -367,15 +367,15 @@ int cUpdate::initDb()
                                 tSeries->getField("SERIESID")->getDbName(),
                                 tSeries->getField("SERIESID")->getDbName());
     status += selectReadSeriesInit->prepare();
-    
+
 
     // get all used series (events/recordings), last_update of used episodes and max(scrsp) of all events, filtered by lastscrsp
 /*  select A.series_id, A.series_name, A.series_last_scraped, A.series_last_updated, A.series_overview, A.series_firstaired, A.series_network,
      A.series_imdb_id, A.series_genre,A.series_rating, A.series_status, B.episode_last_updated, B.scrsp from epg2vdr.series A
-    right join (select C.series_id,max(D.episode_last_updated) as episode_last_updated,max(C.scrsp) as scrsp from 
+    right join (select C.series_id,max(D.episode_last_updated) as episode_last_updated,max(C.scrsp) as scrsp from
                        (select E.series_id,E.episode_id, max(E.scrsp) as scrsp from
                            (select scrseriesid as series_id, scrseriesepisode as episode_id, scrsp from epg2vdr.events where (scrseriesid>0) and (scrsp>LASTSCRSP)
-                            union all 
+                            union all
                             select series_id, episode_id, scrsp from epg2vdr.recordings
                             where (uuid = "4E231345-9219-4FEC-8666-09C60D536E68") and (series_id > 0) and (scrsp>LASTSCRSP)) E group by series_id,episode_id) C
                 left join epg2vdr.series_episode D
@@ -398,7 +398,7 @@ int cUpdate::initDb()
     selectReadSeriesLastScrsp->bind("SERIESRATING", cDBS::bndOut, ", A.");
     selectReadSeriesLastScrsp->bind("SERIESSTATUS", cDBS::bndOut, ", A.");
     selectReadSeriesLastScrsp->bind(&episode_LastUpdate, cDBS::bndOut, ", B."); // max last update time of all episodes of current series with event/recording
-    selectReadSeriesLastScrsp->bind(&event_scrsp, cDBS::bndOut, ", B."); // max last scrsp time of all events/recordings of current series 
+    selectReadSeriesLastScrsp->bind(&event_scrsp, cDBS::bndOut, ", B."); // max last scrsp time of all events/recordings of current series
     selectReadSeriesLastScrsp->build(" from %s A ",
                                      tSeries->TableName());
     selectReadSeriesLastScrsp->build("right join (select C.%s, max(D.%s) as %s, max(C.%s) as %s from ",
@@ -445,12 +445,12 @@ int cUpdate::initDb()
                                      tSeries->getField("SERIESID")->getDbName(),
                                      tSeries->getField("SERIESID")->getDbName());
     status += selectReadSeriesLastScrsp->prepare();
-    
+
     // get all used episodes (with events/recordings) of one series
-/*  select A.episode_id,A.episode_number,A.season_number,A.episode_name,A.episode_overview,A.episode_firstaired,A.episode_gueststars from epg2vdr.series_episode A 
-    right join epg2vdr.usedepisodes B 
+/*  select A.episode_id,A.episode_number,A.season_number,A.episode_name,A.episode_overview,A.episode_firstaired,A.episode_gueststars from epg2vdr.series_episode A
+    right join epg2vdr.usedepisodes B
     on (B.episode_id = A.episode_id) where A.episode_id is not null */
-    
+
     selectReadEpisodes = new cDbStatement(tEpisodes);
     selectReadEpisodes->build("select ");
     selectReadEpisodes->bind("EPISODEID", cDBS::bndOut, "A.");
@@ -471,19 +471,19 @@ int cUpdate::initDb()
                               tEpisodes->getField("EPISODEID")->getDbName(),
                               tEpisodes->getField("EPISODEID")->getDbName());
     status += selectReadEpisodes->prepare();
-    
+
     // get all media data and actor informations of one series (including only episode images for episodes with events/recordings )
 /*  select A.series_id,A.episode_id,A.season_number,A.actor_id, A.media_type,A.media_width,A.media_height,C.actor_id,C.actor_name,C.actor_role,C.actor_sortorder
-    from epg2vdr.series_media A 
+    from epg2vdr.series_media A
     left join epg2vdr.usedepisodes B
     on (B.episode_id = A.episode_id)
-    left join (select D.actor_id,D.actor_name,D.actor_role,D.actor_sortorder from epg2vdr.series_actor D 
-               right join (select actor_id from epg2vdr.series_media where (series_id=SeriesID) and (actor_id>0)) E 
-               on (D.actor_id = E.actor_id)) C 
-    on (A.actor_id=C.actor_id) 
+    left join (select D.actor_id,D.actor_name,D.actor_role,D.actor_sortorder from epg2vdr.series_actor D
+               right join (select actor_id from epg2vdr.series_media where (series_id=SeriesID) and (actor_id>0)) E
+               on (D.actor_id = E.actor_id)) C
+    on (A.actor_id=C.actor_id)
     where (series_id = SeriesID) and ((B.episode_id is not null) or (A.episode_id = 0))
     order by season_number,actor_sortorder */
-    
+
     selectSeriesMediaActors = new cDbStatement(tSeriesMedia);
     selectSeriesMediaActors->build("select ");
     selectSeriesMediaActors->bind("SERIESID", cDBS::bndOut, "A.");
@@ -503,10 +503,10 @@ int cUpdate::initDb()
                                    tEpisodes->getField("EPISODEID")->getDbName(),
                                    tSeriesMedia->getField("EPISODEID")->getDbName());
     selectSeriesMediaActors->build("left join (select D.%s,D.%s,D.%s,D.%s from %s D ",
-                                   tSeriesActors->getField("ACTORID")->getDbName(),                                    
-                                   tSeriesActors->getField("ACTORNAME")->getDbName(),                                    
-                                   tSeriesActors->getField("ACTORROLE")->getDbName(),                                    
-                                   tSeriesActors->getField("SORTORDER")->getDbName(),                                    
+                                   tSeriesActors->getField("ACTORID")->getDbName(),
+                                   tSeriesActors->getField("ACTORNAME")->getDbName(),
+                                   tSeriesActors->getField("ACTORROLE")->getDbName(),
+                                   tSeriesActors->getField("SORTORDER")->getDbName(),
                                    tSeriesActors->TableName());
     selectSeriesMediaActors->build("right join (select %s from %s where (",
                                    tSeriesMedia->getField("ACTORID")->getDbName(),
@@ -525,7 +525,7 @@ int cUpdate::initDb()
                                    tSeriesMedia->getField("SEASONNUMBER")->getDbName(),
                                    tSeriesActors->getField("SORTORDER")->getDbName());
     status += selectSeriesMediaActors->prepare();
-    
+
     selectSeriesImage = new cDbStatement(tSeriesMedia);
     selectSeriesImage->build("select ");
     selectSeriesImage->bind("MEDIAWIDTH", cDBS::bndOut);
@@ -541,18 +541,18 @@ int cUpdate::initDb()
     selectSeriesImage->bind("ACTORID", cDBS::bndIn | cDBS::bndSet, " and ");
     selectSeriesImage->bind("MEDIATYPE", cDBS::bndIn | cDBS::bndSet, " and ");
     status += selectSeriesImage->prepare();
-    
+
     // get all used movies (events/recordings) and max(scrsp) of all events
 /*  select A.movie_id, A.movie_title, A.movie_original_title, A.movie_tagline, A.movie_overview, A.movie_adult, A.movie_collection_name, A.movie_budget,
      A.movie_revenue, A.movie_genres, A.movie_homepage, A.movie_release_date, A.movie_runtime, A.movie_popularity, A.movie_vote_average, B.scrsp from epg2vdr.movie A
-    right join (select C.movie_id, max(C.scrsp) as scrsp from 
+    right join (select C.movie_id, max(C.scrsp) as scrsp from
                            (select scrmovieid as movie_id, scrsp from events where (scrmovieid > 0)
-                            union all 
+                            union all
                             select scrmovieid, scrsp from recordinglist
-                            where  (movie_id > 0)) C 
+                            where  (movie_id > 0)) C
                               group by movie_id) B on (A.movie_id = B.movie_id)
                             order by A.movie_id */
-    
+
     selectReadMoviesInit = new cDbStatement(tMovies);
     selectReadMoviesInit->build("select ");
     selectReadMoviesInit->bind("MOVIEID", cDBS::bndOut, "A.");
@@ -571,7 +571,7 @@ int cUpdate::initDb()
     selectReadMoviesInit->bind("RUNTIME", cDBS::bndOut, ", A.");
     selectReadMoviesInit->bind("POPULARITY", cDBS::bndOut, ", A.");
     selectReadMoviesInit->bind("VOTEAVERAGE", cDBS::bndOut, ", A.");
-    selectReadMoviesInit->bind(&event_scrsp, cDBS::bndOut, ", B."); // max last scrsp time of all events/recordings of current movie 
+    selectReadMoviesInit->bind(&event_scrsp, cDBS::bndOut, ", B."); // max last scrsp time of all events/recordings of current movie
     selectReadMoviesInit->build(" from %s A ",
                                 tMovies->TableName());
     selectReadMoviesInit->build("right join (select C.%s, max(C.%s) as %s from ",
@@ -601,9 +601,9 @@ int cUpdate::initDb()
     // get all used movies (events/recordings) and max(scrsp) of all events, filtered by lastscrsp
 /*  select A.movie_id, A.movie_title, A.movie_original_title, A.movie_tagline, A.movie_overview, A.movie_adult, A.movie_collection_name, A.movie_budget,
      A.movie_revenue, A.movie_genres, A.movie_homepage, A.movie_release_date, A.movie_runtime, A.movie_popularity, A.movie_vote_average, B.scrsp from epg2vdr.movie A
-    right join (select C.movie_id, max(C.scrsp) as scrsp from 
+    right join (select C.movie_id, max(C.scrsp) as scrsp from
                            (select scrmovieid as movie_id, scrsp from epg2vdr.events where (scrmovieid>0) and (scrsp>LASTSCRSP)
-                            union all 
+                            union all
                             select movie_id, scrsp from epg2vdr.recordings
                             where (uuid = "4E231345-9219-4FEC-8666-09C60D536E68") and (movie_id > 0) and (scrsp>LASTSCRSP)) C group by movie_id) B
     on (A.movie_id = B.movie_id)
@@ -627,7 +627,7 @@ int cUpdate::initDb()
     selectReadMoviesLastScrsp->bind("RUNTIME", cDBS::bndOut, ", A.");
     selectReadMoviesLastScrsp->bind("POPULARITY", cDBS::bndOut, ", A.");
     selectReadMoviesLastScrsp->bind("VOTEAVERAGE", cDBS::bndOut, ", A.");
-    selectReadMoviesLastScrsp->bind(&event_scrsp, cDBS::bndOut, ", B."); // max last scrsp time of all events/recordings of current movie 
+    selectReadMoviesLastScrsp->bind(&event_scrsp, cDBS::bndOut, ", B."); // max last scrsp time of all events/recordings of current movie
     selectReadMoviesLastScrsp->build(" from %s A ",
                                      tMovies->TableName());
     selectReadMoviesLastScrsp->build("right join (select C.%s, max(C.%s) as %s from ",
@@ -665,7 +665,7 @@ int cUpdate::initDb()
     selectMovieMediaFast->build(" from %s where ", tMovieMedia->TableName());
     selectMovieMediaFast->bind("MOVIEID", cDBS::bndIn | cDBS::bndSet);
     status += selectMovieMediaFast->prepare();
-    
+
     selectMovieImage = new cDbStatement(tMovieMedia);
     selectMovieImage->build("select ");
     selectMovieImage->bind("MEDIACONTENT", cDBS::bndOut);
@@ -688,19 +688,19 @@ int cUpdate::LoadDBDict(void) {
    char* dictPath = 0;
 
    dbDict.forget();       // clear all old data
-   
+
    asprintf(&dictPath, "%sepg.dat", cPlugin::ConfigDirectory("scraper2vdr/"));
    dbDict.setFilterFromNameFct(toFieldFilter);
-   
+
    if (dbDict.in(dictPath, ffScraper2Vdr) != success)
    {
       tell(0, "Fatal: Dictionary not loaded, aborting!");
       return fail;
    }
-   
+
    tell(0, "Dictionary '%s' loaded", dictPath);
    free(dictPath);
-   
+
    return success;
 }
 
@@ -738,13 +738,13 @@ int cUpdate::exitDb() {
 
     if (dbConnected())
         connection->query("%s",TempEpisodeDeleteStatement.c_str());
-    
+
     delete connection;    connection = 0;
 
     return done;
 }
 
-void cUpdate::Stop() { 
+void cUpdate::Stop() {
     loopActive = false;
     waitCondition.Broadcast();
     Cancel(1);
@@ -767,7 +767,7 @@ int cUpdate::CheckConnection(bool init, int& timeout) {
         cDbConnection::setUser(scraper2VdrConfig.dbUser);
         cDbConnection::setPass(scraper2VdrConfig.dbPass);
         cDbConnection::setConfPath(cPlugin::ConfigDirectory("scraper2vdr/"));
-    }    
+    }
     static int retry = 0;
     timeout = init ? 30 : 60; // 30s during init, otherwise 60s (this is the intervall of update thread)
     // check connection
@@ -780,7 +780,7 @@ int cUpdate::CheckConnection(bool init, int& timeout) {
             exitDb();
             return fail;
         }
-        retry = 0;         
+        retry = 0;
         tell(0, "Connection established successfull!");
     }
     return success;
@@ -811,13 +811,13 @@ int cUpdate::initUuid(int timeout)
    if (isEmpty(scraper2VdrConfig.uuid))
    {
       Epg2vdr_UUID_v1_0 req;
-      
+
       cPlugin* epg2vdrPlugin = cPluginManager::GetPlugin("epg2vdr");
       int epg2vdrPluginUuidService = epg2vdrPlugin && epg2vdrPlugin->Service(EPG2VDR_UUID_SERVICE, 0);
-      
+
       if (!epg2vdrPluginUuidService)
       {
-         tell(0, "Warning: Can't find %s to query uuid, retrying in %d seconds", 
+         tell(0, "Warning: Can't find %s to query uuid, retrying in %d seconds",
               epg2vdrPlugin ? "service " EPG2VDR_UUID_SERVICE : "plugin epg2vdr", timeout);
          return fail;
       }
@@ -826,16 +826,16 @@ int cUpdate::initUuid(int timeout)
 
       if (!epg2vdrPlugin->Service(EPG2VDR_UUID_SERVICE, &req))
       {
-         tell(0, "Error: Call of service '%s' failed, retrying in %d seconds", 
+         tell(0, "Error: Call of service '%s' failed, retrying in %d seconds",
               EPG2VDR_UUID_SERVICE, timeout);
          return fail;
       }
-      
+
       tell(0, "Got UUID '%s' by epg2vdr", req.uuid);
-      
+
       sstrcpy(scraper2VdrConfig.uuid, req.uuid, sizeUuid+TB);
    }
-   
+
    return done;
 }
 
@@ -851,7 +851,7 @@ int cUpdate::ReadScrapedEvents(void) {
 
     tEvents->clear();
     tEvents->setValue("SCRSP", lastScrap);
-    
+
     lastWait = GetTimems(); // init time for CheckRunningAndWait
     for (int res = select->find(); res; res = select->fetch() && CheckRunningAndWait()) {
         eventId = tEvents->getIntValue("MASTERID");
@@ -889,30 +889,30 @@ int cUpdate::ReadSeriesFast(long &maxscrsp) {
     vdr_uuid.setValue(scraper2VdrConfig.uuid); // search all recordigs of this vdr uuid
     tSeries->clear();
     event_scrsp.setValue(maxscrsp); // use last max scrsp as start value for filter
-    
+
     cDbStatement* select = maxscrsp > 0 ? selectReadSeriesLastScrsp : selectReadSeriesInit;
-    
+
     lastWait = GetTimems(); // init time for CheckRunningAndWait
     long lastLog = GetTimems(); // init time for logging
     for (int res = select->find(); res; res = select->fetch() && CheckRunningAndWait()) {
         series = scrapManager->GetSeries(tSeries->getIntValue("SERIESID"));
         if (!series) {
             // add new series with information of current row
-            series = scrapManager->AddSeries(tSeries); 
+            series = scrapManager->AddSeries(tSeries);
             series->lastepisodeupdate = episode_LastUpdate.getIntValue();
-            series->lastscraped = event_scrsp.getIntValue(); 
+            series->lastscraped = event_scrsp.getIntValue();
             isNew = true;
         } else {
             // check if something changed for series
             isNew = false;
             series->updateimages = (series->lastupdate < tSeries->getIntValue("SERIESLASTUPDATED")) || // series get updated on thetvdb
-                                   (series->lastepisodeupdate < episode_LastUpdate.getIntValue()) || // min one used episode get updated on thetvdb         
+                                   (series->lastepisodeupdate < episode_LastUpdate.getIntValue()) || // min one used episode get updated on thetvdb
                                    forceFullUpdate; // force reload everything
-            series->updatecontent = (series->updateimages) || (series->lastscraped < event_scrsp.getIntValue()) || forceFullUpdate; // new events or recodings with this series 
+            series->updatecontent = (series->updateimages) || (series->lastscraped < event_scrsp.getIntValue()) || forceFullUpdate; // new events or recodings with this series
             if ((series->updateimages) || (series->updatecontent)) { // something to refresh for series
                 scrapManager->UpdateSeries(series,tSeries); // update series
                 series->lastepisodeupdate = episode_LastUpdate.getIntValue();
-                series->lastscraped = event_scrsp.getIntValue(); 
+                series->lastscraped = event_scrsp.getIntValue();
                 isNew = true;
             }
         }
@@ -921,10 +921,10 @@ int cUpdate::ReadSeriesFast(long &maxscrsp) {
         if (GetTimeDiffms(lastLog)>LogPeriode) {
             tell(1, "Got %d series, continuing...", i);
             lastLog = GetTimems();
-        }    
+        }
         if (isNew)
             numNew++;
-    }  
+    }
     select->freeResult();
     return numNew;
 }
@@ -951,10 +951,10 @@ int cUpdate::ReadSeriesContentFast(int &newImages, int &newSeasonPoster) {
             numNew = numNew + newValues;
             series->updatecontent = false; // reset update flag
         }
-            
+
         // check if we have to update images
         if (series->updateimages) {
-            ReadSeriesMediaFast(series,newValues,newValues2); 
+            ReadSeriesMediaFast(series,newValues,newValues2);
             if (newValues+newValues2 == 0)
                 series->updateimages = false; // no new images for this series, reset load image flag -> series get not used in ReadSeriesImagesFast
             newImages = newImages + newValues;
@@ -965,13 +965,13 @@ int cUpdate::ReadSeriesContentFast(int &newImages, int &newSeasonPoster) {
         if (GetTimeDiffms(lastLog)>LogPeriode) {
             tell(1, "Handled %d of %d series, continuing...", i, seriescount);
             lastLog = GetTimems();
-        }    
-    }    
+        }
+    }
     return numNew;
 }
 
 // read all episodes for current series with event or recording from sql-db
-int cUpdate::ReadEpisodesContentFast(cTVDBSeries *series) { 
+int cUpdate::ReadEpisodesContentFast(cTVDBSeries *series) {
     cTVDBEpisode *episode;
     int numNew = 0;
 
@@ -1001,7 +1001,7 @@ int cUpdate::ReadEpisodesContentFast(cTVDBSeries *series) {
 }
 
 // read all images of series (also create actors if not available yet)
-void cUpdate::ReadSeriesMediaFast(cTVDBSeries *series, int &newImages, int &newSeasonPoster) { 
+void cUpdate::ReadSeriesMediaFast(cTVDBSeries *series, int &newImages, int &newSeasonPoster) {
     newImages = 0;
     newSeasonPoster = 0;
     bool isFirst = true;
@@ -1033,9 +1033,9 @@ void cUpdate::ReadSeriesMediaFast(cTVDBSeries *series, int &newImages, int &newS
                 return;
             // fill lastupdated list first
             fileDateManager.LoadFileDateList(seriesPath,false); // ignore read errors (try to overwrite with new file) and mark all old values from file as not used
-        }        
+        }
         isFirst = false;
-        
+
         mediaType = tSeriesMedia->getIntValue("MEDIATYPE");
         originalWidth = tSeriesMedia->getIntValue("MEDIAWIDTH");
         originalHeight = tSeriesMedia->getIntValue("MEDIAHEIGHT");
@@ -1105,13 +1105,13 @@ void cUpdate::ReadSeriesMediaFast(cTVDBSeries *series, int &newImages, int &newS
                     imageName.str("");
                     imageName << seriesPath << "/" << "episode_" << episode->id << ".jpg";
                     series->SetEpisodeImage(episode->id, imgWidth, imgHeight, imageName.str(), imgNeedRefresh);
-                }    
+                }
                 break;
             case msActorThumb:
                 actor = series->GetActor(tSeriesMedia->getIntValue("ACTORID"));
-                if (!actor) {    
+                if (!actor) {
                     actor = scrapManager->AddSeriesActor(series,tSeriesActors); // can use all columns of tSeriesActors (get filled from select too)
-                } else {    
+                } else {
                     scrapManager->UpdateSeriesActor(actor,tSeriesActors); // update actor
                 }
                 imageName.str("");
@@ -1127,17 +1127,17 @@ void cUpdate::ReadSeriesMediaFast(cTVDBSeries *series, int &newImages, int &newS
         if (imgNeedRefresh) {
             if (mediaType == msSeasonPoster) {
                 newSeasonPoster++;
-            } else {    
+            } else {
                 newImages++;
-            }    
-        }    
+            }
+        }
     }
     selectSeriesMediaActors->freeResult();
-    
+
     if (!isFirst) {
         // save new file if min one image was available in DB
         fileDateManager.SaveFileDateList();
-    }        
+    }
 }
 
 // create media if not exists in series, update size, path, needRefresh of media
@@ -1151,12 +1151,12 @@ void cUpdate::CheckSeriesMedia(cTVDBSeries *series, int mediaType, int imgWidth,
         media->width = imgWidth;
         media->height = imgHeight;
         media->path = imageName.str();
-        media->needrefresh = needRefresh;    
-    }    
+        media->needrefresh = needRefresh;
+    }
 }
 
 // read all images with needrefresh from sql-db
-void cUpdate::ReadSeriesImagesFast(int &newImages, int &emptyImages) { 
+void cUpdate::ReadSeriesImagesFast(int &newImages, int &emptyImages) {
     newImages = 0;
     emptyImages = 0;
     int i = 0;
@@ -1182,10 +1182,10 @@ void cUpdate::ReadSeriesImagesFast(int &newImages, int &emptyImages) {
             string seriesPath = sPath.str();
             if (!CreateDirectory(seriesPath))
                 return;
-            
+
             // fill lastupdated list first
             fileDateManager.LoadFileDateList(seriesPath,true); // mark all old values from file as used (we only touch changed images in this function and we do not want to delete something from list)
-            
+
             // go trough actors first
             for (int res = series->GetActorFirst(actor); res; res = series->GetActorNext(actor) && CheckRunningAndWait()) {
                 if (actor->actorThumb) {
@@ -1199,11 +1199,11 @@ void cUpdate::ReadSeriesImagesFast(int &newImages, int &emptyImages) {
                         } else {
                             tell(2,"failed to read image (series %d, actor %d)",series->id,actor->id);
                             emptyImages++;
-                        }    
-                    }     
-                }    
-            }    
-            
+                        }
+                    }
+                }
+            }
+
             // continue with epiode images
             for (int res = series->GetEpisodeFirst(episode); res; res = series->GetEpisodeNext(episode) && CheckRunningAndWait()) {
                 if (episode->episodeImage) {
@@ -1218,10 +1218,10 @@ void cUpdate::ReadSeriesImagesFast(int &newImages, int &emptyImages) {
                             tell(2,"failed to read image (series %d, episode %d)",series->id,episode->id);
                             emptyImages++;
                         }
-                    }     
-                }    
+                    }
+                }
             }
-            
+
             // load season posters
             for (int res = series->GetSeasonPosterFirst(season, media); res; res = series->GetSeasonPosterNext(season, media) && CheckRunningAndWait()) {
                 if (media) {
@@ -1241,10 +1241,10 @@ void cUpdate::ReadSeriesImagesFast(int &newImages, int &emptyImages) {
                             tell(2,"failed to read image (series %d, season %d)",series->id,season);
                             emptyImages++;
                         }
-                    }    
-                }    
+                    }
+                }
             }
-            
+
             // now load all series images (ignore season poster in switch)
             for (int mediaType = msBanner1; mediaType <= msFanart3; ++mediaType) {
                 mediaName = "";
@@ -1300,12 +1300,12 @@ void cUpdate::ReadSeriesImagesFast(int &newImages, int &emptyImages) {
                         } else {
                             tell(2,"failed to read image (series %d, mediatype %d)",series->id,mediaType);
                             emptyImages++;
-                        }    
-                    }    
+                        }
+                    }
                 }
             }
             fileDateManager.SaveFileDateList(); // save updated list
-            
+
             series->updateimages = false; // have updated all images
         }
 
@@ -1313,8 +1313,8 @@ void cUpdate::ReadSeriesImagesFast(int &newImages, int &emptyImages) {
         if (GetTimeDiffms(lastLog)>LogPeriode) {
             tell(1, "Handled %d of %d series (loaded %d new images), continuing...", i, seriesCount, newImages);
             lastLog = GetTimems();
-        }    
-    }  
+        }
+    }
 }
 
 // read real image data from sql-db
@@ -1345,7 +1345,7 @@ bool cUpdate::ReadSeriesImageFast(int seriesId, int season, int episodeId, int a
                 if (mediaThumb) {
                    handleThumb = true;
                    thumbPath = mediaThumb->path;
-                }    
+                }
                 HandleImage(media->path, originalWidth, originalHeight,
                             forceImageSize, media->width, media->height, float(scraper2VdrConfig.maxPosterDistortion)/100,
                             handleThumb, thumbPath, scraper2VdrConfig.thumbHeight);
@@ -1355,13 +1355,13 @@ bool cUpdate::ReadSeriesImageFast(int seriesId, int season, int episodeId, int a
                 if (mediaThumb) {
                     mediaThumb->needrefresh = false;
                     mediaThumb->mediavalid = true; // we have a image file for this media
-                }    
+                }
 
                 imageSaved = true;
             }
         } else {
             media->needrefresh = false; // reset update flag for empty images also
-        }    
+        }
     }
     selectSeriesImage->freeResult();
     return imageSaved;
@@ -1387,9 +1387,9 @@ int cUpdate::ReadMoviesFast(long &maxscrsp) {
     vdr_uuid.setValue(scraper2VdrConfig.uuid); // search all recordigs of this vdr uuid
     tMovies->clear();
     event_scrsp.setValue(maxscrsp); // use last max scrsp as start value for filter
-    
+
     cDbStatement* select = maxscrsp > 0 ? selectReadMoviesLastScrsp : selectReadMoviesInit;
-    
+
     lastWait = GetTimems(); // init time for CheckRunningAndWait
     long lastLog = GetTimems(); // init time for logging
     for (int res = select->find(); res; res = select->fetch() && CheckRunningAndWait()) {
@@ -1397,41 +1397,41 @@ int cUpdate::ReadMoviesFast(long &maxscrsp) {
         if (!movie)
         {
             // add new movie with information of current row
-            movie = scrapManager->AddMovie(tMovies); 
-            movie->lastscraped = event_scrsp.getIntValue(); 
+            movie = scrapManager->AddMovie(tMovies);
+            movie->lastscraped = event_scrsp.getIntValue();
             isNew = true;
         } else {
             // only update lastscraped of known movie
-            movie->lastscraped = event_scrsp.getIntValue(); 
+            movie->lastscraped = event_scrsp.getIntValue();
             if (forceFullUpdate) {
                 movie->updateimages = true; // force update of images
                 isNew = true;
-            } else {  
+            } else {
                 isNew = false;
-            }    
+            }
         }
         maxscrsp = std::max(maxscrsp, movie->lastscraped);
         i++;
         if (GetTimeDiffms(lastLog)>LogPeriode) {
             tell(1, "Got %d movies, continuing...", i);
             lastLog = GetTimems();
-        }    
+        }
         if (isNew)
             numNew++;
-    }  
+    }
     select->freeResult();
     return numNew;
 }
 
 // read all actors/media from all movies where movie->updateimages = true
-int cUpdate::ReadMoviesContentFast(void) { 
+int cUpdate::ReadMoviesContentFast(void) {
     cMovieDbMovie *movie;
     int newNew = 0;
     int newActors = 0;
     int newMedia = 0;
     int moviecount = scrapManager->GetNumMovies();
     int i = 0;
-    
+
     lastWait = GetTimems(); // init time for CheckRunningAndWait
     long lastLog = GetTimems(); // init time for logging
     for (int res = scrapManager->GetMoviesFirst(movie); res; res = scrapManager->GetMoviesNext(movie) && CheckRunningAndWait()) {
@@ -1450,7 +1450,7 @@ int cUpdate::ReadMoviesContentFast(void) {
             tell(1, "Handled %d of %d movies, continuing...", i, moviecount);
             lastLog = GetTimems();
         }
-    }        
+    }
     return newNew;
 }
 
@@ -1463,17 +1463,17 @@ int cUpdate::ReadMovieActorsFast(cMovieDbMovie *movie) {
     int imgHeight = 0;
     cMovieActor *actor;
     cMovieMedia *actorThumb;
-    
+
     tMovieActor->clear();
     tMovieMedia->clear();
     actorMovie.setValue(movie->id);
 
     for (int res = selectMovieActors->find(); res; res = selectMovieActors->fetch() && CheckRunningAndWait()) {
         actor = movie->GetActor(tSeriesMedia->getIntValue("ACTORID"));
-        if (!actor) {    
+        if (!actor) {
             actor = scrapManager->AddMovieActor(movie, tMovieActor, actorRole.getStrValue(), true); // do not add actor thumb
             // check if we already have actor in global actor list
-        } else {    
+        } else {
             scrapManager->UpdateMovieActor(actor, tMovieActor, actorRole.getStrValue()); // update actor
         }
         actorThumb = scrapManager->GetMovieActorThumb(actor->id);
@@ -1485,9 +1485,9 @@ int cUpdate::ReadMovieActorsFast(cMovieDbMovie *movie) {
             imgWidth = thbWidth.getIntValue();
             imgHeight = thbHeight.getIntValue();
             actorThumb = scrapManager->AddMovieActorThumb(actor->id, imgWidth, imgHeight, imageName.str(), imgNeedRefresh);
-            if (imgNeedRefresh) 
+            if (imgNeedRefresh)
               numNew++; // only count new actors/images
-        }    
+        }
         actor->actorThumbExternal = actorThumb; // assign actor thumb from global map to movie actor
     }
 
@@ -1576,8 +1576,8 @@ void cUpdate::CheckMovieMedia(cMovieDbMovie *movie, int mediaType, int imgWidth,
         media->width = imgWidth;
         media->height = imgHeight;
         media->path = imgName;
-        media->needrefresh = needRefresh;    
-    }    
+        media->needrefresh = needRefresh;
+    }
 }
 
 // read all images with needrefresh from sql-db
@@ -1585,7 +1585,7 @@ int cUpdate::ReadMovieImagesFast(void) {
     string movieActorsPath = imgPathMovies + "/actors";
     if (!CreateDirectory(movieActorsPath))
         return 0;
-    
+
     int newActors = 0;
     int newImages = 0;
     int i = 0;
@@ -1613,9 +1613,9 @@ int cUpdate::ReadMovieImagesFast(void) {
         if (GetTimeDiffms(lastLog)>LogPeriode) {
             tell(1, "Handled %d of %d actors (loaded %d new images), continuing...", i, actorCount, newActors);
             lastLog = GetTimems();
-        }    
-    }        
-    
+        }
+    }
+
     i = 0;
     for (int res = scrapManager->GetMoviesFirst(movie); res; res = scrapManager->GetMoviesNext(movie) && CheckRunningAndWait()) {
         if (movie->updateimages) {
@@ -1624,7 +1624,7 @@ int cUpdate::ReadMovieImagesFast(void) {
             mPath << imgPathMovies << "/" << movie->id;
             if (!CreateDirectory(mPath.str()))
                 return 0;
-            
+
             // load all movie images
             for (int mediaType = mmPoster; mediaType <= mmCollectionFanart; ++mediaType) {
                 media = NULL;
@@ -1653,8 +1653,8 @@ int cUpdate::ReadMovieImagesFast(void) {
                             newImages++;
                         } else {
                            tell(2,"failed to read image (movie %d, mediatype %d)",movie->id,mediaType);
-                        }    
-                    }    
+                        }
+                    }
                 }
             }
             movie->updateimages = false; // have updated all images
@@ -1664,8 +1664,8 @@ int cUpdate::ReadMovieImagesFast(void) {
         if (GetTimeDiffms(lastLog)>LogPeriode) {
             tell(1, "Handled %d of %d movies (loaded %d new images), continuing...", i, movieCount, newImages);
             lastLog = GetTimems();
-        }    
-    }  
+        }
+    }
     return newActors + newImages;
 }
 
@@ -1694,7 +1694,7 @@ bool cUpdate::ReadMovieImageFast(int movieId, int actorId, int mediaType, cMovie
                 if (mediaThumb) {
                    handleThumb = true;
                    thumbPath = mediaThumb->path;
-                }    
+                }
                 HandleImage(media->path, originalWidth, originalHeight,
                             forceImageSize, media->width, media->height, float(scraper2VdrConfig.maxPosterDistortion)/100,
                             handleThumb, thumbPath, scraper2VdrConfig.thumbHeight);
@@ -1705,12 +1705,12 @@ bool cUpdate::ReadMovieImageFast(int movieId, int actorId, int mediaType, cMovie
                     mediaThumb->needrefresh = false;
                     mediaThumb->mediavalid = true; // we have a image file for this media
                 }
-            
+
                 imageSaved = true;
             }
         } else {
             media->needrefresh = false; // reset update flag for empty images also
-        }    
+        }
     }
     selectMovieImage->freeResult();
     return imageSaved;
@@ -1739,35 +1739,37 @@ int cUpdate::ReadRecordings(void) {
 }
 
 //***************************************************************************
-// 
+//
 //***************************************************************************
 
 int cUpdate::ScanVideoDir(void) {
-    int newRecs = 0;
+   int newRecs = 0;
 
    // --------------------------
    // get recordings lock
-   
+
 #if defined (APIVERSNUM) && (APIVERSNUM >= 20301)
-   cRecordingsLock recordingsLock(false);
-   const cRecordings* recordings = recordingsLock.Recordings();
+   LOCK_RECORDINGS_READ;
+   const cRecordings* recordings = Recordings;
+   // cRecordingsLock recordingsLock(false);
+   // const cRecordings* recordings = recordingsLock.Recordings();
 #else
    const cRecordings* recordings = &Recordings;
 #endif
 
    // --------
-   // iterate 
+   // iterate
 
-    for (const cRecording *rec = recordings->First(); rec; rec = recordings->Next(rec)) 
+    for (const cRecording *rec = recordings->First(); rec; rec = recordings->Next(rec))
     {
         string recPath = getRecPath(rec);
         int recStart = rec->Start();
 
-        if (!scrapManager->RecordingExists(recStart, recPath)) 
+        if (!scrapManager->RecordingExists(recStart, recPath))
         {
             newRecs++;
             int scrapInfoMovieID = 0;
-            int scrapInfoSeriesID = 0;        
+            int scrapInfoSeriesID = 0;
             int scrapInfoEpisodeID = 0;
             ReadScrapInfo(rec->FileName(), scrapInfoMovieID, scrapInfoSeriesID, scrapInfoEpisodeID);
             // string channelId = "";
@@ -1802,7 +1804,7 @@ int cUpdate::ScanVideoDir(void) {
             if (strncmp(rec->FileName(), videoBasePath, strlen(videoBasePath)) == 0)
             {
                pathOffset = strlen(videoBasePath);
-               
+
                if (*(rec->FileName()+pathOffset) == '/')
                   pathOffset++;
             }
@@ -1836,23 +1838,26 @@ int cUpdate::ScanVideoDirScrapInfo(void) {
 
    // --------------------------
    // get recordings lock
-   
-#if defined (APIVERSNUM) && (APIVERSNUM >= 20301)
-   cRecordingsLock recordingsLock(false);
-   const cRecordings* recordings = recordingsLock.Recordings();
-#else
-   const cRecordings* recordings = &Recordings;
-#endif
-   
-   // --------
-   // iterate 
 
-    for (const cRecording *rec = recordings->First(); rec; rec = recordings->Next(rec)) 
+#if defined (APIVERSNUM) && (APIVERSNUM >= 20301)
+    LOCK_RECORDINGS_READ;
+    const cRecordings* recordings = Recordings;
+
+    // cRecordingsLock recordingsLock(false);
+    // const cRecordings* recordings = recordingsLock.Recordings();
+#else
+    const cRecordings* recordings = &Recordings;
+#endif
+
+   // --------
+   // iterate
+
+    for (const cRecording *rec = recordings->First(); rec; rec = recordings->Next(rec))
     {
         int recStart = rec->Start();
         string recPath = getRecPath(rec);
         int scrapInfoMovieID = 0;
-        int scrapInfoSeriesID = 0;        
+        int scrapInfoSeriesID = 0;
         int scrapInfoEpisodeID = 0;
 
         ReadScrapInfo(rec->FileName(), scrapInfoMovieID, scrapInfoSeriesID, scrapInfoEpisodeID);
@@ -1863,16 +1868,16 @@ int cUpdate::ScanVideoDirScrapInfo(void) {
 #else
         const char* videoBasePath = VideoDirectory;
 #endif
-        
+
         if (strncmp(rec->FileName(), videoBasePath, strlen(videoBasePath)) == 0)
            createMd5(rec->FileName()+strlen(videoBasePath), md5path);
         else
            createMd5(rec->FileName(), md5path);
-        
+
         tRecordingList->clear();
         tRecordingList->setValue("MD5PATH", md5path);
         tRecordingList->setValue("STARTTIME", recStart);
-        
+
         if (tRecordingList->find())
         {
            tRecordingList->clearChanged();
@@ -1880,13 +1885,13 @@ int cUpdate::ScanVideoDirScrapInfo(void) {
            tRecordingList->setValue("SCRINFOSERIESID", scrapInfoSeriesID);
            tRecordingList->setValue("SCRINFOEPISODEID", scrapInfoEpisodeID);
            tRecordingList->setValue("SCRNEW", 1);
-           
+
            if (tRecordingList->getChanges())
               tRecordingList->update();
         }
-        
+
         tRecordingList->reset();
-        
+
         numUpdated++;
     }
 
@@ -1919,7 +1924,7 @@ void cUpdate::ReadScrapInfo(string recDir, int &scrapInfoMovieID, int &scrapInfo
         scrapInfoLines.push_back(line);
     }
     fclose(f);
-    int numLines = scrapInfoLines.size(); 
+    int numLines = scrapInfoLines.size();
     if (numLines < 2) {
         tell(0, "invalid scrapinfo file in %s", recDir.c_str());
         return;
@@ -1977,7 +1982,7 @@ void cUpdate::ReadScrapInfo(string recDir, int &scrapInfoMovieID, int &scrapInfo
 // Cleanup
 //***************************************************************************
 
-int cUpdate::CleanupSeries(void) { 
+int cUpdate::CleanupSeries(void) {
     //read existing series in file system
     vector<string> storedSeries;
     DIR *dir;
@@ -2037,23 +2042,23 @@ int cUpdate::CleanupMovies(void) {
     return deletedMovies;
 }
 
-// check if we should abort execution (thread stoped), also check if we should call waitCondition.TimedWait (so other processes can use the CPU) 
-bool cUpdate::CheckRunningAndWait(void)  { 
+// check if we should abort execution (thread stoped), also check if we should call waitCondition.TimedWait (so other processes can use the CPU)
+bool cUpdate::CheckRunningAndWait(void)  {
   if (Running())
   {
-    // check for intervall to call 
+    // check for intervall to call
     if (GetTimeDiffms(lastWait) > 30)
-    {  
+    {
       // wait/sleep after 50ms
       waitCondition.TimedWait(mutex,3);
       lastWait = GetTimems();
-    }  
+    }
     return true; // not aborted
   }
   else
   {
     return false; // should abort
-  }  
+  }
 }
 
 // get used image size (depends on isPoster/isSeasonPoster and useFixPosterSize)
@@ -2061,28 +2066,28 @@ bool cUpdate::GetUsedImageSize(int originalWidth, int originalHeight, bool isPos
     if (isPoster && (scraper2VdrConfig.useFixPosterSize)) {
         // use fix size for posters
         usedWidth = scraper2VdrConfig.fixPosterWidth;
-        usedHeight = scraper2VdrConfig.fixPosterHeight; 
+        usedHeight = scraper2VdrConfig.fixPosterHeight;
         return true;
     } else {
         if (isSeasonPoster && (scraper2VdrConfig.useFixPosterSize)) {
             // use fix size for season posters
             usedWidth = scraper2VdrConfig.fixSeasonPosterWidth;
-            usedHeight = scraper2VdrConfig.fixSeasonPosterHeight; 
+            usedHeight = scraper2VdrConfig.fixSeasonPosterHeight;
             return true;
         } else {
             // no fixed size for this image, use size values from database
             usedWidth = originalWidth;
             usedHeight = originalHeight;
             return false;
-        }    
-    }    
+        }
+    }
 }
 
 //***************************************************************************
 // Action
 //***************************************************************************
 
-void cUpdate::Action() 
+void cUpdate::Action()
 {
     mutex.Lock();
     loopActive = yes;
@@ -2112,13 +2117,13 @@ void cUpdate::Action()
     int numNewImages2 = 0;
     bool showlog = false;
 
-    while (loopActive && Running()) 
+    while (loopActive && Running())
     {
         int reconnectTimeout; // set by checkConnection
 
         waitCondition.TimedWait(mutex, init ? initSleep*1000 : sleep*1000);
 
-        // at first init the uuid 
+        // at first init the uuid
         //  - read uuid from vdrs table to use the same than the epg2vdr plugin
 
         if (isEmpty(scraper2VdrConfig.uuid))
@@ -2127,11 +2132,11 @@ void cUpdate::Action()
         if (isEmpty(scraper2VdrConfig.uuid))
            continue;
 
-        if (CheckConnection(init, reconnectTimeout) != success) 
+        if (CheckConnection(init, reconnectTimeout) != success)
            continue;
 
-        // auch beim init auf den epgd warten, wenn der gerade busy 
-        // ist müssen die sich User etwas gedulden ;) 
+        // auch beim init auf den epgd warten, wenn der gerade busy
+        // ist müssen die sich User etwas gedulden ;)
 
         if (CheckEpgdBusy())
         {
@@ -2142,17 +2147,17 @@ void cUpdate::Action()
 
         // Update Recordings from Database
 
-        if (forceRecordingUpdate || (time(0) - lastScanNewRecDB > scanNewRecDBFreq) && Running()) 
+        if (forceRecordingUpdate || (time(0) - lastScanNewRecDB > scanNewRecDBFreq) && Running())
         {
             worked++;
             /*numNewRecs = */ ReadRecordings();
             lastScanNewRecDB = time(0);
             forceRecordingUpdate = false;
         }
-        
+
         // Update Events
 
-        if (!scraper2VdrConfig.headless && (forceUpdate || (time(0) - lastScan > scanFreq)) && Running()) 
+        if (!scraper2VdrConfig.headless && (forceUpdate || (time(0) - lastScan > scanFreq)) && Running())
         {
            worked++;
            int numNewEvents = ReadScrapedEvents();
@@ -2163,36 +2168,36 @@ void cUpdate::Action()
               lastScan = time(0);
               init = no;
            }
-           
+
            worked++;
            if (forceFullUpdate) {
                // force loading of all data
                MaxScrspMovies = 0;
                MaxScrspSeries = 0;
            }
-               
+
            // new mode
            showlog = (MaxScrspMovies == 0) || (MaxScrspSeries == 0) || numNewEvents || forceUpdate || (scraper2VdrConfig.loglevel>1); // force log if: first run, found new events, forced update or loglevel > 1
            if (showlog)
                tell(1, "Loading Movies information from Database...");
            now = time(0);
            numValues = ReadMoviesFast(MaxScrspMovies);
-           dur = time(0) - now; 
+           dur = time(0) - now;
            showlog = showlog || (numValues>0);
            if (showlog) {
                tell(1, "Got %d new/updated Movies in %ds from Database (new max scrsp: %ld)", numValues, dur, MaxScrspMovies);
                tell(1, "Loading Movies content from Database...");
            }
-               
+
            now = time(0);
            numValues = ReadMoviesContentFast();
-           dur = time(0) - now; 
+           dur = time(0) - now;
            showlog = showlog || (numValues>0);
            if (showlog) {
                tell(1, "Got %d new/updated Image information in %ds from Database", numValues, dur);
                tell(1, "Loading Series information from Database...");
            }
-                   
+
            now = time(0);
            numValues = ReadSeriesFast(MaxScrspSeries);
            dur = time(0) - now;
@@ -2200,7 +2205,7 @@ void cUpdate::Action()
            if (showlog) {
                tell(1, "Got %d new/updated Series in %ds from Database (new max scrsp: %ld)", numValues, dur, MaxScrspSeries);
                tell(1, "Loading Series content from Database...");
-           }    
+           }
            now = time(0);
            numValues = ReadSeriesContentFast(numNewImages,numNewImages2);
            dur = time(0) - now;
@@ -2208,11 +2213,11 @@ void cUpdate::Action()
            if (showlog) {
                tell(1, "Got %d new/updated Episodes and %d new/updated Image information (including %d possible not available season poster) in %ds from Database", numValues, numNewImages+numNewImages2, numNewImages2, dur);
                tell(1, "Loading Image content from Database...");
-           }    
+           }
            now = time(0);
            ReadSeriesImagesFast(numNewImages,numNewImages2);
            numNewImages = numNewImages + ReadMovieImagesFast();
-           dur = time(0) - now; 
+           dur = time(0) - now;
            showlog = showlog || (numNewImages>0);
            if (showlog)
                tell(1, "Got %d new/updated Images (found %d not available images) in %ds from Database", numNewImages, numNewImages2, dur);
@@ -2221,26 +2226,26 @@ void cUpdate::Action()
            forceUpdate = false;
            forceFullUpdate = false;
         }
-        
+
         // Scan new recordings
 
-        if ((init || forceVideoDirUpdate || (time(0) - lastScanNewRec > scanNewRecFreq)) && Running()) 
+        if ((init || forceVideoDirUpdate || (time(0) - lastScanNewRec > scanNewRecFreq)) && Running())
         {
 //            // ---------------------------------------
 //            // check if any recording has changed ...
-           
+
 // #if defined (APIVERSNUM) && (APIVERSNUM >= 20301)
 //            static cStateKey* recordingsKey = new cStateKey();
 //            cRecordings* recordings = cRecordings::GetRecordingsWrite(*recordingsKey, 500/*ms*/);
 //            int recStateChanged = recordings != 0;
-           
+
 //            if (recordings)
 //               recordingsKey->Remove();
 // #else
 //            static int recState = 0;
 //            int recStateChanged = Recordings.StateChanged(recState);
 // #endif
-           
+
 //            if (recStateChanged)
 //            {
 //               tell(1, "Searching for new recordings because of Recordings State Change...");
@@ -2248,16 +2253,16 @@ void cUpdate::Action()
 //               numNewRecs = ScanVideoDir();
 //               tell(1, "found %d new recordings", numNewRecs);
 //            }
-           
+
            lastScanNewRec = time(0);
            forceVideoDirUpdate = false;
         }
-        
+
         init = no;
-        
+
 //         // Scan Video dir for scrapinfo files
 
-//         if (forceScrapInfoUpdate) 
+//         if (forceScrapInfoUpdate)
 //         {
 //            worked++;
 //            tell(1, "Checking for new or updated scrapinfo files in recordings...");
@@ -2265,7 +2270,7 @@ void cUpdate::Action()
 //            tell(1, "found %d new or updated scrapinfo files", numUpdated);
 //            forceScrapInfoUpdate = false;
 //         }
-        
+
         // Cleanup
 
         if ((time(0) - lastCleanup > cleanUpFreq) && Running())
@@ -2274,16 +2279,16 @@ void cUpdate::Action()
            int seriesDeleted = CleanupSeries();
            int moviesDeleted = CleanupMovies();
 
-           if (seriesDeleted > 0 || moviesDeleted > 0) 
+           if (seriesDeleted > 0 || moviesDeleted > 0)
            {
-              tell(1, "Deleted %d outdated series image folders", seriesDeleted);            
+              tell(1, "Deleted %d outdated series image folders", seriesDeleted);
               tell(1, "Deleted %d outdated movie image folders", moviesDeleted);
            }
-           
+
            lastCleanup = time(0);
         }
-        
-        if (worked && scraper2VdrConfig.loglevel > 2) 
+
+        if (worked && scraper2VdrConfig.loglevel > 2)
            connection->showStat();
 
         worked = no;
