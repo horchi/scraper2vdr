@@ -5,8 +5,8 @@
  *
  */
 
-#define _VERSION     "1.0.5"
-#define VERSION_DATE "11.06.2017"
+#define _VERSION     "1.0.6"
+#define VERSION_DATE "21.12.2017"
 #define DB_API       4
 
 #ifdef GIT_REV
@@ -17,6 +17,9 @@
 
 /*
  * ------------------------------------
+
+2017-12-21: version 1.0.6 (horchi)
+   - change: gcc 7 porting
 
 2017-06-11: version 1.0.5 (horchi)
    - change: Porting to VDR 2.3.7

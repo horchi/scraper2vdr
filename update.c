@@ -15,7 +15,7 @@
 
 #include <sstream>
 
-cUpdate::cUpdate(cScrapManager *manager)
+cUpdate::cUpdate(cScrapManager* manager)
    : cThread("scraper2vdr-update", true)
 {
     connection = NULL;
@@ -83,6 +83,7 @@ int cUpdate::init()
    }
 
    // initialize the dictionary
+
    if (LoadDBDict() != success) return fail;
 
    // init database ...

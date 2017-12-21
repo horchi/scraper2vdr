@@ -133,7 +133,7 @@ bool cPluginScraper2vdr::Start(void)
    //  -> therefore delegate to epg2vdr
 
    if (initExitDbConnection(mieaInit) != success)
-      return fail;
+      return false;
 
    if (update->init() == success)
       update->Start();                 // start plugin thread
