@@ -154,9 +154,8 @@ int cPluginScraper2vdr::initExitDbConnection(MysqlInitExitAction action)
    req.action = action;
 
    cPlugin* epg2vdrPlugin = cPluginManager::GetPlugin("epg2vdr");
-   int epg2vdrPluginUuidService = epg2vdrPlugin && epg2vdrPlugin->Service(MYSQL_INIT_EXIT, 0);
 
-   if (!epg2vdrPluginUuidService)
+   if (!epg2vdrPlugin)
    {
       tell(0, "Warning: Can't find %s to init mysql library, aborting!",
            epg2vdrPlugin ? "service " MYSQL_INIT_EXIT : "plugin epg2vdr");

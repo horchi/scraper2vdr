@@ -814,9 +814,8 @@ int cUpdate::initUuid(int timeout)
       Epg2vdr_UUID_v1_0 req;
 
       cPlugin* epg2vdrPlugin = cPluginManager::GetPlugin("epg2vdr");
-      int epg2vdrPluginUuidService = epg2vdrPlugin && epg2vdrPlugin->Service(EPG2VDR_UUID_SERVICE, 0);
 
-      if (!epg2vdrPluginUuidService)
+      if (!epg2vdrPlugin)
       {
          tell(0, "Warning: Can't find %s to query uuid, retrying in %d seconds",
               epg2vdrPlugin ? "service " EPG2VDR_UUID_SERVICE : "plugin epg2vdr", timeout);
