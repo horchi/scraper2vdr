@@ -264,12 +264,14 @@ Table vdrs
    DBAPI                ""  dbapi                UInt         0 Data,
    LASTUPDATE           ""  lastupd              Int          0 Data,
    NEXTUPDATE           ""  nextupd              Int          0 Data,
+   LASTMERGE            ""  lastmerge            Int          0 Data,
    STATE                ""  state                Ascii       20 Data,
    MASTER               ""  master               Ascii        1 Data,
    IP                   ""  ip                   Ascii       20 Data,
    MAC                  ""  mac                  Ascii       18 Data,
    PID                  ""  pid                  UInt         0 Data filter epgd|httpd|epg2vdr,
    SVDRP                ""  svdrp                UInt         0 Data filter epgd|httpd|epg2vdr,
+   OSD2WEBP             ""  osd2webp             UInt         0 Data,
    TUNERCOUNT           ""  tunercount           UInt         0 Data filter epgd|httpd|epg2vdr,
 
    SHAREINWEB           ""  shareinweb           UInt         1 Data,
@@ -500,6 +502,7 @@ Table recordinglist
    TITLE                ""            title            Ascii      200 Data,
    SHORTTEXT            ""            shorttext        Ascii      300 Data,
    LONGDESCRIPTION      ""            longdescription  MText    25000 Data,
+   DESCRIPTION          ""            description      MText    25000 Data,
    DURATION             ""            duration         UInt         0 Data,
    FSK                  ""            fsk              UInt         1 Data,
 
@@ -549,7 +552,7 @@ Table recordinglist
    SCRSERIESEPISODE     ""            scrseriesepisode  UInt         0 Data,
    SCRMOVIEID           ""            scrmovieid        UInt         0 Data,
 
-   // this fields are written by the scraper plugin, 
+   // this fields are written by the scraper plugin,
    //    the id fields hold the user hint for scraping
 
    SCRINFOMOVIEID       ""            scrinfomovieid    UInt         0 Data,
@@ -585,19 +588,21 @@ Table timers
    INSSP                ""                                       inssp                Int          0 Meta,
    UPDSP                ""                                       updsp                Int          0 Meta,
 
-   EVENTID              "useid"                                  eventid              UInt         0 Data,        
+   EVENTID              "useid"                                  eventid              UInt         0 Data,
    CHANNELID            ""                                       channelid            Ascii       50 Data,
    _STARTTIME           "pre filled start timer for trigger"     _starttime           Int         10 Data,
-   
+
    SOURCE               "like  osd, webif, epgd"                 source               Ascii       40 Data,
-   TYPE                 "'R'ecord, 'V'iew, 'S'earch"             type                 Ascii        1 Data,
+   TYPE                 "'R'ecord, 'V'iew (umschalt)"            type                 Ascii        1 Data,
    STATE                "'D'eleted, 'R'unning, 'F'inished"       state                Ascii        1 Data default u,
    INFO                 "error reason if state is failed"        info                 Ascii      255 Data,
    ACTION               ""                                       action               Ascii        1 Data default a,
    TCCMAILCNT           ""                                       tccmailcnt           UInt         0 Data,
+   WRNCOUNT             ""                                       wrncount             UInt         0 Data,
    RETRYS               ""                                       retrys               UInt         0 Data,
 
    NAMINGMODE           ""                                       namingmode           Int          0 Data,
+   TEMPLATE             ""                                       template             Ascii      100 Data,
    ACTIVE               ""                                       active               UInt         0 Data,
    DAY                  ""                                       day                  Int         10 Data,
    WEEKDAYS             ""                                       weekdays             Int         10 Data,
@@ -633,18 +638,18 @@ Index timers
 }
 
 // ----------------------------------------------------------------
-// Table 
+// Table
 // ----------------------------------------------------------------
 
 Table searchtimers
 {
    ID                   ""                                                     id                   UInt         0 Primary|Autoinc,
-   
+
    INSSP                ""                                                     inssp                Int          0 Meta,
    UPDSP                ""                                                     updsp                Int          0 Meta,
 
    CHANNELIDS           "comma separated list of channleids or empty"          channelids           Ascii      500 Data,
-   CHEXCLUDE            ""                                                     chexclude            UInt         0 Data, 
+   CHEXCLUDE            ""                                                     chexclude            UInt         0 Data,
    CHFORMAT             "HD,SD"                                                chformat             Ascii       50 Data,
 
    NAME                 "Bezeichung des Suchtimers"                            name                 Ascii      100 Data,
@@ -657,7 +662,7 @@ Table searchtimers
    CASESENSITIV         "0,1"                                                  casesensitiv         UInt         0 Data,
 
    REPEATFIELDS         "Bitmaske: 1 title, 2 shorttext, 4 - desc, .."         repeatfields         UInt         0 Data,
-   
+
    // optional EPG Detail options
 
    EPISODENAME          ""                                                     episodename          Ascii      100 Data,
@@ -674,6 +679,7 @@ Table searchtimers
    TYPE                 "'R'ecord, 'V'iew, 'S'earch"                           type                 Ascii        1 Data,
    STATE                "D - Deleted"                                          state                Ascii        1 Data,
    NAMINGMODE           ""                                                     namingmode           Int          0 Data,
+   TEMPLATE             ""                                                     template             Ascii      100 Data,
 
    ACTIVE               "0,1"                                                  active               UInt         0 Data,
    SOURCE               "webif ,osd, ..."                                      source               Ascii       40 Data,
@@ -713,7 +719,7 @@ Table timersdone
    AUTOTIMERID          ""                                    autotimerid          UInt         0 Data,
    AUTOTIMERNAME        "Bezeichung des Suchtimers"           autotimername        Ascii      100 Data,
 
-   // to compare 
+   // to compare
 
    TITLE                ""                                    title                Ascii      200 Data,
    COMPTITLE            ""                                    comptitle            Ascii      200 Data,
@@ -749,7 +755,24 @@ Index TimersDone
 }
 
 // ----------------------------------------------------------------
-// SCRAPER stuff --->
+// Table Messages / Notifications
+// ----------------------------------------------------------------
+
+Table messages
+{
+   ID                   ""                                    id            UInt         0 Primary|Autoinc,
+
+   INSSP                ""                                    inssp         Int          0 Meta,
+   UPDSP                ""                                    updsp         Int          0 Meta,
+
+   TYPE                 "Warning, Info, Error, Fatal"         type          Ascii        1 Data,
+   TITLE                ""                                    title         Ascii      200 Data,
+   STATE                "Read, New, Deleted"                  state         Ascii        1 Data,
+   TEXT                 ""                                    text          MText    20000 Data,
+}
+
+// ----------------------------------------------------------------
+// SCRAPER stuff
 // ----------------------------------------------------------------
 // ----------------------------------------------------------------
 // Table Series

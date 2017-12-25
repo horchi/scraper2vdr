@@ -5,9 +5,9 @@
  *
  */
 
-#define _VERSION     "1.0.7"
-#define VERSION_DATE "22.12.2017"
-#define DB_API       4
+#define _VERSION     "1.0.8"
+#define VERSION_DATE "24.12.2017"
+#define DB_API       5
 
 #ifdef GIT_REV
 #  define VERSION _VERSION "-GIT" GIT_REV
@@ -18,8 +18,11 @@
 /*
  * ------------------------------------
 
+2017-12-25: version 1.0.8 (horchi)
+   - change: Updated DB_API
+
 2017-12-22: version 1.0.7 (horchi)
-   - change: Fixed handlicng of servicve calls
+   - change: Fixed handling of service calls
 
 2017-12-21: version 1.0.6 (horchi)
    - change: gcc 7 porting

@@ -1742,7 +1742,7 @@ int cUpdate::ReadRecordings(void) {
 //
 //***************************************************************************
 
-int cUpdate::ScanVideoDir(void) {
+/*int cUpdate::ScanVideoDir(void) {
    int newRecs = 0;
 
    // --------------------------
@@ -1897,7 +1897,7 @@ int cUpdate::ScanVideoDirScrapInfo(void) {
 
     return numUpdated;
 }
-
+*/
 void cUpdate::ReadScrapInfo(string recDir, int &scrapInfoMovieID, int &scrapInfoSeriesID, int &scrapInfoEpisodeID) {
     stringstream sInfoName("");
     sInfoName << recDir << "/" << scraper2VdrConfig.recScrapInfoName;

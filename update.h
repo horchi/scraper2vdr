@@ -56,7 +56,7 @@ class cUpdate : public cThread  {
         int dbConnected(int force = no) { return connection && (!force || connection->check() == success); };
         int CheckConnection(bool init, int& timeout);
         bool CheckEpgdBusy(void);
-        bool CheckRunningAndWait(void); // check if we should abort execution (thread stoped), also check if we should call waitCondition.TimedWait (so other processes can use the CPU) 
+        bool CheckRunningAndWait(void); // check if we should abort execution (thread stoped), also check if we should call waitCondition.TimedWait (so other processes can use the CPU)
         bool GetUsedImageSize(int originalWidth, int originalHeight, bool isPoster, bool isSeasonPoster, int& usedWidth, int& usedHeight); // get used image size (depends on isPoster/isSeasonPoster and useFixPosterSize)
         void Action(void);
         //EVENTS
@@ -79,8 +79,8 @@ class cUpdate : public cThread  {
         bool ReadMovieImageFast(int movieId, int actorId, int mediaType, cMovieMedia *media, cMovieMedia *mediaThumb); // read real image data from sql-db
         //RECORDINGS
         int ReadRecordings(void);
-        int ScanVideoDir(void);
-        int ScanVideoDirScrapInfo(void);
+      //int ScanVideoDir(void);
+      //int ScanVideoDirScrapInfo(void);
         bool LoadRecording(int eventId, string recName);
         bool ScrapInfoChanged(int scrapInfoMovieID, int scrapInfoSeriesID, int scrapInfoEpisodeID);
         void ReadScrapInfo(string recDir, int &scrapInfoMovieID, int &scrapInfoSeriesID, int &scrapInfoEpisodeID);
