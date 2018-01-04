@@ -5,8 +5,8 @@
  *
  */
 
-#define _VERSION     "1.0.8"
-#define VERSION_DATE "24.12.2017"
+#define _VERSION     "1.0.9"
+#define VERSION_DATE "04.01.2018"
 #define DB_API       5
 
 #ifdef GIT_REV
@@ -17,6 +17,9 @@
 
 /*
  * ------------------------------------
+
+2018-01-04: version 1.0.9 (horchi)
+   - added: service to query plugins environment (the resource path config)
 
 2017-12-25: version 1.0.8 (horchi)
    - change: Updated DB_API

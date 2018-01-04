@@ -204,6 +204,12 @@ bool cPluginScraper2vdr::Service(const char *Id, void *Data) {
     if (Data == NULL)
         return false;
 
+    if (strcmp(Id, "GetEnvironment") == 0) {
+       cEnvironment* call = (cEnvironment*)Data;
+       update->GetEnvironment(call);
+       return true;
+    }
+
     if (strcmp(Id, "GetEventType") == 0) {
         ScraperGetEventType* call = (ScraperGetEventType*) Data;
         if (!call->event && !call->recording)

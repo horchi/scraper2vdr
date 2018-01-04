@@ -136,6 +136,7 @@ class cUpdate : public cThread  {
         // void TriggerCleanRecordingsDB(void);
         void ForceFullUpdate(void);
         void ForceReconnect(void); // force DB reconnect (e.g. after changing Host/DB/User/Port)
+        int GetEnvironment(cEnvironment* env);
 };
 
 //***************************************************************************

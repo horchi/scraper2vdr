@@ -109,6 +109,15 @@ cUpdate::~cUpdate() {
 cDbFieldDef imageSizeDef("MEDIACONTENT", "media_content", cDBS::ffUInt, 0, cDBS::ftData);
 cDbFieldDef uuIDDef("VDRUUID", "vdruuid", cDBS::ffAscii, 40, cDBS::ftData);
 
+int cUpdate::GetEnvironment(cEnvironment* env)
+{
+   env->basePath = scraper2VdrConfig.imageDir;
+   env->seriesPath = imgPathSeries;
+   env->moviesPath = imgPathMovies;
+
+   return done;
+}
+
 int cUpdate::initDb()
 {
     int status = success;

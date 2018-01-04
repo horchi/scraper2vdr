@@ -13,6 +13,7 @@ enum tvType {
 /*********************************************************************
 * Helper Structures
 *********************************************************************/
+
 class cTvMedia {
 public:
 	cTvMedia(void) {
@@ -72,7 +73,7 @@ public:
 		episodeId = 0;
 	};
 // in
-    const cEvent *event;             // check type for this event 
+    const cEvent *event;             // check type for this event
     const cRecording *recording;     // or for this recording
 //out
     tvType type;                	 //typeSeries or typeMovie
@@ -81,13 +82,24 @@ public:
     int episodeId;
 };
 
+// Data structure for enviromment
+
+class cEnvironment
+{
+   public:
+
+      std::string basePath;
+      std::string seriesPath;
+      std::string moviesPath;
+};
+
 //Data structure for full series and episode information
 class cMovie {
 public:
     cMovie(void) {
         title = "";
         originalTitle = "";
-        tagline = "";    
+        tagline = "";
         overview = "";
         adult = false;
         collectionName = "";
@@ -102,10 +114,10 @@ public:
     };
 //IN
     int movieId;                    // movieId fetched from ScraperGetEventType
-//OUT    
+//OUT
     std::string title;
     std::string originalTitle;
-    std::string tagline;    
+    std::string tagline;
     std::string overview;
     bool adult;
     std::string collectionName;
