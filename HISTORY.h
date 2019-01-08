@@ -5,8 +5,8 @@
  *
  */
 
-#define _VERSION     "1.0.9"
-#define VERSION_DATE "04.01.2018"
+#define _VERSION     "1.0.10"
+#define VERSION_DATE "02.01.2019"
 #define DB_API       5
 
 #ifdef GIT_REV
@@ -17,6 +17,9 @@
 
 /*
  * ------------------------------------
+
+2019-01-02: version 1.0.10 (horchi)
+   - bugfix: Fixed makefile issue (thx to Dietmar)
 
 2018-01-04: version 1.0.9 (horchi)
    - added: service to query plugins environment (the resource path config)

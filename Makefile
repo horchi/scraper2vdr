@@ -161,7 +161,7 @@ dist: $(I18Npo) clean
 clean:
 	@-rm -f $(PODIR)/*.mo $(PODIR)/*.pot
 	@-rm -f $(OBJS) $(DEPFILE) *.so *.tgz core* *~
-	(cd lib && make clean)
+	(cd lib && $(MAKE) clean)
 
 cppchk:
 	cppcheck --template="{file}:{line}:{severity}:{message}" --quiet --force *.c *.h lib/*.c lib/*.h
