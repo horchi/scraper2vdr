@@ -5,8 +5,8 @@
  *
  */
 
-#define _VERSION     "1.0.10"
-#define VERSION_DATE "02.01.2019"
+#define _VERSION     "1.0.11"
+#define VERSION_DATE "28.01.2019"
 #define DB_API       5
 
 #ifdef GIT_REV
@@ -17,6 +17,9 @@
 
 /*
  * ------------------------------------
+
+2019-01-28: version 1.0.11 (horchi)
+   - change: mariadb 10.3 compatibility
 
 2019-01-02: version 1.0.10 (horchi)
    - bugfix: Fixed makefile issue (thx to Dietmar)
