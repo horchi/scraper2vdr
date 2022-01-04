@@ -5,8 +5,8 @@
  *
  */
 
-#define _VERSION     "1.0.11"
-#define VERSION_DATE "28.01.2019"
+#define _VERSION     "1.0.12"
+#define VERSION_DATE "04.01.2022"
 #define DB_API       5
 
 #ifdef GIT_REV
@@ -17,6 +17,9 @@
 
 /*
  * ------------------------------------
+
+2022-01-04: version 1.0.12 (horchi)
+ - change: Removed dependency to mysql-compat package
 
 2019-01-28: version 1.0.11 (horchi)
    - change: mariadb 10.3 compatibility

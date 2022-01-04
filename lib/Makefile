@@ -22,11 +22,11 @@ ifdef USECURL
    LIBOBJS += curl.o configuration.o thread.o
 endif
 
-BASELIBS = -lrt -lz -luuid 
-BASELIBS += $(shell mysql_config --libs_r)
+BASELIBS = -lrt -lz -luuid
+BASELIBS += $(shell $(SQLCFG) --libs_r)
 
 ifdef USECURL
-   BASELIBS += -lcurl 
+   BASELIBS += -lcurl
 endif
 
 ifdef USEEPGS
@@ -51,7 +51,7 @@ ifdef DEBUG
   CFLAGS += -ggdb -O0
 endif
 
-CFLAGS += $(shell mysql_config --include)
+CFLAGS += $(shell $(SQLCFG) --include)
 DEFINES += $(USES)
 
 ifdef USEPYTHON
@@ -68,17 +68,17 @@ $(LIBTARGET).a : $(LIBOBJS)
 tst: test.o lib
 	$(doLink) test.o $(HLIB) -larchive -lcrypto $(BASELIBS) -o $@
 
-demo: demo.o lib 
+demo: demo.o lib
 	$(doLink) demo.o $(HLIB) -larchive -lcrypto $(BASELIBS) -o $@
 
 pytst: pytst.c python.c python.h hlib
-	$(CC) $(CFLAGS) pytst.c python.c -L./lib -lhorchi $(DLIBS) -o pytst 
+	$(CC) $(CFLAGS) pytst.c python.c -L./lib -lhorchi $(DLIBS) -o pytst
 
 clean:
 	rm -f *.o *~ core $(TEST) $(DEMO) $(LIBTARGET).a
 
 cppchk:
-	cppcheck --template="{file}:{line}:{severity}:{message}" --quiet --force *.c *.h 
+	cppcheck --template="{file}:{line}:{severity}:{message}" --quiet --force *.c *.h
 
 %.o: %.c
 	@echo Compile "$(*F)" ...
@@ -103,6 +103,5 @@ json.o       		:  json.c        		 $(HEADER) json.h
 python.o        :  python.c          $(HEADER) python.h
 searchtimer.o     :  searchtimer.c      $(HEADER) searchtimer.h
 
-demo.o       		:  demo.c        		 $(HEADER) 
-test.o       		:  test.c        		 $(HEADER) 
-
+demo.o       		:  demo.c        		 $(HEADER)
+test.o       		:  test.c        		 $(HEADER)

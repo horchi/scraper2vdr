@@ -30,6 +30,12 @@ LOCDIR = $(call PKGCFG,locdir)
 PLGCFG = $(call PKGCFG,plgcfg)
 CONFDEST = $(call PKGCFG,configdir)/plugins/$(PLUGIN)
 
+SQLCFG = mariadb_config
+
+ifdef MYSQL
+  SQLCFG = mysql_config
+endif
+
 #
 TMPDIR ?= /tmp
 
@@ -46,7 +52,7 @@ APIVERSION = $(call PKGCFG,apiversion)
 
 -include $(PLGCFG)
 
-LIBS = $(HLIB) $(shell mysql_config --libs_r) -luuid -lcrypto
+LIBS = $(HLIB) $(shell $(SQLCFG) --libs_r) -luuid -lcrypto
 
 ### The name of the distribution archive:
 
@@ -59,7 +65,7 @@ SOFILE = libvdr-$(PLUGIN).so
 
 ### Includes and Defines (add further entries here):
 
-INCLUDES += $(shell mysql_config --include)
+INCLUDES += $(shell $(SQLCFG) --include)
 
 DEFINES += -DPLUGIN_NAME_I18N='"$(PLUGIN)"' -DLOG_PREFIX='"$(PLUGIN): "'
 DEFINES += -DVDR_PLUGIN -DUSEUUID -DUSEMD5
