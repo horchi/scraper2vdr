@@ -175,5 +175,5 @@ public:
     void Dump(void);
 
    static int toOldMediaType(int mediaType, uint lfn);
-   static int toNewMediaType(int mediaType);
+   static int toNewMediaType(int mediaType, uint& lfn);
 };

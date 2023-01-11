@@ -1332,32 +1332,36 @@ void cUpdate::ReadSeriesImagesFast(int &newImages, int &emptyImages) {
         }
 
         i++;
-        if (GetTimeDiffms(lastLog)>LogPeriode) {
-            tell(1, "Handled %d of %d series (loaded %d new images), continuing...", i, seriesCount, newImages);
-            lastLog = GetTimems();
+
+        if (GetTimeDiffms(lastLog)>LogPeriode)
+        {
+           tell(1, "Handled %d of %d series (loaded %d new images), continuing...", i, seriesCount, newImages);
+           lastLog = GetTimems();
         }
     }
 }
 
 // read real image data from sql-db
 bool cUpdate::ReadSeriesImageFast(int seriesId, int season, int episodeId, int actorId, int mediaType, cTVDBMedia *media, cTVDBMedia *mediaThumb) {
-    bool imageSaved = false;
-    bool forceImageSize;
+    bool imageSaved {false};
+    uint lfn {0};
+    int newMediaType {cTVDBSeries::toNewMediaType(mediaType, lfn)};
 
     tSeriesMedia->clear();
     tSeriesMedia->setValue("SERIESID", seriesId);
     tSeriesMedia->setValue("SEASONNUMBER", season);
     tSeriesMedia->setValue("EPISODEID", episodeId);
     tSeriesMedia->setValue("ACTORID", actorId);
-    tSeriesMedia->setValue("MEDIATYPE", cTVDBSeries::toNewMediaType(mediaType));
-    tSeriesMedia->setValue("LFN", media->lfn);
-    //tell(0,"serie: %d / season: %d / episode: %d / actor: %d / media: %d / pfad: %s",seriesId,season,episodeId,actorId,mediaType,media->path.c_str());
-    int res = selectSeriesImage->find();
-    if (res)
+    tSeriesMedia->setValue("MEDIATYPE", newMediaType);
+    tSeriesMedia->setValue("LFN", (int)lfn);
+
+    // tell(0,"serie: %d / season: %d / episode: %d / actor: %d / media: %d / pfad: %s",seriesId,season,episodeId,actorId,mediaType,media->path.c_str());
+
+    if (selectSeriesImage->find())
     {
         int originalWidth = tSeriesMedia->getIntValue("MEDIAWIDTH");
         int originalHeight = tSeriesMedia->getIntValue("MEDIAHEIGHT");
-        forceImageSize = GetUsedImageSize(originalWidth, originalHeight,
+        bool forceImageSize = GetUsedImageSize(originalWidth, originalHeight,
                                           (mediaType >= msPoster1) && (mediaType <= msPoster3),mediaType == msSeasonPoster,
                                           media->width, media->height);
         int size = imageSize.getIntValue();
@@ -1379,12 +1383,12 @@ bool cUpdate::ReadSeriesImageFast(int seriesId, int season, int episodeId, int a
                             handleThumb, thumbPath, scraper2VdrConfig.thumbHeight);
 
                 media->needrefresh = false; // reset update flag
-                media->mediavalid = true; // we have a image file for this media
+                media->mediavalid = true;   // we have a image file for this media
 
                 if (mediaThumb)
                 {
                     mediaThumb->needrefresh = false;
-                    mediaThumb->mediavalid = true; // we have a image file for this media
+                    mediaThumb->mediavalid = true;   // we have a image file for this media
                 }
 
                 imageSaved = true;
@@ -1395,7 +1399,9 @@ bool cUpdate::ReadSeriesImageFast(int seriesId, int season, int episodeId, int a
             media->needrefresh = false; // reset update flag for empty images also
         }
     }
+
     selectSeriesImage->freeResult();
+
     return imageSaved;
 }
 
@@ -1404,17 +1410,21 @@ bool cUpdate::ReadSeriesImageFast(int seriesId, int season, int episodeId, int a
 //***************************************************************************
 
 // read all movies with event or recording from sql-db
-int cUpdate::ReadMoviesFast(long &maxscrsp) {
-    // try to create directorys first (if not exists)
-    if (!CreateDirectory(scraper2VdrConfig.imageDir))
-        return 0;
-    if (!CreateDirectory(imgPathMovies))
-        return 0;
 
-    cMovieDbMovie *movie;
-    bool isNew = false;
-    int numNew = 0;
-    int i = 0;
+int cUpdate::ReadMoviesFast(long &maxscrsp)
+{
+   // try to create directorys first (if not exists)
+
+   if (!CreateDirectory(scraper2VdrConfig.imageDir))
+      return 0;
+
+   if (!CreateDirectory(imgPathMovies))
+      return 0;
+
+   cMovieDbMovie* movie {};
+   bool isNew = false;
+   int numNew = 0;
+   int i = 0;
 
     vdr_uuid.setValue(scraper2VdrConfig.uuid); // search all recordigs of this vdr uuid
     tMovies->clear();
@@ -1424,7 +1434,9 @@ int cUpdate::ReadMoviesFast(long &maxscrsp) {
 
     lastWait = GetTimems(); // init time for CheckRunningAndWait
     long lastLog = GetTimems(); // init time for logging
-    for (int res = select->find(); res; res = select->fetch() && CheckRunningAndWait()) {
+
+    for (int res = select->find(); res; res = select->fetch() && CheckRunningAndWait())
+    {
         movie = scrapManager->GetMovie(tMovies->getIntValue("MOVIEID"));
         if (!movie)
         {
