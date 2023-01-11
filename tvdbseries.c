@@ -161,7 +161,8 @@ void cTVDBSeries::SetActorThumb(int actorId, int imgWidth, int imgHeight, string
         cTVDBMedia *m;
         if (a->actorThumb) {
             m = a->actorThumb;
-        } else {
+        }
+        else {
             m = new cTVDBMedia();
             a->actorThumb = m;
         }
@@ -185,7 +186,7 @@ int cTVDBSeries::GetActorFirst(cTVDBActor* &actor) {
 }
 
 // get next actor from iterator
-int cTVDBSeries::GetActorNext(cTVDBActor* &actor){
+int cTVDBSeries::GetActorNext(cTVDBActor* &actor) {
     actor = NULL;
     if (actorsIterator != actors.end())
         actorsIterator++;
@@ -569,4 +570,25 @@ int cTVDBSeries::toOldMediaType(int mediaType, uint lfn)
    return msBanner1;
    // msPosterThumb,
    // msSeasonPosterThumb,
+}
+
+int cTVDBSeries::toNewMediaType(int mediaType)
+{
+   switch (mediaType)
+   {
+      case msBanner1: return atBanner;
+      case msBanner2: return atBanner;
+      case msBanner3: return atBanner;
+      case msPoster1: return atPoster;
+      case msPoster2: return atPoster;
+      case msPoster3: return atPoster;
+      case msSeasonPoster: return atPoster;
+      case msFanart1: return atBackground;
+      case msFanart2: return atBackground;
+      case msFanart3: return atBackground;
+      case msEpisodePic: return atEpisode;
+      case msActorThumb: return atActor;
+   }
+
+   return atBanner;
 }

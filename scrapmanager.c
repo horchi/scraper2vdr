@@ -311,8 +311,8 @@ void cScrapManager::AddMovieMedia(cMovieDbMovie *movie, cDbTable* tMovieMedia, s
 	m->mediaType = tMovieMedia->getIntValue("MEDIATYPE");
 	m->width = tMovieMedia->getIntValue("MEDIAWIDTH");
 	m->height = tMovieMedia->getIntValue("MEDIAHEIGHT");
-    m->path = path;
-    movie->InsertMedia(m);
+   m->path = path;
+   movie->InsertMedia(m);
 }
 
 // try to find actor in global movie actor thumbs map

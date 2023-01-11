@@ -174,5 +174,6 @@ public:
     void GetActors(vector<cActor> *a);
     void Dump(void);
 
-    static int toOldMediaType(int mediaType, uint lfn);
+   static int toOldMediaType(int mediaType, uint lfn);
+   static int toNewMediaType(int mediaType);
 };

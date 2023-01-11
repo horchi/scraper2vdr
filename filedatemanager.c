@@ -22,31 +22,31 @@ void cFileDateManager::AddFileValue(string fileName, long lastUpdated, bool used
     map<string, sFileValue>::iterator hit = files.find(fileName);
     if (hit != files.end())
             files.erase(hit); // delete existing entry for this filename
-    files.insert(pair<string, sFileValue>(fileName, v));    
+    files.insert(pair<string, sFileValue>(fileName, v));
 }
 
 // Fill list with values from information file
 bool cFileDateManager::LoadFileDateList(string path, bool used) {
     files.clear(); // clear old values
     curPath = path;
-    
+
     // build filename
     stringstream fPath("");
     fPath << path << "/" << LASTUPDATEDFILENAME;
     string fileName = fPath.str();
     bool fExists = FileExists(fileName,false);
     if (!fExists) {
-//        tell(1,"no %s found in %s",LASTUPDATEDFILENAME,path.c_str()); 
-        return true; // file not available 
+//        tell(1,"no %s found in %s",LASTUPDATEDFILENAME,path.c_str());
+        return true; // file not available
     }
-    
+
     // file available, read all non empty lines
     vector<string> lastupdatedLines;
     FILE *f = fopen(fileName.c_str(), "r");
     if (!f) {
         tell(0, "failed to read %s", fileName.c_str());
         return false;
-    }    
+    }
     cReadLine ReadLine;
     char *line;
     while ((line = ReadLine.Read(f)) != NULL) {
@@ -55,10 +55,10 @@ bool cFileDateManager::LoadFileDateList(string path, bool used) {
     fclose(f);
 
     string newFileName = "", newLastUpdated = "";
-    int numLines = lastupdatedLines.size(); 
+    int numLines = lastupdatedLines.size();
     for (int line=0; line < numLines; line++) {
         lastupdatedLines[line] = trim(lastupdatedLines[line]);
-        
+
         // split at =
         splitstring s(lastupdatedLines[line].c_str());
         vector<string> flds = s.split('=');
@@ -78,13 +78,13 @@ bool cFileDateManager::SaveFileDateList(void) {
     stringstream fPath("");
     fPath << curPath << "/" << LASTUPDATEDFILENAME;
     string fileName = fPath.str();
-    
+
     FILE *f = fopen(fileName.c_str(), "w"); // overwrite current file
     if (!f) {
         tell(0, "failed to write to %s", fileName.c_str());
         return false;
     }
-    
+
     for (map<string, sFileValue>::iterator it = files.begin(); it != files.end(); it++) {
         sFileValue v = it->second;
         if (v.used) {
@@ -92,8 +92,8 @@ bool cFileDateManager::SaveFileDateList(void) {
             fPath.str("");
             fPath << it->first << " = " << v.lastupdated << "\n";
             fputs(fPath.str().c_str(),f);
-        }     
-    }    
+        }
+    }
     fclose(f);
     return true;
 }
@@ -115,12 +115,12 @@ bool cFileDateManager::CheckImageNeedRefresh(string fileName, long lastUpdated) 
         hit->second.used = true;
         return (!fExists) || (hit->second.lastupdated < lastUpdated);
     } else {
-        // new file, check if we can read filedate of existing file     
+        // new file, check if we can read filedate of existing file
         if (fExists)
            fileLastUpdated = fileModTime(fullFileName.c_str());
         AddFileValue(fileName,fileLastUpdated,true); // add with lastupdated from file (if available)
         return fileLastUpdated < lastUpdated;
-    }    
+    }
 }
 
 // same as above, but check if thumbfile exist
@@ -144,7 +144,7 @@ void cFileDateManager::SetLastUpdated(string fileName, long lastUpdated) {
     } else {
         // new file, add to list
         AddFileValue(fileName,lastUpdated,true);
-    }    
+    }
 }
 
 // delete image from list
@@ -152,5 +152,5 @@ void cFileDateManager::DeleteImage(string fileName) {
     map<string, sFileValue>::iterator hit = files.find(fileName);
     if (hit != files.end()) {
         files.erase(hit);
-    }    
+    }
 }
