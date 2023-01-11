@@ -1,5 +1,5 @@
 /*
- * common.c: 
+ * common.c:
  *
  * See the README file for copyright information and how to reach the author.
  *
@@ -39,9 +39,9 @@ cMyMutex logMutex;
 // Tell
 //***************************************************************************
 
-const char* getLogPrefix() 
-{ 
-   return logPrefix; 
+const char* getLogPrefix()
+{
+   return logPrefix;
 }
 
 void tell(int eloquence, const char* format, ...)
@@ -71,7 +71,7 @@ void tell(int eloquence, const char* format, ...)
       snprintf(t, sizeBuffer, "%s", getLogPrefix());
 
    vsnprintf(t+strlen(t), sizeBuffer-strlen(t), format, ap);
-   
+
    strReplace(t, '\n', '$');
 
    if (cEpgConfig::logstdout)
@@ -80,14 +80,14 @@ void tell(int eloquence, const char* format, ...)
       timeval tp;
 
       gettimeofday(&tp, 0);
-      
+
       tm* tm = localtime(&tp.tv_sec);
-      
+
       sprintf(buf,"%2.2d:%2.2d:%2.2d,%3.3ld ",
-              tm->tm_hour, tm->tm_min, tm->tm_sec, 
+              tm->tm_hour, tm->tm_min, tm->tm_sec,
               tp.tv_usec / 1000);
 
-      printf("%s %s\n", buf, t);     
+      printf("%s %s\n", buf, t);
    }
    else
       syslog(LOG_ERR, "%s", t);
@@ -176,7 +176,7 @@ double usNow()
 {
    struct timeval tp;
 
-   gettimeofday(&tp, 0); 
+   gettimeofday(&tp, 0);
 
    return tp.tv_sec * 1000000.0 + tp.tv_usec;
 }
@@ -208,7 +208,7 @@ void toUpper(std::string& str)
    for (int ps = 0; ps < lenSrc; ps += csSrc)
    {
       csSrc = std::max(mblen(&s[ps], lenSrc-ps), 1);
-      
+
       if (csSrc == 1)
          *d++ = toupper(s[ps]);
       else if (csSrc == 2 && s[ps] == (char)0xc3 && s[ps+1] >= (char)0xa0)
@@ -243,7 +243,7 @@ const char* toCase(Case cs, char* str)
    for (int ps = 0; ps < lenSrc; ps += csSrc)
    {
       csSrc = std::max(mblen(&s[ps], lenSrc-ps), 1);
-      
+
       if (csSrc == 1)
          s[ps] = cs == cUpper ? toupper(s[ps]) : tolower(s[ps]);
       else if (csSrc == 2 && s[ps] == (char)0xc3 && s[ps+1] >= (char)0xa0)
@@ -271,7 +271,7 @@ void removeChars(std::string& str, const char* ignore)
    char* d = dest;
 
    int csSrc;  // size of character
-   int csIgn;  // 
+   int csIgn;  //
 
    for (int ps = 0; ps < lenSrc; ps += csSrc)
    {
@@ -313,7 +313,7 @@ void removeCharsExcept(std::string& str, const char* except)
    char* d = dest;
 
    int csSrc;  // size of character
-   int csIgn;  // 
+   int csIgn;  //
 
    for (int ps = 0; ps < lenSrc; ps += csSrc)
    {
@@ -360,8 +360,8 @@ void removeWord(std::string& pattern, std::string word)
 
 void prepareCompressed(std::string& pattern)
 {
-   // const char* ignore = " (),.;:-_+*!#?=&%$<>§/'`´@~\"[]{}"; 
-   const char* notignore = "ABCDEFGHIJKLMNOPQRSTUVWXYZßÖÄÜöäü0123456789"; 
+   // const char* ignore = " (),.;:-_+*!#?=&%$<>§/'`´@~\"[]{}";
+   const char* notignore = "ABCDEFGHIJKLMNOPQRSTUVWXYZßÖÄÜöäü0123456789";
 
    toUpper(pattern);
    removeWord(pattern, " TEIL ");
@@ -381,12 +381,12 @@ int rangeFrom(const char* s)
 int rangeTo(const char* s)
 {
    int to = INT_MAX;
-   
+
    const char* p = strchr(s, '-');
 
    if (p && *(p+1))
       to = atoi(p+1);
-   
+
    return to;
 }
 
@@ -400,12 +400,12 @@ char* lTrim(char* buf)
    {
       char *tp = buf;
 
-      while (*tp && strchr("\n\r\t ",*tp)) 
+      while (*tp && strchr("\n\r\t ",*tp))
          tp++;
 
       memmove(buf, tp, strlen(tp) +1);
    }
-   
+
    return buf;
 }
 
@@ -419,12 +419,12 @@ char* rTrim(char* buf)
    {
       char *tp = buf + strlen(buf);
 
-      while (tp >= buf && strchr("\n\r\t ",*tp)) 
+      while (tp >= buf && strchr("\n\r\t ",*tp))
          tp--;
 
       *(tp+1) = 0;
    }
-   
+
    return buf;
 }
 
@@ -441,8 +441,8 @@ std::string strReplace(const std::string& what, const std::string& with, const s
 {
    std::string str = subject;
    size_t pos = 0;
-   
-   while((pos = str.find(what, pos)) != std::string::npos) 
+
+   while((pos = str.find(what, pos)) != std::string::npos)
    {
       str.replace(pos, what.length(), with);
       pos += with.length();
@@ -505,9 +505,9 @@ std::string l2pTime(time_t t, const char* format)
 {
    char txt[100];
    tm* tmp = localtime(&t);
-   
+
    strftime(txt, sizeof(txt), format, tmp);
-   
+
    return std::string(txt);
 }
 
@@ -515,9 +515,9 @@ std::string l2pDate(time_t t)
 {
    char txt[30];
    tm* tmp = localtime(&t);
-   
+
    strftime(txt, sizeof(txt), "%d.%m.%Y", tmp);
-   
+
    return std::string(txt);
 }
 
@@ -533,9 +533,9 @@ std::string l2HttpTime(time_t t)
    static const char *const days[] =
       { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
 
-   static const char *const mons[] = 
+   static const char *const mons[] =
       { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
-   
+
    gmtime_r(&t, &now);
 
    sprintf(date, "%3s, %02u %3s %04u %02u:%02u:%02u GMT",
@@ -543,8 +543,8 @@ std::string l2HttpTime(time_t t)
            (unsigned int)now.tm_mday,
            mons[now.tm_mon % 12],
            (unsigned int)(1900 + now.tm_year),
-           (unsigned int)now.tm_hour, 
-           (unsigned int)now.tm_min, 
+           (unsigned int)now.tm_hour,
+           (unsigned int)now.tm_min,
            (unsigned int)now.tm_sec);
 
    return std::string(date);
@@ -586,16 +586,16 @@ int weekdayOf(time_t t)
 // To Weekday Name
 //***************************************************************************
 
-const char* toWeekdayName(uint day) 
+const char* toWeekdayName(uint day)
 {
-   const char* dayNames[] = 
-   { 
-      "Monday", 
-      "Tuesday", 
-      "Wednesday", 
-      "Thursday", 
-      "Friday", 
-      "Saturday", 
+   const char* dayNames[] =
+   {
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
       "Sunday",
       0
    };
@@ -636,7 +636,7 @@ int l2hhmm(time_t t)
    struct tm tm;
 
    localtime_r(&t, &tm);
-   
+
    return  tm.tm_hour * 100 + tm.tm_min;
 }
 
@@ -665,7 +665,7 @@ time_t midnightOf(time_t t)
 std::string ms2Dur(uint64_t t)
 {
    char txt[30];
-   
+
    int s = t / 1000;
    int ms = t % 1000;
 
@@ -673,7 +673,7 @@ std::string ms2Dur(uint64_t t)
       snprintf(txt, sizeof(txt), "%d.%03d seconds", s, ms);
    else
       snprintf(txt, sizeof(txt), "%d ms", ms);
-   
+
    return std::string(txt);
 }
 
@@ -758,7 +758,7 @@ int loadFromFile(const char* infile, MemoryStruct* data)
 
       if (strcmp(sfx, "gz") == 0)
          sprintf(data->contentEncoding, "gzip");
-      
+
       if (strcmp(sfx, "js") == 0)
          sprintf(data->contentType, "application/javascript");
 
@@ -830,7 +830,7 @@ int isMember(const char** list, const char* item)
 }
 
 //***************************************************************************
-// 
+//
 //***************************************************************************
 
 char* sstrcpy(char* dest, const char* src, int max)
@@ -840,7 +840,7 @@ char* sstrcpy(char* dest, const char* src, int max)
 
    strncpy(dest, src, max);
    dest[max-1] = 0;
-   
+
    return dest;
 }
 
@@ -899,7 +899,7 @@ int folderExists(const char* path)
 
 int fileExists(const char* path)
 {
-   return access(path, F_OK) == 0; 
+   return access(path, F_OK) == 0;
 }
 
 int createLink(const char* link, const char* dest, int force)
@@ -908,9 +908,9 @@ int createLink(const char* link, const char* dest, int force)
    {
       // may be the link exists and point to a wrong or already deleted destination ...
       //   .. therefore we delete the link at first
-      
+
       unlink(link);
-      
+
       if (symlink(dest, link) != 0)
       {
          tell(0, "Failed to create symlink '%s', error was '%s'", link, strerror(errno));
@@ -932,12 +932,12 @@ int removeFile(const char* filename)
    if (unlink(filename) != 0)
    {
       tell(0, "Can't remove file '%s', '%s'", filename, strerror(errno));
-      
+
       return 1;
    }
 
    tell(3, "Removed %s '%s'", lnk ? "link" : "file", filename);
-   
+
    return 0;
 }
 
@@ -948,11 +948,11 @@ int removeFile(const char* filename)
 int chkDir(const char* path)
 {
    struct stat fs;
-   
+
    if (stat(path, &fs) != 0 || !S_ISDIR(fs.st_mode))
    {
       tell(0, "Creating directory '%s'", path);
-      
+
       if (mkdir(path, ACCESSPERMS) == -1)
       {
          tell(0, "Can't create directory '%s'", strerror(errno));
@@ -975,12 +975,12 @@ xsltStylesheetPtr loadXSLT(const char* name, const char* path, int utf8)
    char* xsltfile;
 
    asprintf(&xsltfile, "%s/%s-%s.xsl", path, name, utf8 ? "utf-8" : "iso-8859-1");
-   
+
    if ((stylesheet = xsltParseStylesheetFile((const xmlChar*)xsltfile)) == 0)
       tell(0, "Error: Can't load xsltfile %s", xsltfile);
    else
       tell(0, "Info: Stylesheet '%s' loaded", xsltfile);
-      
+
    free(xsltfile);
    return stylesheet;
 }
@@ -1004,7 +1004,7 @@ int gunzip(MemoryStruct* zippedData, MemoryStruct* unzippedData)
 
    // determining the size in this way is taken from the sources of the gzip utility.
 
-   memcpy(&unzippedData->size, zippedData->memory + zippedData->size -4, 4); 
+   memcpy(&unzippedData->size, zippedData->memory + zippedData->size -4, 4);
    unzippedData->memory = (char*)malloc(unzippedData->size);
 
    // zlib initialisation
@@ -1091,13 +1091,13 @@ int gzip(Bytef* dest, uLongf* destLen, const Bytef* source, uLong sourceLen)
     {
        res = deflate(&stream, Z_FINISH);
 
-       if (res != Z_STREAM_END) 
+       if (res != Z_STREAM_END)
        {
           deflateEnd(&stream);
           res = res == Z_OK ? Z_BUF_ERROR : res;
        }
     }
-       
+
     if (res == Z_STREAM_END)
     {
        *destLen = stream.total_out;
@@ -1110,9 +1110,9 @@ int gzip(Bytef* dest, uLongf* destLen, const Bytef* source, uLong sourceLen)
     return res == Z_OK ? success : fail;
 }
 
-ulong gzipBound(ulong size)  
-{ 
-   return compressBound(size); 
+ulong gzipBound(ulong size)
+{
+   return compressBound(size);
 }
 
 //*************************************************************************
@@ -1164,7 +1164,7 @@ const char* getFirstIp(int skipLo)
    static char host[NI_MAXHOST] = "";
    static char netMask[INET6_ADDRSTRLEN] = "";
 
-   if (getifaddrs(&ifaddr) == -1) 
+   if (getifaddrs(&ifaddr) == -1)
    {
       tell(0, "getifaddrs() failed");
       return "";
@@ -1172,16 +1172,16 @@ const char* getFirstIp(int skipLo)
 
    // walk through linked interface list
 
-   for (ifa = ifaddr; ifa; ifa = ifa->ifa_next) 
+   for (ifa = ifaddr; ifa; ifa = ifa->ifa_next)
    {
       if (!ifa->ifa_addr)
          continue;
-      
+
       // For an AF_INET interfaces
 
-      if (ifa->ifa_addr->sa_family == AF_INET) //  || ifa->ifa_addr->sa_family == AF_INET6) 
+      if (ifa->ifa_addr->sa_family == AF_INET) //  || ifa->ifa_addr->sa_family == AF_INET6)
       {
-         int res = getnameinfo(ifa->ifa_addr, 
+         int res = getnameinfo(ifa->ifa_addr,
                                (ifa->ifa_addr->sa_family == AF_INET) ? sizeof(struct sockaddr_in) :
                                sizeof(struct sockaddr_in6),
                                host, NI_MAXHOST, 0, 0, NI_NUMERICHOST);
@@ -1196,13 +1196,13 @@ const char* getFirstIp(int skipLo)
 
          if (skipLo && strcmp(host, "127.0.0.1") == 0)
             continue;
-         
+
          if (ifa->ifa_netmask && ifa->ifa_netmask->sa_family == AF_INET)
          {
             void* p = &((struct sockaddr_in*)ifa->ifa_netmask)->sin_addr;
             inet_ntop(ifa->ifa_netmask->sa_family, p, netMask, sizeof(netMask));
          }
-         
+
          tell(5, "%-8s %-15s %s; netmask '%s'", ifa->ifa_name, host,
               ifa->ifa_addr->sa_family == AF_INET   ? " (AF_INET)" :
               ifa->ifa_addr->sa_family == AF_INET6  ? " (AF_INET6)" : "",
@@ -1227,7 +1227,7 @@ const char* getInterfaces()
 
    *buffer = 0;
 
-   if (getifaddrs(&ifaddr) == -1) 
+   if (getifaddrs(&ifaddr) == -1)
    {
       tell(0, "getifaddrs() failed");
       return "";
@@ -1235,20 +1235,20 @@ const char* getInterfaces()
 
    // walk through linked interface list
 
-   for (ifa = ifaddr; ifa; ifa = ifa->ifa_next) 
+   for (ifa = ifaddr; ifa; ifa = ifa->ifa_next)
    {
       if (!ifa->ifa_addr)
          continue;
-      
+
       // For an AF_INET interfaces
 
-      if (ifa->ifa_addr->sa_family == AF_INET) //  || ifa->ifa_addr->sa_family == AF_INET6) 
-      {        
-         int res = getnameinfo(ifa->ifa_addr, 
+      if (ifa->ifa_addr->sa_family == AF_INET) //  || ifa->ifa_addr->sa_family == AF_INET6)
+      {
+         int res = getnameinfo(ifa->ifa_addr,
                                (ifa->ifa_addr->sa_family == AF_INET) ? sizeof(struct sockaddr_in) :
                                sizeof(struct sockaddr_in6),
                                host, NI_MAXHOST, 0, 0, NI_NUMERICHOST);
-         
+
          if (res)
          {
             tell(0, "getnameinfo() failed: %s, skipping interface '%s'", gai_strerror(res), ifa->ifa_name);
@@ -1261,7 +1261,7 @@ const char* getInterfaces()
 
    freeifaddrs(ifaddr);
 
-   return buffer;   
+   return buffer;
 }
 
 //***************************************************************************
@@ -1291,7 +1291,7 @@ const char* getFirstInterface()
 
       // For an AF_INET interfaces
 
-      if (ifa->ifa_addr->sa_family == AF_INET) //  || ifa->ifa_addr->sa_family == AF_INET6) 
+      if (ifa->ifa_addr->sa_family == AF_INET) //  || ifa->ifa_addr->sa_family == AF_INET6)
       {
          int res = getnameinfo(ifa->ifa_addr,
                                (ifa->ifa_addr->sa_family == AF_INET) ? sizeof(struct sockaddr_in) :
@@ -1315,19 +1315,19 @@ const char* getFirstInterface()
 }
 
 //***************************************************************************
-// Get IP Of 
+// Get IP Of
 //***************************************************************************
 
 const char* getIpOf(const char* device)
 {
    struct ifreq ifr;
    int fd;
-   
+
    if (isEmpty(device))
       return getFirstIp();
 
    fd = socket(AF_INET, SOCK_DGRAM, 0);
-   
+
    ifr.ifr_addr.sa_family = AF_INET;
    strncpy(ifr.ifr_name, device, IFNAMSIZ-1);
 
@@ -1340,7 +1340,7 @@ const char* getIpOf(const char* device)
 }
 
 //***************************************************************************
-// Get Mask Of 
+// Get Mask Of
 //***************************************************************************
 
 const char* getMaskOf(const char* device)
@@ -1366,7 +1366,7 @@ const char* getMaskOf(const char* device)
 
       tell(5, "netmask for device '%s' is '%s'", device, netMask);
   }
-        
+
   return netMask;
 }
 
@@ -1406,20 +1406,20 @@ const char* bcastAddressOf(const char* ipStr, const char* maskStr)
 const char* getMacOf(const char* device)
 {
    enum { macTuppel = 6 };
-   
+
    static char mac[20+TB];
    struct ifreq ifr;
    int s;
-     
+
    s = socket(AF_INET, SOCK_DGRAM, 0);
    strcpy(ifr.ifr_name, device);
    ioctl(s, SIOCGIFHWADDR, &ifr);
-   
+
    for (int i = 0; i < macTuppel; i++)
       sprintf(&mac[i*3],"%02x:",((unsigned char*)ifr.ifr_hwaddr.sa_data)[i]);
-   
+
    mac[17] = 0;
-   
+
    return mac;
 }
 
@@ -1455,7 +1455,7 @@ int unzip(const char* file, const char* filter, char*& buffer, int& size, char* 
       return 1;
    }
 
-   while (archive_read_next_header(a, &entry) == ARCHIVE_OK) 
+   while (archive_read_next_header(a, &entry) == ARCHIVE_OK)
    {
       strcpy(entryName, archive_entry_pathname(entry));
 
@@ -1471,7 +1471,7 @@ int unzip(const char* file, const char* filter, char*& buffer, int& size, char* 
 
             buffer = (char*)realloc(buffer, bufSize+1);
          }
-         
+
          buffer[size] = 0;
 
          break;
@@ -1483,7 +1483,7 @@ int unzip(const char* file, const char* filter, char*& buffer, int& size, char* 
    if (r != ARCHIVE_OK)
    {
       size = 0;
-      free(buffer);      
+      free(buffer);
       return fail;
    }
 
@@ -1599,7 +1599,7 @@ int rep(const char* string, const char* expression, Option options)
   return rep(string, expression, tmpA, tmpB, options);
 }
 
-int rep(const char* string, const char* expression, const char*& s_location, 
+int rep(const char* string, const char* expression, const char*& s_location,
         Option options)
 {
   const char* tmpA;
@@ -1608,7 +1608,7 @@ int rep(const char* string, const char* expression, const char*& s_location,
 }
 
 
-int rep(const char* string, const char* expression, const char*& s_location, 
+int rep(const char* string, const char* expression, const char*& s_location,
         const char*& e_location, Option options)
 {
    regex_t reg;
@@ -1627,17 +1627,17 @@ int rep(const char* string, const char* expression, const char*& s_location,
      opt = opt | REG_EXTENDED;
    if (options & repIgnoreCase)
      opt = opt | REG_ICASE;
- 
+
    if (regcomp( &reg, expression, opt) != 0)
-     return fail;  
+     return fail;
 
    // Suchen des ersten Vorkommens von reg in string
 
    status = regexec(&reg, string, 1, &rm, 0);
    regfree(&reg);
 
-   if (status != 0) 
-     return fail; 
+   if (status != 0)
+     return fail;
 
    // Suche erfolgreich =>
    // Setzen der ermittelten Start- und Endpositionen
@@ -1645,7 +1645,7 @@ int rep(const char* string, const char* expression, const char*& s_location,
    s_location = (char*)(string + rm.rm_so);
    e_location = (char*)(string + rm.rm_eo);
 
-   return success; 
+   return success;
 }
 
 //***************************************************************************
@@ -1656,7 +1656,7 @@ LogDuration::LogDuration(const char* aMessage, int aLogLevel)
 {
    logLevel = aLogLevel;
    strcpy(message, aMessage);
-   
+
    // at last !
 
    durationStart = cMyTimeMs::Now();
@@ -1697,6 +1697,78 @@ const char* getUniqueId()
 
 #ifdef USEMD5
 
+#include <openssl/evp.h>
+
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+
+int createMd5(const char* buf, md5* md5)
+{
+   EVP_MD_CTX* mdctx;
+   unsigned char* md5_digest {};
+   unsigned int md5_digest_len = EVP_MD_size(EVP_md5());
+
+   mdctx = EVP_MD_CTX_new();
+   EVP_DigestInit_ex(mdctx, EVP_md5(), NULL);
+
+   EVP_DigestUpdate(mdctx, buf, strlen(buf));
+
+   md5_digest = (unsigned char*)OPENSSL_malloc(md5_digest_len);
+   EVP_DigestFinal_ex(mdctx, md5_digest, &md5_digest_len);
+   EVP_MD_CTX_free(mdctx);
+
+   for (uint n = 0; n < md5_digest_len; n++)
+      sprintf(md5+2*n, "%02x", md5_digest[n]);
+
+   md5[sizeMd5] = 0;
+
+   return done;
+}
+
+int createMd5OfFile(const char* path, const char* name, md5* md5)
+{
+   EVP_MD_CTX* mdctx;
+   unsigned char* md5_digest;
+   unsigned int md5_digest_len = EVP_MD_size(EVP_md5());
+
+   char* file {};
+   asprintf(&file, "%s/%s", path, name);
+
+   FILE* f {};
+
+   if (!(f = fopen(file, "r")))
+   {
+      tell(0, "Fatal: Cannot build MD5 of '%s'; Error was '%s'", file, strerror(errno));
+      free(file);
+      return fail;
+   }
+
+   free(file);
+
+   char buffer[1000];
+   int nread = 0;
+
+   mdctx = EVP_MD_CTX_new();
+   EVP_DigestInit_ex(mdctx, EVP_md5(), NULL);
+
+   while ((nread = fread(buffer, 1, 1000, f)) > 0)
+      EVP_DigestUpdate(mdctx, buffer, nread);
+
+   fclose(f);
+
+   md5_digest = (unsigned char*)OPENSSL_malloc(md5_digest_len);
+   EVP_DigestFinal_ex(mdctx, md5_digest, &md5_digest_len);
+   EVP_MD_CTX_free(mdctx);
+
+   for (uint n = 0; n < md5_digest_len; n++)
+      sprintf(md5+2*n, "%02x", md5_digest[n]);
+
+   md5[sizeMd5] = 0;
+
+   return success;
+}
+
+#else
+
 int createMd5(const char* buf, md5* md5)
 {
    MD5_CTX c;
@@ -1724,7 +1796,7 @@ int createMd5OfFile(const char* path, const char* name, md5* md5)
    char* file = 0;
 
    asprintf(&file, "%s/%s", path, name);
-   
+
    if (!(f = fopen(file, "r")))
    {
       tell(0, "Fatal: Cannot build MD5 of '%s'; Error was '%s'", file, strerror(errno));
@@ -1734,15 +1806,15 @@ int createMd5OfFile(const char* path, const char* name, md5* md5)
 
    free(file);
 
-   MD5_Init(&c);   
-   
+   MD5_Init(&c);
+
    while ((nread = fread(buffer, 1, 1000, f)) > 0)
       MD5_Update(&c, buffer, nread);
-   
+
    fclose(f);
 
    MD5_Final(out, &c);
-   
+
    for (int n = 0; n < MD5_DIGEST_LENGTH; n++)
       sprintf(md5+2*n, "%02x", out[n]);
 
@@ -1750,6 +1822,7 @@ int createMd5OfFile(const char* path, const char* name, md5* md5)
 
    return success;
 }
+#endif // OPENSSL_NO_DEPRECATED_3_0
 
 #endif // USEMD5
 
@@ -1779,16 +1852,16 @@ int urlUnescape(char* dst, const char* src, int normalize)
 //    if (curl_global_init(CURL_GLOBAL_ALL) != 0)
 //    {
 //       tell(0, "Error, something went wrong with curl_global_init()");
-      
+
 //       return fail;
 //    }
-   
+
 //    curl = curl_easy_init();
-   
+
 //    if (!curl)
 //    {
 //       tell(0, "Error, unable to get handle from curl_easy_init()");
-      
+
 //       return fail;
 //    }
 
@@ -1808,34 +1881,34 @@ int urlUnescape(char* dst, const char* src, int normalize)
    do {
       ch = *src++;
 
-      if (ch == '%' && isxdigit(a = src[0]) && isxdigit(b = src[1])) 
+      if (ch == '%' && isxdigit(a = src[0]) && isxdigit(b = src[1]))
       {
-         if (a < 'A') 
+         if (a < 'A')
             a -= '0';
-         else if 
+         else if
             (a < 'a') a -= 'A' - 10;
-         else 
+         else
             a -= 'a' - 10;
-         
-         if (b < 'A') 
+
+         if (b < 'A')
             b -= '0';
-         else if (b < 'a') 
+         else if (b < 'a')
             b -= 'A' - 10;
-         else 
+         else
             b -= 'a' - 10;
-         
+
          ch = 16 * a + b;
          src += 2;
       }
-      
-      if (normalize) 
+
+      if (normalize)
       {
-         switch (ch) 
+         switch (ch)
          {
             case '/':                         // compress consecutive slashes and remove slash-dot
-               if (slash_dot_dot < 3) 
+               if (slash_dot_dot < 3)
                {
-                  
+
                   dst -= slash_dot_dot;
                   slash_dot_dot = 1;
                   break;
@@ -1849,7 +1922,7 @@ int urlUnescape(char* dst, const char* src, int normalize)
                // fall-through
 
             case '\0':                        // remove trailing slash-dot-(dot)
-               if (slash_dot_dot > 1) 
+               if (slash_dot_dot > 1)
                {
                   dst -= slash_dot_dot;
 
@@ -1869,7 +1942,7 @@ int urlUnescape(char* dst, const char* src, int normalize)
                break;
 
             case '.':
-               if (slash_dot_dot == 1 || slash_dot_dot == 2) 
+               if (slash_dot_dot == 1 || slash_dot_dot == 2)
                {
                   ++slash_dot_dot;
                   break;
@@ -1883,6 +1956,6 @@ int urlUnescape(char* dst, const char* src, int normalize)
 
       *dst++ = ch;
    } while(ch);
-   
+
    return (dst - org_dst) - 1;
 }
