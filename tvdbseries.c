@@ -67,7 +67,7 @@ cTVDBEpisode *cTVDBSeries::GetEpisode(int episodeId) {
     if (hit == episodes.end())
         return NULL;
     return hit->second;
-}  
+}
 
 void cTVDBSeries::InsertEpisodeImage(int episodeId, int width, int height, string path) {
     map<int, cTVDBEpisode*>::iterator hit = episodes.find(episodeId);
@@ -78,9 +78,10 @@ void cTVDBSeries::InsertEpisodeImage(int episodeId, int width, int height, strin
         m->height = height;
         m->path = path;
         m->mediaType = msEpisodePic;
+        m->lfn = 0;
         m->mediavalid = true; // force true for old functions
         e->episodeImage = m;
-    }    
+    }
 }
 
 // insert/update episode image
@@ -94,11 +95,12 @@ void cTVDBSeries::SetEpisodeImage(int episodeId, int imgWidth, int imgHeight, st
         } else {
             m = new cTVDBMedia();
             e->episodeImage = m;
-        }    
+        }
         m->width = imgWidth;
         m->height = imgHeight;
         m->path = path;
         m->mediaType = msEpisodePic;
+        m->lfn = 0;
         m->needrefresh = needrefresh;
         m->mediavalid = m->mediavalid || !needrefresh; // all media which do not need a refresh should have a image file (if was valid, is stay valid)
     }
@@ -106,12 +108,12 @@ void cTVDBSeries::SetEpisodeImage(int episodeId, int imgWidth, int imgHeight, st
 
 // get first episode (also init episode iterator)
 int cTVDBSeries::GetEpisodeFirst(cTVDBEpisode* &episode) {
-    episode = NULL;  
+    episode = NULL;
     episodesIterator = episodes.begin();
     if (episodesIterator == episodes.end())
         return 0; // no episodes availabe
     episode = episodesIterator->second; // return current episode
-    return 1; 
+    return 1;
 }
 
 // get next episode from iterator
@@ -122,11 +124,11 @@ int cTVDBSeries::GetEpisodeNext(cTVDBEpisode* &episode) {
     if (episodesIterator == episodes.end())
         return 0; // no next availabe
     episode = episodesIterator->second; // return current episode
-    return 1; 
+    return 1;
 }
 
 void cTVDBSeries::InsertActor(cTVDBActor *actor) {
-    actors.insert(pair<int, cTVDBActor*>(actor->id, actor));    
+    actors.insert(pair<int, cTVDBActor*>(actor->id, actor));
 }
 
 cTVDBActor *cTVDBSeries::GetActor(int actorId) {
@@ -148,7 +150,7 @@ void cTVDBSeries::SetActorThumb(int actorId, int imgWidth, int imgHeight, string
         m->needrefresh = false;
         m->mediavalid = true; // force true for old functions
         a->actorThumb = m;
-    }    
+    }
 }
 
 // insert/update actor thumb
@@ -162,7 +164,7 @@ void cTVDBSeries::SetActorThumb(int actorId, int imgWidth, int imgHeight, string
         } else {
             m = new cTVDBMedia();
             a->actorThumb = m;
-        }    
+        }
         m->width = imgWidth;
         m->height = imgHeight;
         m->path = path;
@@ -174,12 +176,12 @@ void cTVDBSeries::SetActorThumb(int actorId, int imgWidth, int imgHeight, string
 
 // get first actor (also init actor iterator)
 int cTVDBSeries::GetActorFirst(cTVDBActor* &actor) {
-    actor = NULL;  
+    actor = NULL;
     actorsIterator = actors.begin();
     if (actorsIterator == actors.end())
         return 0; // no actor availabe
     actor = actorsIterator->second; // return current actor
-    return 1; 
+    return 1;
 }
 
 // get next actor from iterator
@@ -190,20 +192,21 @@ int cTVDBSeries::GetActorNext(cTVDBActor* &actor){
     if (actorsIterator == actors.end())
         return 0; // no next availabe
     actor = actorsIterator->second; // return current actor
-    return 1; 
+    return 1;
 }
 
-void cTVDBSeries::InsertMedia(int mediaType, int imgWidth, int imgHeight, string path, int season) {
-    InsertMedia(mediaType, imgWidth, imgHeight, path, season, false);
+void cTVDBSeries::InsertMedia(int mediaType, int lfn, int imgWidth, int imgHeight, string path, int season) {
+   InsertMedia(mediaType, lfn, imgWidth, imgHeight, path, season, false);
 }
 
 // insert media object
-void cTVDBSeries::InsertMedia(int mediaType, int imgWidth, int imgHeight, string path, int season, bool needrefresh) {
+void cTVDBSeries::InsertMedia(int mediaType, int lfn, int imgWidth, int imgHeight, string path, int season, bool needrefresh) {
     cTVDBMedia *media = new cTVDBMedia();
     media->width = imgWidth;
     media->height = imgHeight;
     media->path = path;
     media->mediaType = mediaType;
+    media->lfn = lfn;
     media->needrefresh = needrefresh;
     media->mediavalid = !needrefresh; // all media which do not need a refresh should have a image file
     switch (mediaType) {
@@ -233,38 +236,38 @@ void cTVDBSeries::InsertMedia(int mediaType, int imgWidth, int imgHeight, string
             break;
         default:
         break;
-    }   
+    }
 }
 
 // try to find media of given type
-cTVDBMedia *cTVDBSeries::GetMedia(int mediaType, int season) {
+cTVDBMedia *cTVDBSeries::GetMedia(int mediaType, int lfn, int season) {
     switch (mediaType) {
         case msPoster1:
         case msPoster2:
         case msPoster3:
             for (vector<cTVDBMedia*>::iterator it = posters.begin(); it != posters.end(); it++) {
                 cTVDBMedia *mStored = *it;
-                if (mStored->mediaType == mediaType)
+                if (mStored->mediaType == mediaType && mStored->lfn == lfn)
                     return mStored;
-            }    
+            }
             break;
         case msFanart1:
         case msFanart2:
         case msFanart3:
             for (vector<cTVDBMedia*>::iterator it = fanart.begin(); it != fanart.end(); it++) {
                 cTVDBMedia *mStored = *it;
-                if (mStored->mediaType == mediaType)
+                if (mStored->mediaType == mediaType && mStored->lfn == lfn)
                     return mStored;
-            }    
+            }
             break;
         case msBanner1:
         case msBanner2:
         case msBanner3:
             for (vector<cTVDBMedia*>::iterator it = banners.begin(); it != banners.end(); it++) {
                 cTVDBMedia *mStored = *it;
-                if (mStored->mediaType == mediaType)
+                if (mStored->mediaType == mediaType && mStored->lfn == lfn)
                     return mStored;
-            }    
+            }
             break;
         case msSeasonPoster:
             {
@@ -285,7 +288,7 @@ cTVDBMedia *cTVDBSeries::GetMedia(int mediaType, int season) {
             break;
         default:
         break;
-    }   
+    }
     return NULL; // not found
 }
 
@@ -297,8 +300,8 @@ int cTVDBSeries::GetSeasonPosterFirst(int &season, cTVDBMedia* &media) {
     if (seasonPostersIterator == seasonPosters.end())
         return 0; // no season poster availabe
     media = seasonPostersIterator->second; // return current season poster
-    season = seasonPostersIterator->first; // return current season number 
-    return 1; 
+    season = seasonPostersIterator->first; // return current season number
+    return 1;
 }
 
 // get season poster from iterator
@@ -310,8 +313,8 @@ int cTVDBSeries::GetSeasonPosterNext(int &season, cTVDBMedia* &media) {
     if (seasonPostersIterator == seasonPosters.end())
         return 0; // no next availabe
     media = seasonPostersIterator->second; // return current season poster
-    season = seasonPostersIterator->first; // return current season number 
-    return 1; 
+    season = seasonPostersIterator->first; // return current season number
+    return 1;
 }
 
 // delete season poster and thumb
@@ -348,7 +351,7 @@ void cTVDBSeries::GetEpisode(int episodeId, cEpisode *e) {
             e->episodeImage.path = eStored->episodeImage->path;
             e->episodeImage.width = eStored->episodeImage->width;
             e->episodeImage.height = eStored->episodeImage->height;
-        }    
+        }
     }
 }
 
@@ -358,11 +361,11 @@ void cTVDBSeries::GetPosters(vector<cTvMedia> *p) {
         if (mStored->mediavalid) {
             // only use valid images
             cTvMedia m;
-            m.path = mStored->path;        
+            m.path = mStored->path;
             m.width = mStored->width;
             m.height = mStored->height;
             p->push_back(m);
-        }    
+        }
     }
 }
 
@@ -374,7 +377,7 @@ bool cTVDBSeries::GetPoster(cTvMedia *p) {
             p->width = posters[0]->width;
             p->height = posters[0]->height;
             return true;
-        }    
+        }
     }
     return false;
 }
@@ -387,7 +390,7 @@ bool cTVDBSeries::GetPosterThumb(cTvMedia *p) {
             p->width = posterThumb->width;
             p->height = posterThumb->height;
             return true;
-        }    
+        }
     }
     return false;
 }
@@ -398,11 +401,11 @@ void cTVDBSeries::GetBanners(vector<cTvMedia> *b) {
         if (bStored->mediavalid) {
             // only use valid images
             cTvMedia m;
-            m.path = bStored->path;        
+            m.path = bStored->path;
             m.width = bStored->width;
             m.height = bStored->height;
             b->push_back(m);
-        }    
+        }
     }
 }
 
@@ -420,7 +423,7 @@ bool cTVDBSeries::GetRandomBanner(cTvMedia *b) {
         b->height = bStored->height;
         return true;
     }
-    return false;    
+    return false;
 }
 
 void cTVDBSeries::GetFanart(vector<cTvMedia> *f) {
@@ -429,11 +432,11 @@ void cTVDBSeries::GetFanart(vector<cTvMedia> *f) {
         if (fStored->mediavalid) {
             // only use valid images
             cTvMedia m;
-            m.path = fStored->path;        
+            m.path = fStored->path;
             m.width = fStored->width;
             m.height = fStored->height;
             f->push_back(m);
-        }    
+        }
     }
 }
 
@@ -451,7 +454,7 @@ void cTVDBSeries::GetSeasonPoster(int episodeId, cTvMedia *sp) {
         sp->width = spStored->width;
         sp->height = spStored->height;
         sp->path = spStored->path;
-    }    
+    }
 }
 
 void cTVDBSeries::GetActors(vector<cActor> *a) {
@@ -467,7 +470,7 @@ void cTVDBSeries::GetActors(vector<cActor> *a) {
                 act.actorThumb.height = aStored->actorThumb->height;
                 act.actorThumb.path = aStored->actorThumb->path;
                 act.actorThumb.path = aStored->actorThumb->path;
-            }    
+            }
         }
         a->push_back(act);
     }
@@ -523,4 +526,47 @@ void cTVDBSeries::Dump(void) {
     if (posterThumb) {
         tell(0, "posterThumb path %s, width %d, height %d, needrefresh %d, valid %d", posterThumb->path.c_str(), posterThumb->width, posterThumb->height, posterThumb->needrefresh, posterThumb->mediavalid);
     }
+}
+
+int cTVDBSeries::toOldMediaType(int mediaType, uint lfn)
+{
+   switch (mediaType)
+   {
+      case atBanner:
+         if (lfn == 0)
+            return msBanner1;
+         else if (lfn == 1)
+            return msBanner2;
+         else if (lfn == 2)
+            return msBanner3;
+         return msBanner1;
+      case atPoster:
+         if (lfn == 0)
+            return msPoster1;
+         else if (lfn == 1)
+            return msPoster2;
+         else if (lfn == 2)
+            return msPoster3;
+         return msPoster1;
+      case atBackground:
+         if (lfn == 0)
+            return msFanart1;
+         else if (lfn == 1)
+            return msFanart2;
+         else if (lfn == 2)
+            return msFanart3;
+         return msFanart1;
+      case atIcon:
+         break;
+      case atSeasonPoster:
+         return msSeasonPoster;
+      case atEpisode:
+         return msEpisodePic;
+      case atActor:
+         return msActorThumb;
+   }
+
+   return msBanner1;
+   // msPosterThumb,
+   // msSeasonPosterThumb,
 }

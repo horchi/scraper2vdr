@@ -43,7 +43,7 @@ cScrapManager::~cScrapManager(void) {
         cMovieMedia *ma = (cMovieMedia*)it->second;
         delete ma;
     }
-    movieActorsThumbs.clear();    
+    movieActorsThumbs.clear();
 }
 
 void cScrapManager::InitIterator(bool isRec) {
@@ -143,7 +143,7 @@ bool cScrapManager::GetNextMovie(bool isRec, int &movieId) {
 			}
 			recIterator++;
 			next = false;
-		}		
+		}
 	}
 	return next;
 }
@@ -155,7 +155,7 @@ int cScrapManager::GetSeriesFirst(cTVDBSeries* &seriesval) {
     if (seriesIterator == series.end())
         return 0; // no series availabe
     seriesval = seriesIterator->second; // return current series
-    return 1; 
+    return 1;
 }
 
 // get next series from iterator
@@ -166,7 +166,7 @@ int cScrapManager::GetSeriesNext(cTVDBSeries* &seriesval) {
     if (seriesIterator == series.end())
         return 0; // no series availabe
     seriesval = seriesIterator->second; // return current series
-    return 1; 
+    return 1;
 }
 
 // get first movie (also init series iterator)
@@ -176,7 +176,7 @@ int cScrapManager::GetMoviesFirst(cMovieDbMovie* &movieval) {
     if (moviesIterator == movies.end())
         return 0; // no movie availabe
     movieval = moviesIterator->second; // return current movie
-    return 1; 
+    return 1;
 }
 
 // get next movie from iterator
@@ -187,7 +187,7 @@ int cScrapManager::GetMoviesNext(cMovieDbMovie* &movieval) {
     if (moviesIterator == movies.end())
         return 0; // no movie availabe
     movieval = moviesIterator->second; // return current movie
-    return 1; 
+    return 1;
 }
 
 cTVDBSeries *cScrapManager::GetSeries(int seriesId) {
@@ -201,7 +201,7 @@ cMovieDbMovie *cScrapManager::GetMovie(int movieId) {
 	map<int, cMovieDbMovie*>::iterator hit = movies.find(movieId);
 	if (hit == movies.end())
 		return NULL;
-	return hit->second;	
+	return hit->second;
 }
 
 cTVDBSeries *cScrapManager::AddSeries(cDbTable* tSeries) {
@@ -271,7 +271,7 @@ void cScrapManager::UpdateSeriesEpisode(cTVDBEpisode *episode, cDbTable* tEpisod
     string guestStars = replaceString(tEpisodes->getStrValue("EPISODEGUESTSTARS"), "|", ", ");
     episode->guestStars = guestStars;
     episode->rating = tEpisodes->getFloatValue("EPISODERATING");
-    episode->lastupdate = tEpisodes->getIntValue("EPISODELASTUPDATED"); 
+    episode->lastupdate = tEpisodes->getIntValue("EPISODELASTUPDATED");
 }
 
 cTVDBActor *cScrapManager::AddSeriesActor(cTVDBSeries *series, cDbTable* tActors) {
@@ -295,7 +295,7 @@ cMovieActor * cScrapManager::AddMovieActor(cMovieDbMovie *movie, cDbTable* tActo
       movie->InsertActorNoThumb(a);
     } else {
       movie->InsertActor(a);
-    }    
+    }
     return a;
 }
 
@@ -312,14 +312,14 @@ void cScrapManager::AddMovieMedia(cMovieDbMovie *movie, cDbTable* tMovieMedia, s
 	m->width = tMovieMedia->getIntValue("MEDIAWIDTH");
 	m->height = tMovieMedia->getIntValue("MEDIAHEIGHT");
     m->path = path;
-    movie->InsertMedia(m);	
+    movie->InsertMedia(m);
 }
 
 // try to find actor in global movie actor thumbs map
 cMovieMedia *cScrapManager::GetMovieActorThumb(int actorId) {
     map<int, cMovieMedia*>::iterator hit = movieActorsThumbs.find(actorId);
     if (hit == movieActorsThumbs.end())
-        return NULL;    
+        return NULL;
     return hit->second;
 }
 
@@ -344,8 +344,8 @@ int cScrapManager::GetMovieActorThumbFirst(int &actorId, cMovieMedia* &movieActo
     if (movieActorsThumbsIterator == movieActorsThumbs.end())
         return 0; // no movie availabe
     movieActorThumb = movieActorsThumbsIterator->second; // return current movie
-    actorId = movieActorsThumbsIterator->first; 
-    return 1; 
+    actorId = movieActorsThumbsIterator->first;
+    return 1;
 }
 
 // get next movie actor from iterator
@@ -357,8 +357,8 @@ int cScrapManager::GetMovieActorThumbNext(int &actorId, cMovieMedia* &movieActor
     if (movieActorsThumbsIterator == movieActorsThumbs.end())
         return 0; // no movie availabe
     movieActorThumb = movieActorsThumbsIterator->second; // return current movie
-    actorId = movieActorsThumbsIterator->first; 
-    return 1; 
+    actorId = movieActorsThumbsIterator->first;
+    return 1;
 }
 
 bool cScrapManager::AddRecording(int recStart, string recPath, int seriesId, int episodeId, int movieId) {
@@ -379,7 +379,7 @@ bool cScrapManager::AddRecording(int recStart, string recPath, int seriesId, int
 	v.episodeId = episodeId;
 	v.movieId = movieId;
 	v.isNew = true;
-	recordings.insert(pair<sRecordingsKey, sEventsValue>(k, v));	
+	recordings.insert(pair<sRecordingsKey, sEventsValue>(k, v));
 	return true;
 }
 
@@ -390,7 +390,7 @@ bool cScrapManager::RecordingExists(int recStart, string recPath) {
 	map<sRecordingsKey, sEventsValue>::iterator hit = recordings.find(k);
 	if (hit != recordings.end())
 		return true;
-	return false;	
+	return false;
 }
 
 bool cScrapManager::SeriesInUse(int seriesId) {
@@ -407,17 +407,17 @@ bool cScrapManager::MovieInUse(int movieId) {
 	return false;
 }
 
-void cScrapManager::DumpSeries(void) 
+void cScrapManager::DumpSeries(void)
 {
 	int numSeries = 0;
 	map<sEventsKey, sEventsValue>::iterator it;
 
-	for (it = events.begin(); it != events.end(); it++) 
+	for (it = events.begin(); it != events.end(); it++)
    {
 		sEventsKey key = it->first;
 		sEventsValue ev = it->second;
 
-		if (ev.seriesId > 0) 
+		if (ev.seriesId > 0)
       {
 			const cEvent* event = NULL;
 			const cChannel* c = NULL;
@@ -435,25 +435,25 @@ void cScrapManager::DumpSeries(void)
          schedules = (cSchedules*)cSchedules::Schedules(schedulesLock);
          c = Channels.GetByChannelID(cID);
 #endif
-         
-			if (schedules) 
+
+			if (schedules)
          {
 				const cSchedule *schedule = schedules->GetSchedule(cID);
-            
+
 				if (schedule)
 					event = schedule->GetEvent(key.eventId);
 			}
-         
+
 			if (event)
-				tell(0, "series (tvdbID %d, episodeId %d), Event (EventID %d): %s, %s: %s (%s)", ev.seriesId, 
-                 ev.episodeId, 
-                 key.eventId, 
-                 *event->GetDateString(), 
-                 *event->GetTimeString(), 
+				tell(0, "series (tvdbID %d, episodeId %d), Event (EventID %d): %s, %s: %s (%s)", ev.seriesId,
+                 ev.episodeId,
+                 key.eventId,
+                 *event->GetDateString(),
+                 *event->GetTimeString(),
                  event->Title(),
                  c?(c->Name()) : "unknown channel");
          else
-				tell(0, "series (tvdbID %d, episodeId %d), Event (EventID %d): No VDR Event found", 
+				tell(0, "series (tvdbID %d, episodeId %d), Event (EventID %d): No VDR Event found",
                  ev.seriesId, ev.episodeId, key.eventId);
 
 			numSeries++;
@@ -463,17 +463,17 @@ void cScrapManager::DumpSeries(void)
 	tell(0, "Keeping %d series in memory", numSeries);
 }
 
-void cScrapManager::DumpMovies(void) 
+void cScrapManager::DumpMovies(void)
 {
 	int numMovies = 0;
 	map<sEventsKey, sEventsValue>::iterator it;
 
-	for (it = events.begin(); it != events.end(); it++) 
+	for (it = events.begin(); it != events.end(); it++)
    {
 		sEventsKey key = it->first;
 		sEventsValue ev = it->second;
 
-		if (ev.movieId > 0) 
+		if (ev.movieId > 0)
       {
 			const cEvent *event = NULL;
 			const cChannel *c = NULL;
@@ -491,8 +491,8 @@ void cScrapManager::DumpMovies(void)
          schedules = (cSchedules*)cSchedules::Schedules(schedulesLock);
          c = Channels.GetByChannelID(cID);
 #endif
-         
-			if (schedules) 
+
+			if (schedules)
          {
 				const cSchedule *schedule = schedules->GetSchedule(cID);
 
@@ -500,16 +500,16 @@ void cScrapManager::DumpMovies(void)
 					event = schedule->GetEvent(key.eventId);
 			}
 
-			if (event) 
+			if (event)
          {
-				tell(0, "movie (moviedbId %d), Event (EventID %d): %s, %s: %s (%s)", ev.movieId, 
-																					 key.eventId, 
-																					 *event->GetDateString(), 
-																					 *event->GetTimeString(), 
+				tell(0, "movie (moviedbId %d), Event (EventID %d): %s, %s: %s (%s)", ev.movieId,
+																					 key.eventId,
+																					 *event->GetDateString(),
+																					 *event->GetTimeString(),
 																					 event->Title(),
 																					 c?(c->Name()):"unknown channel");
-			} 
-         else 
+			}
+         else
          {
 				tell(0, "movie (moviedbId %d), Event (EventID %d): No VDR Event found", ev.movieId, key.eventId);
 			}
@@ -531,7 +531,7 @@ void cScrapManager::DumpRecordings(void) {
 		} else if (val.movieId) {
 			tell(0, "movie (moviedbID %d): %s", val.movieId, key.recPath.c_str());
 		} else {
-			tell(0, "unknown recording: %s", key.recPath.c_str());			
+			tell(0, "unknown recording: %s", key.recPath.c_str());
 		}
 	}
 }
@@ -572,7 +572,7 @@ bool cScrapManager::GetEventType(ScraperGetEventType *call) {
 	} else {
       tell(4, "unvalid entry");
 		call->type = tNone;
-		return false;			
+		return false;
 	}
 	call->seriesId = v.seriesId;
 	call->episodeId = v.episodeId;
@@ -595,7 +595,7 @@ bool cScrapManager::GetSeries(cSeries *s) {
     //Episode
     if (s->episodeId > 0) {
     	sStored->GetEpisode(s->episodeId, &s->episode);
-	    sStored->GetSeasonPoster(s->episodeId, &s->seasonPoster);    
+	    sStored->GetSeasonPoster(s->episodeId, &s->seasonPoster);
     }
     //Media
     sStored->GetPosters(&s->posters);
@@ -613,7 +613,7 @@ bool cScrapManager::GetMovie(cMovie *m) {
     cMovieDbMovie *mStored = hit->second;
     m->title = mStored->title;
     m->originalTitle = mStored->originalTitle;
-    m->tagline = mStored->tagline;    
+    m->tagline = mStored->tagline;
     m->overview = mStored->overview;
     m->adult = mStored->adult;
     m->collectionName = mStored->collectionName;
@@ -668,7 +668,7 @@ bool cScrapManager::GetPosterBanner(ScraperGetPosterBanner *call) {
 	} else {
 		call->type = tNone;
 	}
-	return false;			
+	return false;
 }
 
 bool cScrapManager::GetPosterBannerV2(ScraperGetPosterBannerV2 *call) {
@@ -713,7 +713,7 @@ bool cScrapManager::GetPosterBannerV2(ScraperGetPosterBannerV2 *call) {
 	} else {
 		call->type = tNone;
 	}
-	return false;			
+	return false;
 }
 
 bool cScrapManager::GetPoster(ScraperGetPoster *call) {

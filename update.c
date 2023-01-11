@@ -501,6 +501,7 @@ int cUpdate::initDb()
     selectSeriesMediaActors->bind("SEASONNUMBER", cDBS::bndOut, ", A.");
     selectSeriesMediaActors->bind("ACTORID", cDBS::bndOut, ", A.");
     selectSeriesMediaActors->bind("MEDIATYPE", cDBS::bndOut, ", A.");
+    selectSeriesMediaActors->bind("LFN", cDBS::bndOut, ", A.");
     selectSeriesMediaActors->bind("MEDIAWIDTH", cDBS::bndOut, ", A.");
     selectSeriesMediaActors->bind("MEDIAHEIGHT", cDBS::bndOut, ", A.");
     selectSeriesMediaActors->bind(tSeriesActors,"ACTORID", cDBS::bndOut, ", C.");
@@ -550,6 +551,7 @@ int cUpdate::initDb()
     selectSeriesImage->bind("EPISODEID", cDBS::bndIn | cDBS::bndSet, " and ");
     selectSeriesImage->bind("ACTORID", cDBS::bndIn | cDBS::bndSet, " and ");
     selectSeriesImage->bind("MEDIATYPE", cDBS::bndIn | cDBS::bndSet, " and ");
+    selectSeriesImage->bind("LFN", cDBS::bndIn | cDBS::bndSet, " and ");
     status += selectSeriesImage->prepare();
 
     // get all used movies (events/recordings) and max(scrsp) of all events
@@ -1037,60 +1039,65 @@ void cUpdate::ReadSeriesMediaFast(cTVDBSeries *series, int &newImages, int &newS
     series_id.setValue(series->id); // we would search for all media for this series
 
     for (int res = selectSeriesMediaActors->find(); res; res = selectSeriesMediaActors->fetch() && CheckRunningAndWait()) {
-        if (isFirst) {
-            if (!CreateDirectory(seriesPath))
-                return;
-            // fill lastupdated list first
-            fileDateManager.LoadFileDateList(seriesPath,false); // ignore read errors (try to overwrite with new file) and mark all old values from file as not used
-        }
-        isFirst = false;
+       if (isFirst)
+       {
+          if (!CreateDirectory(seriesPath))
+             return;
+          // fill lastupdated list first
+          fileDateManager.LoadFileDateList(seriesPath,false); // ignore read errors (try to overwrite with new file) and mark all old values from file as not used
+       }
+       isFirst = false;
 
         mediaType = tSeriesMedia->getIntValue("MEDIATYPE");
+        uint lfn = tSeriesMedia->getIntValue("LFN");
         originalWidth = tSeriesMedia->getIntValue("MEDIAWIDTH");
         originalHeight = tSeriesMedia->getIntValue("MEDIAHEIGHT");
         GetUsedImageSize(originalWidth, originalHeight,
                         (mediaType >= msPoster1) && (mediaType <= msPoster3),mediaType == msSeasonPoster,
                          imgWidth, imgHeight);
         imgNeedRefresh = false;
+
+        mediaType = cTVDBSeries::toOldMediaType(mediaType, lfn);
+
         // check type of media first
         switch (mediaType) {
             case msBanner1:
                 imgNeedRefresh = fileDateManager.CheckImageNeedRefresh("banner1.jpg", series->lastupdate) || forceFullUpdate;
-                CheckSeriesMedia(series, mediaType, imgWidth, imgHeight,"banner1.jpg", 0, imgNeedRefresh);
+                CheckSeriesMedia(series, mediaType, 0, imgWidth, imgHeight,"banner1.jpg", 0, imgNeedRefresh);
                 break;
             case msBanner2:
                 imgNeedRefresh = fileDateManager.CheckImageNeedRefresh("banner2.jpg", series->lastupdate) || forceFullUpdate;
-                CheckSeriesMedia(series, mediaType, imgWidth, imgHeight,"banner2.jpg", 0, imgNeedRefresh);
+                CheckSeriesMedia(series, mediaType, 1, imgWidth, imgHeight,"banner2.jpg", 0, imgNeedRefresh);
                 break;
             case msBanner3:
                 imgNeedRefresh = fileDateManager.CheckImageNeedRefresh("banner3.jpg", series->lastupdate) || forceFullUpdate;
-                CheckSeriesMedia(series, mediaType, imgWidth, imgHeight,"banner3.jpg", 0, imgNeedRefresh);
+                CheckSeriesMedia(series, mediaType, 2, imgWidth, imgHeight,"banner3.jpg", 0, imgNeedRefresh);
                 break;
             case msPoster1:
                 imgNeedRefresh = fileDateManager.CheckImageNeedRefreshThumb("poster1.jpg", "poster_thumb.jpg", series->lastupdate) || forceFullUpdate;
-                CheckSeriesMedia(series, mediaType, imgWidth, imgHeight, "poster1.jpg", 0, imgNeedRefresh);
+                CheckSeriesMedia(series, mediaType, 0, imgWidth, imgHeight, "poster1.jpg", 0, imgNeedRefresh);
                 CalcThumbSize(imgWidth, imgHeight, scraper2VdrConfig.thumbHeight, thbWidth, thbHeight);
-                CheckSeriesMedia(series, msPosterThumb, thbWidth, thbHeight, "poster_thumb.jpg", 0, imgNeedRefresh);
+                CheckSeriesMedia(series, msPosterThumb, 0, thbWidth, thbHeight, "poster_thumb.jpg", 0, imgNeedRefresh);
                 break;
             case msPoster2:
                 imgNeedRefresh = fileDateManager.CheckImageNeedRefresh("poster2.jpg", series->lastupdate) || forceFullUpdate;
-                CheckSeriesMedia(series, mediaType, imgWidth, imgHeight,"poster2.jpg", 0, imgNeedRefresh);
+                CheckSeriesMedia(series, mediaType, 1, imgWidth, imgHeight,"poster2.jpg", 0, imgNeedRefresh);
                 break;
             case msPoster3:
                 imgNeedRefresh = fileDateManager.CheckImageNeedRefresh("poster3.jpg", series->lastupdate) || forceFullUpdate;
-                CheckSeriesMedia(series, mediaType, imgWidth, imgHeight,"poster3.jpg", 0, imgNeedRefresh);
+                CheckSeriesMedia(series, mediaType, 2, imgWidth, imgHeight,"poster3.jpg", 0, imgNeedRefresh);
                 break;
             case msFanart1:
                 imgNeedRefresh = fileDateManager.CheckImageNeedRefresh("fanart1.jpg", series->lastupdate) || forceFullUpdate;
-                CheckSeriesMedia(series, mediaType, imgWidth, imgHeight,"fanart1.jpg", 0, imgNeedRefresh);
+                CheckSeriesMedia(series, mediaType, 0, imgWidth, imgHeight,"fanart1.jpg", 0, imgNeedRefresh);
                 break;
             case msFanart2:
                 imgNeedRefresh = fileDateManager.CheckImageNeedRefresh("fanart2.jpg", series->lastupdate) || forceFullUpdate;
-                CheckSeriesMedia(series, mediaType, imgWidth, imgHeight,"fanart2.jpg", 0, imgNeedRefresh);
+                CheckSeriesMedia(series, mediaType, 1, imgWidth, imgHeight,"fanart2.jpg", 0, imgNeedRefresh);
                 break;
             case msFanart3:
                 imgNeedRefresh = fileDateManager.CheckImageNeedRefresh("fanart3.jpg", series->lastupdate) || forceFullUpdate;
-                CheckSeriesMedia(series, mediaType, imgWidth, imgHeight,"fanart3.jpg", 0, imgNeedRefresh);
+                CheckSeriesMedia(series, mediaType, 2, imgWidth, imgHeight,"fanart3.jpg", 0, imgNeedRefresh);
                 break;
             case msSeasonPoster:
                 season = tSeriesMedia->getIntValue("SEASONNUMBER");
@@ -1100,9 +1107,9 @@ void cUpdate::ReadSeriesMediaFast(cTVDBSeries *series, int &newImages, int &newS
                 imageName.str("");
                 imageName << "season_" << season << ".jpg";
                 imgNeedRefresh = fileDateManager.CheckImageNeedRefreshThumb(imageName.str(),thumbName,series->lastupdate) || forceFullUpdate;
-                CheckSeriesMedia(series, mediaType, imgWidth, imgHeight, imageName.str(), season, imgNeedRefresh);
+                CheckSeriesMedia(series, mediaType, 0, imgWidth, imgHeight, imageName.str(), season, imgNeedRefresh);
                 CalcThumbSize(imgWidth, imgHeight, scraper2VdrConfig.thumbHeight, thbWidth, thbHeight);
-                CheckSeriesMedia(series, msSeasonPosterThumb, thbWidth, thbHeight, thumbName, season, imgNeedRefresh);
+                CheckSeriesMedia(series, msSeasonPosterThumb, 0, thbWidth, thbHeight, thumbName, season, imgNeedRefresh);
                 break;
             case msEpisodePic:
                 episode = series->GetEpisode(tSeriesMedia->getIntValue("EPISODEID"));
@@ -1150,12 +1157,12 @@ void cUpdate::ReadSeriesMediaFast(cTVDBSeries *series, int &newImages, int &newS
 }
 
 // create media if not exists in series, update size, path, needRefresh of media
-void cUpdate::CheckSeriesMedia(cTVDBSeries *series, int mediaType, int imgWidth, int imgHeight, string imgName, int season, bool needRefresh) {
+void cUpdate::CheckSeriesMedia(cTVDBSeries *series, int mediaType, int lfn, int imgWidth, int imgHeight, string imgName, int season, bool needRefresh) {
     stringstream imageName("");
     imageName << imgPathSeries << "/" << series->id << "/" << imgName;
-    cTVDBMedia *media = series->GetMedia(mediaType,season);
+    cTVDBMedia *media = series->GetMedia(mediaType,lfn,season);
     if (!media) {
-        series->InsertMedia(mediaType,imgWidth,imgHeight,imageName.str(),season,needRefresh);
+       series->InsertMedia(mediaType,lfn,imgWidth,imgHeight,imageName.str(),season,needRefresh);
     } else {
         media->width = imgWidth;
         media->height = imgHeight;
@@ -1236,20 +1243,20 @@ void cUpdate::ReadSeriesImagesFast(int &newImages, int &emptyImages) {
                 if (media) {
                     if (media->needrefresh) {
                         // have to load this image from DB
-                        mediaThumb = series->GetMedia(msSeasonPosterThumb, season); // try to get season thumb for this season
-                        if (ReadSeriesImageFast(series->id,season,0,0,msSeasonPoster,media,mediaThumb)) {
-                            imageName.str("");
-                            imageName << "season_" << season << ".jpg";
-                            fileDateManager.SetLastUpdated(imageName.str(),series->lastupdate); // use lastupdated of series for season images
-                            newImages++;
-                        } else {
-                            // delete season posters from fileDateManager which are not available
-                            imageName.str("");
-                            imageName << "season_" << season << ".jpg";
-                            fileDateManager.DeleteImage(imageName.str());
-                            tell(2,"failed to read image (series %d, season %d)",series->id,season);
-                            emptyImages++;
-                        }
+                       mediaThumb = series->GetMedia(msSeasonPosterThumb, 0, season); // try to get season thumb for this season
+                       if (ReadSeriesImageFast(series->id,season,0,0,msSeasonPoster,media,mediaThumb)) {
+                          imageName.str("");
+                          imageName << "season_" << season << ".jpg";
+                          fileDateManager.SetLastUpdated(imageName.str(),series->lastupdate); // use lastupdated of series for season images
+                          newImages++;
+                       } else {
+                          // delete season posters from fileDateManager which are not available
+                          imageName.str("");
+                          imageName << "season_" << season << ".jpg";
+                          fileDateManager.DeleteImage(imageName.str());
+                          tell(2,"failed to read image (series %d, season %d)",series->id,season);
+                          emptyImages++;
+                       }
                     }
                 }
             }
@@ -1262,40 +1269,40 @@ void cUpdate::ReadSeriesImagesFast(int &newImages, int &emptyImages) {
                 switch (mediaType) {
                     case msBanner1:
                         mediaName = "banner1.jpg";
-                        media = series->GetMedia(mediaType,0);
+                        media = series->GetMedia(mediaType, 0, 0);
                         break;
                     case msBanner2:
                         mediaName = "banner2.jpg";
-                        media = series->GetMedia(mediaType,0);
+                        media = series->GetMedia(mediaType, 1, 0);
                         break;
                     case msBanner3:
                         mediaName = "banner3.jpg";
-                        media = series->GetMedia(mediaType,0);
+                        media = series->GetMedia(mediaType, 2, 0);
                         break;
                     case msPoster1:
                         mediaName = "poster1.jpg";
-                        media = series->GetMedia(mediaType,0);
-                        mediaThumb = series->GetMedia(msPosterThumb,0);
+                        media = series->GetMedia(mediaType, 0, 0);
+                        mediaThumb = series->GetMedia(msPosterThumb, 0, 0);
                         break;
                     case msPoster2:
                         mediaName = "poster2.jpg";
-                        media = series->GetMedia(mediaType,0);
+                        media = series->GetMedia(mediaType, 1, 0);
                         break;
                     case msPoster3:
                         mediaName = "poster3.jpg";
-                        media = series->GetMedia(mediaType,0);
+                        media = series->GetMedia(mediaType, 2, 0);
                         break;
                     case msFanart1:
                         mediaName = "fanart1.jpg";
-                        media = series->GetMedia(mediaType,0);
+                        media = series->GetMedia(mediaType, 0, 0);
                         break;
                     case msFanart2:
                         mediaName = "fanart2.jpg";
-                        media = series->GetMedia(mediaType,0);
+                        media = series->GetMedia(mediaType, 1, 0);
                         break;
                     case msFanart3:
                         mediaName = "fanart3.jpg";
-                        media = series->GetMedia(mediaType,0);
+                        media = series->GetMedia(mediaType, 2, 0);
                         break;
                     default:
                         break;
@@ -1336,6 +1343,7 @@ bool cUpdate::ReadSeriesImageFast(int seriesId, int season, int episodeId, int a
     tSeriesMedia->setValue("EPISODEID", episodeId);
     tSeriesMedia->setValue("ACTORID", actorId);
     tSeriesMedia->setValue("MEDIATYPE", mediaType);
+    tSeriesMedia->setValue("LFN", media->lfn);
     //tell(0,"serie: %d / season: %d / episode: %d / actor: %d / media: %d / pfad: %s",seriesId,season,episodeId,actorId,mediaType,media->path.c_str());
     int res = selectSeriesImage->find();
     if (res) {

@@ -66,7 +66,7 @@ class cUpdate : public cThread  {
         int ReadSeriesContentFast(int &newImages, int &newSeasonPoster); // read all episodes/actors/media from all series where series->updatecontent = true
         int ReadEpisodesContentFast(cTVDBSeries *series); // read all episodes for current series with event or recording from sql-db
         void ReadSeriesMediaFast(cTVDBSeries *series, int &newImages, int &newSeasonPoster); // read all images of series (also create actors if not available yet)
-        void CheckSeriesMedia(cTVDBSeries *series, int mediaType, int imgWidth, int imgHeight, string imgName, int season, bool needRefresh); // create media if not exists in series, update size, path, needRefresh of media
+        void CheckSeriesMedia(cTVDBSeries *series, int mediaType, int lfn, int imgWidth, int imgHeight, string imgName, int season, bool needRefresh); // create media if not exists in series, update size, path, needRefresh of media
         void ReadSeriesImagesFast(int &newImages, int &emptyImages); // read all images with needrefresh from sql-db
         bool ReadSeriesImageFast(int seriesId, int season, int episodeId, int actorId, int mediaType, cTVDBMedia *media, cTVDBMedia *mediaThumb); // read real image data from sql-db
         //MOVIES

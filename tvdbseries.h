@@ -1,5 +1,5 @@
-#ifndef __TVSCRAPER_TVDBSERIES_H
-#define __TVSCRAPER_TVDBSERIES_H
+
+#pragma once
 
 #include <iostream>
 #include <string>
@@ -12,42 +12,50 @@
 
 using namespace std;
 
-enum mediaSeries {
-    msBanner1,
-    msBanner2,
-    msBanner3,
-    msPoster1,
-    msPoster2,
-    msPoster3,
-    msSeasonPoster,
-    msFanart1,
-    msFanart2,
-    msFanart3,
-    msEpisodePic,
-    msActorThumb,
-    msPosterThumb,
-    msSeasonPosterThumb,
+enum mediaSeries  // the old types
+{
+   msBanner1,
+   msBanner2,
+   msBanner3,
+   msPoster1,
+   msPoster2,
+   msPoster3,
+   msSeasonPoster,      // 6
+   msFanart1,
+   msFanart2,
+   msFanart3,
+   msEpisodePic,        // 10
+   msActorThumb,
+   msPosterThumb,       // ??
+   msSeasonPosterThumb, // ??
+};
+
+enum ArtworkType   // the new types
+{
+   atBanner       = 1,
+   atPoster       = 2,
+   atBackground   = 3,
+   atIcon         = 5,
+   atSeasonPoster = 7,
+   atEpisode      = 12,
+   atActor        = 13,
+   atCinemagraph  = 20,
+   atClearArt     = 22,
+   atClearLogo    = 23
 };
 
 // --- cTVDBMedia -------------------------------------------------------------
 class cTVDBMedia {
 public:
-    cTVDBMedia(void) {
-        path = "";
-        mediaType = msBanner1;
-        width = 0;
-        height = 0;
-        needrefresh = false;
-        mediavalid = false;
-    };
-    ~cTVDBMedia(void) {
-    };
+    cTVDBMedia(void) {};
+    ~cTVDBMedia(void) {};
     string path;
-    int mediaType;
-    int width;
-    int height;
-    bool needrefresh; // if is true we need to load new image data from server for this image
-    bool mediavalid; // if is true there should be a file available for this media
+    int mediaType {msBanner1};
+    int lfn {0};
+    int width {0};
+    int height {0};
+    bool needrefresh {false}; // if is true we need to load new image data from server for this image
+    bool mediavalid {false}; // if is true there should be a file available for this media
 };
 
 // --- cTVDBEpisode -------------------------------------------------------------
@@ -131,7 +139,7 @@ public:
     float rating;
     string status;
     long lastupdate; // Time when series/episodes get updated on thetvdb-server (refresh series data and images)
-    long lastepisodeupdate; // Time when newest event/recording of this series get updated on thetvdb-server (refresh episodes and episode images)   
+    long lastepisodeupdate; // Time when newest event/recording of this series get updated on thetvdb-server (refresh episodes and episode images)
     long lastscraped; // Time when newest event/recording of one of the episodes of this series get scraped from epgd (check for new episodes)
     bool updatecontent; // True if content should be updated/loaded (true after lastupdate changed)
     bool updateimages; // True if there are images inside this series which need to get downloaded
@@ -147,13 +155,13 @@ public:
     void SetActorThumb(int actorId, int imgWidth, int imgHeight, string path, bool needrefresh); // insert/update actor thumb
     int GetActorFirst(cTVDBActor* &actor); // get first actor (also init actor iterator)
     int GetActorNext(cTVDBActor* &actor); // get next actor from iterator
-    void InsertMedia(int mediaType, int imgWidth, int imgHeight, string path, int season = 0);
-    void InsertMedia(int mediaType, int imgWidth, int imgHeight, string path, int season, bool needrefresh); // insert media object
-    cTVDBMedia *GetMedia(int mediaType, int season); // try to find media of given type
+    void InsertMedia(int mediaType, int lfn, int imgWidth, int imgHeight, string path, int season = 0);
+    void InsertMedia(int mediaType, int lfn, int imgWidth, int imgHeight, string path, int season, bool needrefresh); // insert media object
+    cTVDBMedia *GetMedia(int mediaType, int lfn, int season); // try to find media of given type
     int GetSeasonPosterFirst(int &season, cTVDBMedia* &media); // get first season poster (also init season poster iterator)
     int GetSeasonPosterNext(int &season, cTVDBMedia* &media); // get season poster from iterator
     void DeleteSeasonPoster(int season); // delete season poster and thumb
-    
+
     //Getter for Serivice Calls
     void GetEpisode(int episodeId, cEpisode *e);
     void GetPosters(vector<cTvMedia> *p);
@@ -165,7 +173,6 @@ public:
     void GetSeasonPoster(int episodeId, cTvMedia *sp);
     void GetActors(vector<cActor> *a);
     void Dump(void);
+
+    static int toOldMediaType(int mediaType, uint lfn);
 };
-
-
-#endif //__TVSCRAPER_TVDBSERIES_H
