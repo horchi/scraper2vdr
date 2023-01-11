@@ -22,10 +22,10 @@ struct sEventsKey {
 };
 
 struct sEventsValue {
-    int seriesId;
-    int episodeId;
-    int movieId;
-    bool isNew;
+    int seriesId {0};
+    int episodeId {0};
+    int movieId {0};
+    bool isNew {false};
 };
 
 struct sRecordingsKey {

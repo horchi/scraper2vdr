@@ -1,3 +1,4 @@
+
 #ifndef __FILEDATEMANAGER_H
 #define __FILEDATEMANAGER_H
 
@@ -10,7 +11,8 @@ struct sFileValue {
     bool used; // only save used files into file
 };
 
-class cFileDateManager  {
+class cFileDateManager
+{
     private:
         map<string, sFileValue> files;
         map<string, sFileValue>::iterator filesIterator;
@@ -21,7 +23,7 @@ class cFileDateManager  {
         virtual ~cFileDateManager(void);
         bool LoadFileDateList(string path, bool used); // Fill list with values from information file
         bool SaveFileDateList(void); // Save list to information file in curPath
-        bool CheckImageNeedRefresh(string fileName, long lastUpdated); // result = true if image file not exist, or new lastUpdated > saved lastUpdated (function add filename to list if is new, try to read lastUpdated from filedate if available) 
+        bool CheckImageNeedRefresh(string fileName, long lastUpdated); // result = true if image file not exist, or new lastUpdated > saved lastUpdated (function add filename to list if is new, try to read lastUpdated from filedate if available)
         bool CheckImageNeedRefreshThumb(string fileName, string thumbfilename, long lastUpdated); // same as above, but check if thumbfile exist
         void SetLastUpdated(string fileName, long lastUpdated); // set lastUpdated for image (create new entry in list if is new)
         void DeleteImage(string fileName); // delete image from list

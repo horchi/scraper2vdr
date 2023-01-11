@@ -538,8 +538,8 @@ void cScrapManager::DumpRecordings(void) {
 
 bool cScrapManager::GetEventType(ScraperGetEventType *call) {
    tell(4, "scraper2vdr plugin service call GetEventType called");
-	sEventsValue v;
-   memset(&v, 0, sizeof(sEventsValue));
+	sEventsValue v {};
+   // memset(&v, 0, sizeof(sEventsValue));
 	if (call->event) {
 		sEventsKey k;
 		k.eventId = call->event->EventID();
