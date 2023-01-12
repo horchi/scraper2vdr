@@ -313,4 +313,4 @@ cString cPluginScraper2vdr::SVDRPCommand(const char *Command, const char *Option
     return NULL;
 }
 
-VDRPLUGINCREATOR(cPluginScraper2vdr); // Don't touch this!
+VDRPLUGINCREATOR(cPluginScraper2vdr)

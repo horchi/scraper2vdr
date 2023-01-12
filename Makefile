@@ -11,6 +11,8 @@ PLUGIN = scraper2vdr
 HLIB   = -L./lib -lhorchi
 HISTFILE  = "HISTORY.h"
 
+include Make.config
+
 ### The version number of this plugin (taken from the main source file):
 
 VERSION = $(shell grep 'define _VERSION ' $(HISTFILE) | awk '{ print $$3 }' | sed -e 's/[";]//g')
@@ -30,13 +32,6 @@ LOCDIR = $(call PKGCFG,locdir)
 PLGCFG = $(call PKGCFG,plgcfg)
 CONFDEST = $(call PKGCFG,configdir)/plugins/$(PLUGIN)
 
-SQLCFG = mariadb_config
-
-ifdef MYSQL
-  SQLCFG = mysql_config
-endif
-
-#
 TMPDIR ?= /tmp
 
 ### The compiler options:
@@ -52,7 +47,11 @@ APIVERSION = $(call PKGCFG,apiversion)
 
 -include $(PLGCFG)
 
-LIBS = $(HLIB) $(shell $(SQLCFG) --libs_r) -luuid -lcrypto
+#LIBS = $(HLIB) $(shell $(SQLCFG) --libs_r) -luuid -lcrypto
+LIBS += $(HLIB)
+LIBS += -lcrypto
+LIBS += $(shell pkg-config --libs uuid)
+LIBS += $(shell $(SQLCFG) --libs_r)
 
 ### The name of the distribution archive:
 
@@ -96,7 +95,8 @@ hlib:
 ### Implicit rules:
 
 %.o: %.c
-	$(CXX) $(CXXFLAGS) -c $(DEFINES) $(INCLUDES) -o $@ $<
+	$(doCompile) $(INCLUDES) -o $@ $<
+#	$(CXX) $(CXXFLAGS) -c $(DEFINES) $(INCLUDES) -o $@ $<
 
 ### Dependencies:
 
