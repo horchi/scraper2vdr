@@ -5,8 +5,8 @@
  *
  */
 
-#define _VERSION     "1.0.12"
-#define VERSION_DATE "04.01.2022"
+#define _VERSION     "1.1.0"
+#define VERSION_DATE "21.01.2023"
 #define DB_API       5
 
 #ifdef GIT_REV
@@ -17,6 +17,9 @@
 
 /*
  * ------------------------------------
+
+2023-01-21: version 1.1.0 (horchi)
+ - change: ported to epgd API changes (epgd version 1.3.0)
 
 2022-01-04: version 1.0.12 (horchi)
  - change: Removed dependency to mysql-compat package
