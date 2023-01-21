@@ -1,7 +1,6 @@
 #
 # Makefile for a Video Disk Recorder plugin
 #
-# $Id$
 
 # External image lib to use: imagemagick, graphicsmagick
 
@@ -47,7 +46,6 @@ APIVERSION = $(call PKGCFG,apiversion)
 
 -include $(PLGCFG)
 
-#LIBS = $(HLIB) $(shell $(SQLCFG) --libs_r) -luuid -lcrypto
 LIBS += $(HLIB)
 LIBS += -lcrypto
 LIBS += $(shell pkg-config --libs uuid)
@@ -96,7 +94,6 @@ hlib:
 
 %.o: %.c
 	$(doCompile) $(INCLUDES) -o $@ $<
-#	$(CXX) $(CXXFLAGS) -c $(DEFINES) $(INCLUDES) -o $@ $<
 
 ### Dependencies:
 
