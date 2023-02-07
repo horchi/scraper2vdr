@@ -5,8 +5,8 @@
  *
  */
 
-#define _VERSION     "1.1.0"
-#define VERSION_DATE "21.01.2023"
+#define _VERSION     "1.1.1"
+#define VERSION_DATE "07.02.2023"
 #define DB_API       5
 
 #ifdef GIT_REV
@@ -17,6 +17,9 @@
 
 /*
  * ------------------------------------
+
+2023-02-07: version 1.1.1 (horchi)
+ - bugfix: Fixed season poster
 
 2023-01-21: version 1.1.0 (horchi)
  - change: ported to epgd API changes (epgd version 1.3.0)

@@ -576,18 +576,18 @@ int cTVDBSeries::toNewMediaType(int mediaType, uint& lfn)
 {
    switch (mediaType)
    {
-      case msBanner1: lfn = 0; return atBanner;
-      case msBanner2: lfn = 1; return atBanner;
-      case msBanner3: lfn = 2; return atBanner;
-      case msPoster1: lfn = 0; return atPoster;
-      case msPoster2: lfn = 1; return atPoster;
-      case msPoster3: lfn = 2; return atPoster;
-      case msSeasonPoster: lfn = 0; return atPoster;
-      case msFanart1: lfn = 0; return atBackground;
-      case msFanart2: lfn = 1; return atBackground;
-      case msFanart3: lfn = 2; return atBackground;
-      case msEpisodePic: lfn = 0; return atEpisode;
-      case msActorThumb: lfn = 0; return atActor;
+      case msBanner1:      lfn = 0; return atBanner;
+      case msBanner2:      lfn = 1; return atBanner;
+      case msBanner3:      lfn = 2; return atBanner;
+      case msPoster1:      lfn = 0; return atPoster;
+      case msPoster2:      lfn = 1; return atPoster;
+      case msPoster3:      lfn = 2; return atPoster;
+      case msSeasonPoster: lfn = 0; return atSeasonPoster;
+      case msFanart1:      lfn = 0; return atBackground;
+      case msFanart2:      lfn = 1; return atBackground;
+      case msFanart3:      lfn = 2; return atBackground;
+      case msEpisodePic:   lfn = 0; return atEpisode;
+      case msActorThumb:   lfn = 0; return atActor;
    }
 
    return atBanner;
