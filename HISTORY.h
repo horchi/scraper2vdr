@@ -5,8 +5,9 @@
  *
  */
 
-#define _VERSION     "1.1.1"
-#define VERSION_DATE "07.02.2023"
+#define _VERSION     "1.1.2"
+#define VERSION_DATE "20.03.2023"
+
 #define DB_API       5
 
 #ifdef GIT_REV
@@ -17,6 +18,9 @@
 
 /*
  * ------------------------------------
+
+2023-03-20: version 1.1.2 (horchi)
+   - change: Improved handling of loging level for syslogd
 
 2023-02-07: version 1.1.1 (horchi)
  - bugfix: Fixed season poster

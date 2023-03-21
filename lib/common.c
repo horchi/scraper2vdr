@@ -62,21 +62,21 @@ void tell(int eloquence, const char* format, ...)
 #endif
 
    const int sizeBuffer = 100000;
-   char t[sizeBuffer+100]; *t = 0;
+   char buffer[sizeBuffer+100] {};
    va_list ap;
 
    va_start(ap, format);
 
    if (getLogPrefix())
-      snprintf(t, sizeBuffer, "%s", getLogPrefix());
+      snprintf(buffer, sizeBuffer, "%s", getLogPrefix());
 
-   vsnprintf(t+strlen(t), sizeBuffer-strlen(t), format, ap);
+   vsnprintf(eos(buffer), sizeBuffer-strlen(buffer), format, ap);
 
-   strReplace(t, '\n', '$');
+   strReplace(buffer, '\n', '$');
 
    if (cEpgConfig::logstdout)
    {
-      char buf[50+TB];
+      char buf[50+TB] {};
       timeval tp;
 
       gettimeofday(&tp, 0);
@@ -87,10 +87,19 @@ void tell(int eloquence, const char* format, ...)
               tm->tm_hour, tm->tm_min, tm->tm_sec,
               tp.tv_usec / 1000);
 
-      printf("%s %s\n", buf, t);
+      printf("%s %s\n", buf, buffer);
    }
    else
-      syslog(LOG_ERR, "%s", t);
+   {
+      switch (eloquence)
+      {
+         case 0:  syslog(LOG_ERR, "%s", buffer);     break;
+         case 1:  syslog(LOG_NOTICE, "%s", buffer);  break;
+         case 2:  syslog(LOG_NOTICE, "%s", buffer);  break;
+         case 3:  syslog(LOG_INFO, "%s", buffer);    break;
+         default: syslog(LOG_DEBUG, "%s", buffer);   break;
+      }
+   }
 
    logMutex.Unlock();
 
