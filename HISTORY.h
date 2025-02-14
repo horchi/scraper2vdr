@@ -5,8 +5,8 @@
  *
  */
 
-#define _VERSION     "1.1.1"
-#define VERSION_DATE "07.02.2023"
+#define _VERSION     "1.1.2"
+#define VERSION_DATE "12.02.2025"
 #define DB_API       5
 
 #ifdef GIT_REV
@@ -17,6 +17,9 @@
 
 /*
  * ------------------------------------
+
+2025-02-12: version 1.1.2 (horchi)
+   - change: Porting to vdr API version > 20501
 
 2023-02-07: version 1.1.1 (horchi)
  - bugfix: Fixed season poster

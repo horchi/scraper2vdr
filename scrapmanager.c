@@ -441,7 +441,13 @@ void cScrapManager::DumpSeries(void)
 				const cSchedule *schedule = schedules->GetSchedule(cID);
 
 				if (schedule)
-					event = schedule->GetEvent(key.eventId);
+            {
+#if (defined (APIVERSNUM) && (APIVERSNUM >= 20501))
+               event = schedule->GetEventById(key.eventId);
+#else
+               event = schedule->GetEvent(key.eventId);
+#endif
+            }
 			}
 
 			if (event)
@@ -497,7 +503,13 @@ void cScrapManager::DumpMovies(void)
 				const cSchedule *schedule = schedules->GetSchedule(cID);
 
 				if (schedule)
-					event = schedule->GetEvent(key.eventId);
+            {
+#if (defined (APIVERSNUM) && (APIVERSNUM >= 20501))
+               event = schedule->GetEventById(key.eventId);
+#else
+               event = schedule->GetEvent(key.eventId);
+#endif
+            }
 			}
 
 			if (event)
