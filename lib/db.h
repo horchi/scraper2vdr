@@ -729,7 +729,7 @@ class cDbConnection
          {
             connectDropped = yes;
 
-            tell(0, "Calling mysql_init(%ld)", syscall(__NR_gettid));
+            tell(1, "Calling mysql_init(%ld)", syscall(__NR_gettid));
 
             if (!(mysql = mysql_init(0)))
                return errorSql(this, "attachConnection(init)");

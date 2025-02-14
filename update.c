@@ -785,7 +785,7 @@ int cUpdate::CheckConnection(bool init, int& timeout) {
     // check connection
     if (!dbConnected(yes)) {
         // try to connect
-        tell(0, "Trying to re-connect to database!");
+        tell(1, "Trying to re-connect to database!");
         retry++;
         if (initDb() != success) {
             tell(0, "Retry #%d failed, retrying in %d seconds!", retry, timeout);
@@ -793,7 +793,7 @@ int cUpdate::CheckConnection(bool init, int& timeout) {
             return fail;
         }
         retry = 0;
-        tell(0, "Connection established successfull!");
+        tell(1, "Connection established successfull!");
     }
     return success;
 }
@@ -842,7 +842,7 @@ int cUpdate::initUuid(int timeout)
          return fail;
       }
 
-      tell(0, "Got UUID '%s' by epg2vdr", req.uuid);
+      tell(2, "Got UUID '%s' by epg2vdr", req.uuid);
 
       sstrcpy(scraper2VdrConfig.uuid, req.uuid, sizeUuid+TB);
    }

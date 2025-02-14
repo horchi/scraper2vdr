@@ -5,8 +5,10 @@
  *
  */
 
-#define _VERSION     "1.1.2"
+#define _VERSION     "1.1.3"
+
 #define VERSION_DATE "12.02.2025"
+
 #define DB_API       5
 
 #ifdef GIT_REV
@@ -18,8 +20,11 @@
 /*
  * ------------------------------------
 
-2025-02-12: version 1.1.2 (horchi)
+2025-02-12: version 1.1.3 (horchi)
    - change: Porting to vdr API version > 20501
+
+2023-03-20: version 1.1.2 (horchi)
+   - change: Improved handling of loging level for syslogd
 
 2023-02-07: version 1.1.1 (horchi)
  - bugfix: Fixed season poster
