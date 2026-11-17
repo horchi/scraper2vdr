@@ -5,9 +5,9 @@
  *
  */
 
-#define _VERSION     "1.1.3"
+#define _VERSION     "1.1.4"
 
-#define VERSION_DATE "12.02.2025"
+#define VERSION_DATE "17.11.2026"
 
 #define DB_API       5
 
@@ -19,6 +19,11 @@
 
 /*
  * ------------------------------------
+
+2026-11-17: version 1.1.4 (horchi)
+   - bugfix: Added mutex to protect the scraper data (maps, series and movies) against
+             concurrent access of the update thread and the service calls
+   - change: Dump of series/movies (SVDRP DSER/DMOV) now locks Channels/Schedules only once
 
 2025-02-12: version 1.1.3 (horchi)
    - change: Porting to vdr API version > 20501

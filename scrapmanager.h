@@ -7,6 +7,8 @@
 #include <utility>
 #include <algorithm>
 
+#include <vdr/thread.h>
+
 #include "lib/common.h"
 #include "lib/db.h"
 
@@ -45,7 +47,13 @@ class cScrapManager  {
         map<int, cMovieDbMovie*>::iterator moviesIterator;
         map<int, cMovieMedia*> movieActorsThumbs; // map with all movie actor thumbs
         map<int, cMovieMedia*>::iterator movieActorsThumbsIterator;
+        // protects the maps and the stored series/movie objects:
+        //   all modifications (done by the update thread) and all reads by
+        //   service calls (other threads) have to be done with this mutex locked.
+        //   Lock order: VDR list locks (Timers, Channels, Recordings, Schedules) first, then this mutex!
+        cMutex mutex;
     public:
+        cMutex* Mutex() { return &mutex; }
         cScrapManager(void);
         virtual ~cScrapManager(void);
         //Series and Movies Handling

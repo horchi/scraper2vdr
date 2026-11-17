@@ -1126,6 +1126,7 @@ void cUpdate::ReadSeriesMediaFast(cTVDBSeries *series, int &newImages, int &newS
                     imgNeedRefresh = fileDateManager.CheckImageNeedRefresh(imageName.str(),episode->lastupdate) || forceFullUpdate; // use lastupdate from episode for episode images
                     imageName.str("");
                     imageName << seriesPath << "/" << "episode_" << episode->id << ".jpg";
+                    cMutexLock lock(scrapManager->Mutex());
                     series->SetEpisodeImage(episode->id, imgWidth, imgHeight, imageName.str(), imgNeedRefresh);
                 }
                 break;
@@ -1141,7 +1142,10 @@ void cUpdate::ReadSeriesMediaFast(cTVDBSeries *series, int &newImages, int &newS
                imgNeedRefresh = fileDateManager.CheckImageNeedRefresh(imageName.str(),series->lastupdate) || forceFullUpdate;
                imageName.str("");
                imageName << seriesPath << "/" << "actor_" << actor->id << ".jpg";
-               series->SetActorThumb(actor->id, imgWidth, imgHeight, imageName.str(), imgNeedRefresh); // update/insert actor thumb
+               {
+                  cMutexLock lock(scrapManager->Mutex());
+                  series->SetActorThumb(actor->id, imgWidth, imgHeight, imageName.str(), imgNeedRefresh); // update/insert actor thumb
+               }
                break;
            default:
               break;
@@ -1166,6 +1170,7 @@ void cUpdate::ReadSeriesMediaFast(cTVDBSeries *series, int &newImages, int &newS
 void cUpdate::CheckSeriesMedia(cTVDBSeries *series, int mediaType, int lfn, int imgWidth, int imgHeight, string imgName, int season, bool needRefresh) {
     stringstream imageName("");
     imageName << imgPathSeries << "/" << series->id << "/" << imgName;
+    cMutexLock lock(scrapManager->Mutex());
     cTVDBMedia *media = series->GetMedia(mediaType,lfn,season);
     if (!media) {
        series->InsertMedia(mediaType,lfn,imgWidth,imgHeight,imageName.str(),season,needRefresh);
@@ -1361,9 +1366,15 @@ bool cUpdate::ReadSeriesImageFast(int seriesId, int season, int episodeId, int a
     {
         int originalWidth = tSeriesMedia->getIntValue("MEDIAWIDTH");
         int originalHeight = tSeriesMedia->getIntValue("MEDIAHEIGHT");
+        int usedWidth {0}, usedHeight {0};
         bool forceImageSize = GetUsedImageSize(originalWidth, originalHeight,
                                           (mediaType >= msPoster1) && (mediaType <= msPoster3),mediaType == msSeasonPoster,
-                                          media->width, media->height);
+                                          usedWidth, usedHeight);
+        {
+           cMutexLock lock(scrapManager->Mutex());
+           media->width = usedWidth;
+           media->height = usedHeight;
+        }
         int size = imageSize.getIntValue();
         if (size > 0)
         {
@@ -1379,9 +1390,10 @@ bool cUpdate::ReadSeriesImageFast(int seriesId, int season, int episodeId, int a
                    thumbPath = mediaThumb->path;
                 }
                 HandleImage(media->path, originalWidth, originalHeight,
-                            forceImageSize, media->width, media->height, float(scraper2VdrConfig.maxPosterDistortion)/100,
+                            forceImageSize, usedWidth, usedHeight, float(scraper2VdrConfig.maxPosterDistortion)/100,
                             handleThumb, thumbPath, scraper2VdrConfig.thumbHeight);
 
+                cMutexLock lock(scrapManager->Mutex());
                 media->needrefresh = false; // reset update flag
                 media->mediavalid = true;   // we have a image file for this media
 
@@ -1396,6 +1408,7 @@ bool cUpdate::ReadSeriesImageFast(int seriesId, int season, int episodeId, int a
         }
         else
         {
+            cMutexLock lock(scrapManager->Mutex());
             media->needrefresh = false; // reset update flag for empty images also
         }
     }
@@ -1532,7 +1545,10 @@ int cUpdate::ReadMovieActorsFast(cMovieDbMovie *movie) {
             if (imgNeedRefresh)
               numNew++; // only count new actors/images
         }
-        actor->actorThumbExternal = actorThumb; // assign actor thumb from global map to movie actor
+        {
+           cMutexLock lock(scrapManager->Mutex());
+           actor->actorThumbExternal = actorThumb; // assign actor thumb from global map to movie actor
+        }
     }
 
     selectMovieActors->freeResult();
@@ -1613,6 +1629,7 @@ int cUpdate::ReadMovieMediaFast(cMovieDbMovie *movie) {
 
 // create media if not exists in movie, update size, path, needRefresh of media
 void cUpdate::CheckMovieMedia(cMovieDbMovie *movie, int mediaType, int imgWidth, int imgHeight, string imgName, bool needRefresh) {
+    cMutexLock lock(scrapManager->Mutex());
     cMovieMedia *media = movie->GetMediaObj(mediaType);
     if (!media) {
         movie->InsertMedia(mediaType,imgWidth,imgHeight,imgName,needRefresh);
@@ -1725,9 +1742,15 @@ bool cUpdate::ReadMovieImageFast(int movieId, int actorId, int mediaType, cMovie
     if (res) {
         int originalWidth = tMovieMedia->getIntValue("MEDIAWIDTH");
         int originalHeight = tMovieMedia->getIntValue("MEDIAHEIGHT");
+        int usedWidth {0}, usedHeight {0};
         forceImageSize = GetUsedImageSize(originalWidth, originalHeight,
                                           (mediaType == mmPoster) || (mediaType == mmCollectionPoster), false,
-                                          media->width, media->height);
+                                          usedWidth, usedHeight);
+        {
+           cMutexLock lock(scrapManager->Mutex());
+           media->width = usedWidth;
+           media->height = usedHeight;
+        }
         int size = imageSize.getIntValue();
         if (size > 0) {
             if (FILE* fh = fopen(media->path.c_str(), "w")) {
@@ -1740,9 +1763,10 @@ bool cUpdate::ReadMovieImageFast(int movieId, int actorId, int mediaType, cMovie
                    thumbPath = mediaThumb->path;
                 }
                 HandleImage(media->path, originalWidth, originalHeight,
-                            forceImageSize, media->width, media->height, float(scraper2VdrConfig.maxPosterDistortion)/100,
+                            forceImageSize, usedWidth, usedHeight, float(scraper2VdrConfig.maxPosterDistortion)/100,
                             handleThumb, thumbPath, scraper2VdrConfig.thumbHeight);
 
+                cMutexLock lock(scrapManager->Mutex());
                 media->needrefresh = false; // reset update flag
                 media->mediavalid = true; // we have a image file for this media
                 if (mediaThumb) {
@@ -1753,6 +1777,7 @@ bool cUpdate::ReadMovieImageFast(int movieId, int actorId, int mediaType, cMovie
                 imageSaved = true;
             }
         } else {
+            cMutexLock lock(scrapManager->Mutex());
             media->needrefresh = false; // reset update flag for empty images also
         }
     }

@@ -29,6 +29,7 @@ cScrapManager::cScrapManager(void) {
 }
 
 cScrapManager::~cScrapManager(void) {
+    cMutexLock lock(&mutex);
     for (map<int, cTVDBSeries*>::iterator it = series.begin(); it != series.end(); it++) {
         cTVDBSeries *s = (cTVDBSeries*)it->second;
         delete s;
@@ -54,6 +55,7 @@ void cScrapManager::InitIterator(bool isRec) {
 }
 
 sEventsValue cScrapManager::GetEventInformation(int eventId, string channelId) {
+    cMutexLock lock(&mutex);
 	sEventsKey k;
 	k.eventId = eventId;
 	k.channelId = channelId;
@@ -70,6 +72,7 @@ sEventsValue cScrapManager::GetEventInformation(int eventId, string channelId) {
 
 
 void cScrapManager::AddEvent(int eventId, string channelId, int seriesId, int episodeId, int movieId) {
+    cMutexLock lock(&mutex);
 	sEventsKey k;
 	k.eventId = eventId;
 	k.channelId = channelId;
@@ -82,6 +85,7 @@ void cScrapManager::AddEvent(int eventId, string channelId, int seriesId, int ep
 }
 
 bool cScrapManager::GetNextSeries(bool isRec, int &seriesId, int &episodeId) {
+    cMutexLock lock(&mutex);
 	bool next = false;
 	if (!isRec) {
 		while (eventsIterator != events.end()) {
@@ -117,6 +121,7 @@ bool cScrapManager::GetNextSeries(bool isRec, int &seriesId, int &episodeId) {
 }
 
 bool cScrapManager::GetNextMovie(bool isRec, int &movieId) {
+    cMutexLock lock(&mutex);
 	bool next = false;
 	if (!isRec) {
 		while (eventsIterator != events.end()) {
@@ -205,6 +210,7 @@ cMovieDbMovie *cScrapManager::GetMovie(int movieId) {
 }
 
 cTVDBSeries *cScrapManager::AddSeries(cDbTable* tSeries) {
+    cMutexLock lock(&mutex);
     cTVDBSeries *s = new cTVDBSeries();
     UpdateSeries(s,tSeries);
     s->updateimages = true; // have to search images for new series
@@ -214,6 +220,7 @@ cTVDBSeries *cScrapManager::AddSeries(cDbTable* tSeries) {
 
 // update series using values from current db row
 void cScrapManager::UpdateSeries(cTVDBSeries *seriesval, cDbTable* tSeries) {
+    cMutexLock lock(&mutex);
     seriesval->id = tSeries->getIntValue("SERIESID");
     seriesval->name = tSeries->getStrValue("SERIESNAME");
     seriesval->overview = tSeries->getStrValue("SERIESOVERVIEW");
@@ -227,6 +234,7 @@ void cScrapManager::UpdateSeries(cTVDBSeries *seriesval, cDbTable* tSeries) {
 }
 
 cMovieDbMovie *cScrapManager::AddMovie(cDbTable* tMovies) {
+    cMutexLock lock(&mutex);
     cMovieDbMovie *m = new cMovieDbMovie();
     UpdateMovie(m,tMovies);
     m->updateimages = true; // have to search images for new movies
@@ -236,6 +244,7 @@ cMovieDbMovie *cScrapManager::AddMovie(cDbTable* tMovies) {
 
 // update movie using values from current db row
 void cScrapManager::UpdateMovie(cMovieDbMovie *movieval, cDbTable* tMovies) {
+    cMutexLock lock(&mutex);
     movieval->id = tMovies->getIntValue("MOVIEID");
     movieval->title = tMovies->getStrValue("TITLE");
     movieval->originalTitle = tMovies->getStrValue("ORIGINALTITLE");
@@ -255,6 +264,7 @@ void cScrapManager::UpdateMovie(cMovieDbMovie *movieval, cDbTable* tMovies) {
 }
 
 void cScrapManager::AddSeriesEpisode(cTVDBSeries *series, cDbTable* tEpisodes) {
+    cMutexLock lock(&mutex);
     cTVDBEpisode *e = new cTVDBEpisode();
     UpdateSeriesEpisode(e,tEpisodes);
     series->InsertEpisode(e);
@@ -262,6 +272,7 @@ void cScrapManager::AddSeriesEpisode(cTVDBSeries *series, cDbTable* tEpisodes) {
 
 // update episode using values from current db row
 void cScrapManager::UpdateSeriesEpisode(cTVDBEpisode *episode, cDbTable* tEpisodes) {
+    cMutexLock lock(&mutex);
     episode->id = tEpisodes->getIntValue("EPISODEID");
     episode->name = tEpisodes->getStrValue("EPISODENAME");
     episode->number =  tEpisodes->getIntValue("EPISODENUMBER");
@@ -275,6 +286,7 @@ void cScrapManager::UpdateSeriesEpisode(cTVDBEpisode *episode, cDbTable* tEpisod
 }
 
 cTVDBActor *cScrapManager::AddSeriesActor(cTVDBSeries *series, cDbTable* tActors) {
+    cMutexLock lock(&mutex);
     cTVDBActor *a = new cTVDBActor();
     UpdateSeriesActor(a,tActors);
     series->InsertActor(a);
@@ -283,12 +295,14 @@ cTVDBActor *cScrapManager::AddSeriesActor(cTVDBSeries *series, cDbTable* tActors
 
 // update actor using values from current db row
 void cScrapManager::UpdateSeriesActor(cTVDBActor *actor, cDbTable* tActors) {
+    cMutexLock lock(&mutex);
     actor->id = tActors->getIntValue("ACTORID");
     actor->name = tActors->getStrValue("ACTORNAME");
     actor->role =  tActors->getStrValue("ACTORROLE");
 }
 
 cMovieActor * cScrapManager::AddMovieActor(cMovieDbMovie *movie, cDbTable* tActor, string role, bool noActorThumb) {
+    cMutexLock lock(&mutex);
     cMovieActor *a = new cMovieActor();
     UpdateMovieActor(a, tActor, role);
     if (noActorThumb) {
@@ -301,12 +315,14 @@ cMovieActor * cScrapManager::AddMovieActor(cMovieDbMovie *movie, cDbTable* tActo
 
 // update actor using values from current db row
 void cScrapManager::UpdateMovieActor(cMovieActor *actor, cDbTable* tActor, string role) {
+    cMutexLock lock(&mutex);
     actor->id = tActor->getIntValue("ACTORID");
     actor->name = tActor->getStrValue("ACTORNAME");
     actor->role =  role;
 }
 
 void cScrapManager::AddMovieMedia(cMovieDbMovie *movie, cDbTable* tMovieMedia, string path) {
+    cMutexLock lock(&mutex);
 	cMovieMedia *m = new cMovieMedia();
 	m->mediaType = tMovieMedia->getIntValue("MEDIATYPE");
 	m->width = tMovieMedia->getIntValue("MEDIAWIDTH");
@@ -325,6 +341,7 @@ cMovieMedia *cScrapManager::GetMovieActorThumb(int actorId) {
 
 // insert movie actor thumb
 cMovieMedia *cScrapManager::AddMovieActorThumb(int actorId, int imgWidth, int imgHeight, string path, bool needrefresh) {
+    cMutexLock lock(&mutex);
     cMovieMedia *m = new cMovieMedia();
     m->width = imgWidth;
     m->height = imgHeight;
@@ -362,6 +379,7 @@ int cScrapManager::GetMovieActorThumbNext(int &actorId, cMovieMedia* &movieActor
 }
 
 bool cScrapManager::AddRecording(int recStart, string recPath, int seriesId, int episodeId, int movieId) {
+    cMutexLock lock(&mutex);
 	sRecordingsKey k;
 	k.recStart = recStart;
 	k.recPath = recPath;
@@ -384,6 +402,7 @@ bool cScrapManager::AddRecording(int recStart, string recPath, int seriesId, int
 }
 
 bool cScrapManager::RecordingExists(int recStart, string recPath) {
+    cMutexLock lock(&mutex);
 	sRecordingsKey k;
 	k.recStart = recStart;
 	k.recPath = recPath;
@@ -394,6 +413,7 @@ bool cScrapManager::RecordingExists(int recStart, string recPath) {
 }
 
 bool cScrapManager::SeriesInUse(int seriesId) {
+    cMutexLock lock(&mutex);
 	map<int, cTVDBSeries*>::iterator hit = series.find(seriesId);
 	if (hit != series.end())
 		return true;
@@ -401,6 +421,7 @@ bool cScrapManager::SeriesInUse(int seriesId) {
 }
 
 bool cScrapManager::MovieInUse(int movieId) {
+    cMutexLock lock(&mutex);
 	map<int, cMovieDbMovie*>::iterator hit = movies.find(movieId);
 	if (hit != movies.end())
 		return true;
@@ -411,6 +432,17 @@ void cScrapManager::DumpSeries(void)
 {
 	int numSeries = 0;
 	map<sEventsKey, sEventsValue>::iterator it;
+
+   // lock order: VDR lists first (Channels, Schedules), then our mutex
+
+#if defined (APIVERSNUM) && (APIVERSNUM >= 20301)
+   LOCK_CHANNELS_READ;
+   LOCK_SCHEDULES_READ;
+#else
+   cSchedulesLock schedulesLock(true);
+#endif
+
+   cMutexLock lock(&mutex);
 
 	for (it = events.begin(); it != events.end(); it++)
    {
@@ -425,13 +457,9 @@ void cScrapManager::DumpSeries(void)
          tChannelID cID = tChannelID::FromString(key.channelId.c_str());
 
 #if defined (APIVERSNUM) && (APIVERSNUM >= 20301)
-         LOCK_CHANNELS_READ;
-         LOCK_SCHEDULES_READ;
-
          c = Channels->GetByChannelID(cID);
          schedules = Schedules;
 #else
-         cSchedulesLock schedulesLock(true);
          schedules = (cSchedules*)cSchedules::Schedules(schedulesLock);
          c = Channels.GetByChannelID(cID);
 #endif
@@ -474,6 +502,17 @@ void cScrapManager::DumpMovies(void)
 	int numMovies = 0;
 	map<sEventsKey, sEventsValue>::iterator it;
 
+   // lock order: VDR lists first (Channels, Schedules), then our mutex
+
+#if defined (APIVERSNUM) && (APIVERSNUM >= 20301)
+   LOCK_CHANNELS_READ;
+   LOCK_SCHEDULES_READ;
+#else
+   cSchedulesLock schedulesLock(true);
+#endif
+
+   cMutexLock lock(&mutex);
+
 	for (it = events.begin(); it != events.end(); it++)
    {
 		sEventsKey key = it->first;
@@ -487,13 +526,9 @@ void cScrapManager::DumpMovies(void)
          tChannelID cID = tChannelID::FromString(key.channelId.c_str());
 
 #if defined (APIVERSNUM) && (APIVERSNUM >= 20301)
-         LOCK_CHANNELS_READ;
-         LOCK_SCHEDULES_READ;
-
          c = Channels->GetByChannelID(cID);
          schedules = Schedules;
 #else
-         cSchedulesLock schedulesLock(true);
          schedules = (cSchedules*)cSchedules::Schedules(schedulesLock);
          c = Channels.GetByChannelID(cID);
 #endif
@@ -534,6 +569,7 @@ void cScrapManager::DumpMovies(void)
 }
 
 void cScrapManager::DumpRecordings(void) {
+    cMutexLock lock(&mutex);
 	tell(0, "%ld recordings in memory:", recordings.size());
 	for (map<sRecordingsKey, sEventsValue>::iterator it = recordings.begin(); it != recordings.end(); it++) {
 		sRecordingsKey key = it->first;
@@ -549,6 +585,7 @@ void cScrapManager::DumpRecordings(void) {
 }
 
 bool cScrapManager::GetEventType(ScraperGetEventType *call) {
+    cMutexLock lock(&mutex);
    tell(4, "scraper2vdr plugin service call GetEventType called");
 	sEventsValue v {};
    // memset(&v, 0, sizeof(sEventsValue));
@@ -593,6 +630,7 @@ bool cScrapManager::GetEventType(ScraperGetEventType *call) {
 }
 
 bool cScrapManager::GetSeries(cSeries *s) {
+    cMutexLock lock(&mutex);
     map<int, cTVDBSeries*>::iterator hit = series.find(s->seriesId);
     if (hit == series.end())
         return false;
@@ -619,6 +657,7 @@ bool cScrapManager::GetSeries(cSeries *s) {
 }
 
 bool cScrapManager::GetMovie(cMovie *m) {
+    cMutexLock lock(&mutex);
     map<int, cMovieDbMovie*>::iterator hit = movies.find(m->movieId);
     if (hit == movies.end())
         return false;
@@ -648,6 +687,7 @@ bool cScrapManager::GetMovie(cMovie *m) {
 }
 
 bool cScrapManager::GetPosterBanner(ScraperGetPosterBanner *call) {
+    cMutexLock lock(&mutex);
     sEventsValue v;
     v.episodeId = 0;
     if (call->event) {
@@ -684,6 +724,7 @@ bool cScrapManager::GetPosterBanner(ScraperGetPosterBanner *call) {
 }
 
 bool cScrapManager::GetPosterBannerV2(ScraperGetPosterBannerV2 *call) {
+    cMutexLock lock(&mutex);
     sEventsValue v;
     v.episodeId = 0;
     if (call->event) {
@@ -729,6 +770,7 @@ bool cScrapManager::GetPosterBannerV2(ScraperGetPosterBannerV2 *call) {
 }
 
 bool cScrapManager::GetPoster(ScraperGetPoster *call) {
+    cMutexLock lock(&mutex);
     sEventsValue v;
     if (call->event) {
     	sEventsKey k;
@@ -765,6 +807,7 @@ bool cScrapManager::GetPoster(ScraperGetPoster *call) {
 }
 
 bool cScrapManager::GetPosterThumb(ScraperGetPosterThumb *call) {
+    cMutexLock lock(&mutex);
     sEventsValue v;
     if (call->event) {
 	    sEventsKey k;
